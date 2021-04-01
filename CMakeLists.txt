@@ -16,7 +16,7 @@ find_package(dfmessages REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TimestampEstimator.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages)
+daq_add_library(TokenManager.cpp TimestampEstimator.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages)
 
 ##############################################################################
 # Codegen
