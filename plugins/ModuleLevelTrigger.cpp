@@ -37,10 +37,8 @@ namespace trigger {
 ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
   : DAQModule(name)
   , m_time_sync_source(nullptr)
-  , m_trigger_inhibit_source(nullptr)
   , m_token_source(nullptr)
   , m_trigger_decision_sink(nullptr)
-  , m_inhibited(false)
   , m_last_trigger_number(0)
   , m_run_number(0)
 {
@@ -59,9 +57,6 @@ ModuleLevelTrigger::init(const nlohmann::json& iniobj)
   for (const auto& qi : ini.qinfos) {
     if (qi.name == "time_sync_source") {
       m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
-    }
-    if (qi.name == "trigger_inhibit_source") {
-      m_trigger_inhibit_source.reset(new appfwk::DAQSource<dfmessages::TriggerInhibit>(qi.inst));
     }
     if (qi.name == "trigger_decision_sink") {
       m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(qi.inst));
@@ -127,16 +122,10 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
   m_run_number = startobj.value<dunedaq::dataformats::run_number_t>("run", 0);
 
   m_paused.store(true);
-  m_inhibited.store(false);
   m_running_flag.store(true);
 
   m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
-
   m_token_manager.reset(new TokenManager(m_token_source, m_initial_tokens, m_run_number));
-
-  m_read_inhibit_queue_thread = std::thread(&ModuleLevelTrigger::read_inhibit_queue, this);
-  pthread_setname_np(m_read_inhibit_queue_thread.native_handle(), "tde-inhibit-q");
-
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "tde-trig-dec");
@@ -147,7 +136,6 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
 {
   m_running_flag.store(false);
 
-  m_read_inhibit_queue_thread.join();
   m_send_trigger_decisions_thread.join();
 
   m_timestamp_estimator.reset(nullptr); // Calls TimestampEstimator dtor
@@ -241,7 +229,7 @@ ModuleLevelTrigger::send_trigger_decisions()
     }
 
     bool tokens_allow_triggers=m_token_manager->triggers_allowed();
-    if (!triggers_are_inhibited() && !m_paused.load() && tokens_allow_triggers) {
+    if (!m_paused.load() && tokens_allow_triggers) {
 
       dfmessages::TriggerDecision decision = create_decision(next_trigger_timestamp);
 
@@ -262,7 +250,7 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_inhibited_trigger_count++;
       m_inhibited_trigger_count_tot++;
     } else {
-      TLOG_DEBUG(1) << "Triggers are inhibited/paused. Not sending a TriggerDecision for timestamp "
+      TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision for timestamp "
                     << next_trigger_timestamp;
     }
 
@@ -285,42 +273,6 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_trigger_count++;
       m_trigger_count_tot++;
     }
-  }
-}
-
-void
-ModuleLevelTrigger::read_inhibit_queue()
-{
-  if (m_trigger_inhibit_source == nullptr)
-    return;
-
-  // This loop is a hack to deal with the fact that there might be
-  // leftover TriggerInhibit messages from the previous run, because
-  // ModuleLevelTrigger is stopped before the DF modules that
-  // send the TriggerInhibits. So we pop everything we can at
-  // startup. This will definitely get all of the TriggerInhibits from
-  // the previous run. It *may* also get TriggerInhibits from the
-  // current run, which we drop on the floor. This is not really
-  // ideal, since we don't know whether a given message on the queue
-  // came from the previous (and should be ignored) or from this run
-  // (and should be handled). The problem would be when an inhibit is
-  // sent in this run before this loop gets started. That seems
-  // unlikely, and the whole way we do inhibits is changing for
-  // MiniDAQApp v2 anyway, so I'm leaving it like this
-  while (m_trigger_inhibit_source->can_pop()) {
-    dfmessages::TriggerInhibit ti;
-    m_trigger_inhibit_source->pop(ti);
-  }
-  while (m_running_flag.load()) {
-    while (m_trigger_inhibit_source->can_pop()) {
-      dfmessages::TriggerInhibit ti;
-      m_trigger_inhibit_source->pop(ti);
-      m_inhibited.store(ti.busy);
-      if (ti.busy) {
-        TLOG() << "Dataflow is BUSY.";
-      }
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 

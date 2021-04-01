@@ -70,16 +70,11 @@ private:
   void do_resume(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
-  // Are we inhibited from sending triggers?
-  bool triggers_are_inhibited() { return m_inhibited.load(); }
-
   // Thread functions
   void send_trigger_decisions();
-  void read_inhibit_queue();
 
   // ...and the std::threads that hold them
   std::thread m_send_trigger_decisions_thread;
-  std::thread m_read_inhibit_queue_thread;
 
   std::unique_ptr<TimestampEstimator> m_timestamp_estimator;
   std::unique_ptr<TokenManager> m_token_manager;
@@ -89,7 +84,6 @@ private:
 
   // Queue sources and sinks
   std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>> m_time_sync_source;
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerInhibit>> m_trigger_inhibit_source;
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
 
@@ -130,9 +124,7 @@ private:
   // getting to disk
   int m_stop_burst_count{ 0 };
 
-  // The most recent inhibit status we've seen (true = inhibited)
-  std::atomic<bool> m_inhibited;
-  // paused state, equivalent to inhibited
+  // paused state, in which we don't send triggers
   std::atomic<bool> m_paused;
 
   int m_initial_tokens;
