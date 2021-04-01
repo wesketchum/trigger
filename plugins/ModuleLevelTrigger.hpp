@@ -15,6 +15,7 @@
 #define TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 
 #include "trigger/TimestampEstimator.hpp"
+#include "trigger/TokenManager.hpp"
 
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -74,17 +75,14 @@ private:
 
   // Thread functions
   void send_trigger_decisions();
-  // void estimate_current_timestamp();
   void read_inhibit_queue();
-  void read_token_queue();
 
   // ...and the std::threads that hold them
   std::thread m_send_trigger_decisions_thread;
-  // std::thread m_estimate_current_timestamp_thread;
   std::thread m_read_inhibit_queue_thread;
-  std::thread m_read_token_queue_thread;
 
   std::unique_ptr<TimestampEstimator> m_timestamp_estimator;
+  std::unique_ptr<TokenManager> m_token_manager;
 
   // Create the next trigger decision
   dfmessages::TriggerDecision create_decision(dfmessages::timestamp_t timestamp);
@@ -134,12 +132,10 @@ private:
 
   // The most recent inhibit status we've seen (true = inhibited)
   std::atomic<bool> m_inhibited;
-  std::atomic<int> m_tokens;
-  int m_initial_tokens;
-  std::mutex m_open_trigger_decisions_mutex;
-  std::set<dfmessages::trigger_number_t> m_open_trigger_decisions;
   // paused state, equivalent to inhibited
   std::atomic<bool> m_paused;
+
+  int m_initial_tokens;
 
   dfmessages::trigger_number_t m_last_trigger_number;
 
