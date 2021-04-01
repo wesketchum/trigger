@@ -224,13 +224,7 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_inhibited_trigger_count_tot.store(0);
 
   // Wait for there to be a valid timestamp estimate before we start
-  while (m_running_flag.load() &&
-         m_timestamp_estimator->get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
-
-  if (!m_running_flag.load()) {
-    // We get here if we were stopped before the TimestampEstimator received any TimeSyncs
+  if(m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag)==TimestampEstimator::kInterrupted){
     return;
   }
 
@@ -245,13 +239,9 @@ ModuleLevelTrigger::send_trigger_decisions()
   assert(next_trigger_timestamp > ts);
 
   while (true) {
-    while (m_running_flag.load() &&
-           (m_timestamp_estimator->get_timestamp_estimate() < (next_trigger_timestamp + trigger_delay_ticks_) ||
-            m_timestamp_estimator->get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp)) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    if (!m_running_flag.load())
+    if(m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag)==TimestampEstimator::kInterrupted){
       break;
+    }
 
     auto tokens_available = m_token_source != nullptr ? m_tokens.load() : 1;
     if (!triggers_are_inhibited() && !m_paused.load() && tokens_available > 0) {
