@@ -11,16 +11,22 @@ find_package(serialization REQUIRED)
 find_package(logging REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(triggeralgs REQUIRED)
+find_package(dfmessages REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library( LINK_LIBRARIES appfwk::appfwk logging::logging)
+daq_add_library(TimestampEstimator.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages)
+
+##############################################################################
+# Codegen
+
+daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 
 ##############################################################################
 # Plugins
 
-# daq_add_plugin(... ... LINK_LIBRARIES trigger)
+daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
