@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <vector>
-#include "dune-trigger-algs/TriggerActivity.hh"
+#include "TriggerActivity.hh"
 
-namespace triggeralgs {
+namespace trigger {
   struct TriggerCandidate {
     int64_t  time_start     = {0};
     int64_t  time_end       = {0};
@@ -13,7 +13,7 @@ namespace triggeralgs {
     uint32_t algorithm      = {0};
     uint16_t version        = {0};
 
-    std::vector<TriggerActivity> ta_list;
+    std::vector<TriggerActivity> activity_list;
   };
     
 }
