@@ -3,6 +3,7 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
+#include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 #include "trigger/TimeStampedData.hh"
 #include "trigger/TriggerCandidate.hh"
 

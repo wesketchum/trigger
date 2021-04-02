@@ -48,20 +48,7 @@ namespace dunedaq {
 		}
 
 		void DAQTriggerCandidateMaker::do_conf(const nlohmann::json& config /*args*/) {
-			auto params = config.get<dunedaq::triggermodules::daqtriggercandidatemaker::Conf>();
-			
-			window = params.time_window;
-			thresh = params.threshold;
-			hit_thresh = params.hit_threshold;
-			try {
-				m_time_window = {window};
-				m_threshold = {thresh};
-				m_hit_threshold = {hit_thresh};
-			} catch(...)  {
-				ERS_LOG(get_name() << " unsuccessfully configured");
-			}
-			ERS_LOG(get_name() << " successfully configured");
-			TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
+			auto params = config.get<dunedaq::trigger::timingtriggercandidatemaker::Conf>();
 		}
 
 	} //namespace trigger
