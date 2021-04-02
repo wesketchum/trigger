@@ -1,0 +1,39 @@
+local moo = import "moo.jsonnet";
+local ns = "dunedaq.trigger.timingtriggercandidatemaker";
+local s = moo.oschema.schema(ns);
+
+local types = {
+	time_t : s.number("time_t", "i8", doc="Time"),
+	signal_type_t : s.number("signal_type_t", "u4", doc="Signal type"),
+	map_t : s.record("map_t", [
+			s.field("signal_type",
+				self.signal_type_t,
+				0,
+				doc="Readout time before time stamp"),
+			s.field("time_before",
+				self.time_t,
+				10000,
+				doc="Readout time before time stamp"),
+			s.field("time_after",
+				self.time_t,
+				20000,
+				doc="Readout time after time stamp"),
+			], doc="Map from signal type to readout window"),
+	conf: s.record("Conf", [
+		s.field("s0",
+			self.map_t,
+			[0,10000,20000],
+			doc="Iceberg"),
+		s.field("s1",
+			self.map_t,
+			[0,100000,20000],
+			doc="Example 1"),
+		s.field("s2",
+			self.map_t,
+			[0,100000,20000],
+			doc="Example 2"),
+	], doc="Configuration of the different readout time maps"),
+
+};
+
+moo.oschema.sort_select(types, ns)
