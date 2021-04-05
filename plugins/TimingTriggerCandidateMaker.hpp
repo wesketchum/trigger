@@ -23,14 +23,16 @@ namespace dunedaq {
 			void init(const nlohmann::json& obj) override;
       
 		private:
-			void do_conf(const nlohmann::json& obj);
+			void do_conf(const nlohmann::json& config);
 			void do_start(const nlohmann::json& obj);
 			void do_stop(const nlohmann::json& obj);
 			void do_scrap(const nlohmann::json& obj);
 
+
 			dunedaq::appfwk::ThreadHelper thread_;
 
-			TriggerCandidate TriggerCandidateMakerTiming::TimeStampedDataToTriggerCandidate(const TimeStampedData& data);
+			TriggerCandidate TimeStampedDataToTriggerCandidate(const TimeStampedData& data);
+			void init(const nlohmann::json& iniobj);
 			void do_work(std::atomic<bool>&);
 
 			using source_t = dunedaq::appfwk::DAQSource<TimeStampedData>;
@@ -40,6 +42,8 @@ namespace dunedaq {
 			std::unique_ptr<sink_t> outputQueue_;
 
 			std::chrono::milliseconds queueTimeout_;
+
+			std::vector<std::pair<int64_t, int64_t>> m_map;
 		};
 	} //namespace trigger
 } //namespace dunedaq
