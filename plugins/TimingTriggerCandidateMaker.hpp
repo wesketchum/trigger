@@ -2,16 +2,20 @@
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
-#include "trigger/TimeStampedData.hh"
+
+#include "trigger/TriggerPrimitive.hh"
+#include "trigger/TriggerActivity.hh"
 #include "trigger/TriggerCandidate.hh"
+#include "trigger/TimeStampedData.hh"
 
 #include <chrono>
 
 namespace dunedaq {
 	namespace trigger {
-		class TimingTriggerCandidateMaker: public dunedaq::appfwk::DAQModule, TriggerCandidateMakerTiming {
+		class TimingTriggerCandidateMaker: public dunedaq::appfwk::DAQModule {
 		public:
 			explicit TimingTriggerCandidateMaker(const std::string& name);
 
@@ -20,7 +24,7 @@ namespace dunedaq {
 			TimingTriggerCandidateMaker(TimingTriggerCandidateMaker&&) = delete;
 			TimingTriggerCandidateMaker& operator=(TimingTriggerCandidateMaker&&) = delete;
 
-			void init(const nlohmann::json& obj) override;
+			void init(const nlohmann::json& iniobj) override;
       
 		private:
 			void do_conf(const nlohmann::json& config);
@@ -32,7 +36,6 @@ namespace dunedaq {
 			dunedaq::appfwk::ThreadHelper thread_;
 
 			TriggerCandidate TimeStampedDataToTriggerCandidate(const TimeStampedData& data);
-			void init(const nlohmann::json& iniobj);
 			void do_work(std::atomic<bool>&);
 
 			using source_t = dunedaq::appfwk::DAQSource<TimeStampedData>;

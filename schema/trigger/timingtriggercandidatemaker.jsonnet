@@ -22,15 +22,27 @@ local types = {
 	conf: s.record("Conf", [
 		s.field("s0",
 			self.map_t,
-			[0,10000,20000],
+			{
+				signal_type: 0,
+				time_before: 10000,
+				time_after: 20000
+			} ,
 			doc="Iceberg"),
 		s.field("s1",
 			self.map_t,
-			[0,100000,20000],
+			{
+				signal_type: 0,
+				time_before: 100000,
+				time_after: 200000
+			},
 			doc="Example 1"),
 		s.field("s2",
 			self.map_t,
-			[0,100000,20000],
+			{
+				signal_type: 0,
+				time_before: 1000000,
+				time_after: 2000000
+			},
 			doc="Example 2"),
 	], doc="Configuration of the different readout time maps"),
 

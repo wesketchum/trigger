@@ -15,13 +15,18 @@ find_package(triggeralgs REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library( LINK_LIBRARIES appfwk::appfwk logging::logging)
+daq_add_library(LINK_LIBRARIES appfwk::appfwk logging::logging )
+
+##############################################################################
+# Codegen
+
+daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 
 ##############################################################################
 # Plugins
 
 # daq_add_plugin(... ... LINK_LIBRARIES trigger)
-daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
