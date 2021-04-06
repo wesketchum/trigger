@@ -50,13 +50,10 @@ public:
    */
   explicit ModuleLevelTrigger(const std::string& name);
 
-  ModuleLevelTrigger(const ModuleLevelTrigger&) =
-    delete; ///< ModuleLevelTrigger is not copy-constructible
-  ModuleLevelTrigger& operator=(const ModuleLevelTrigger&) =
-    delete;                                                    ///< ModuleLevelTrigger is not copy-assignable
-  ModuleLevelTrigger(ModuleLevelTrigger&&) = delete; ///< ModuleLevelTrigger is not move-constructible
-  ModuleLevelTrigger& operator=(ModuleLevelTrigger&&) =
-    delete; ///< ModuleLevelTrigger is not move-assignable
+  ModuleLevelTrigger(const ModuleLevelTrigger&) = delete;            ///< ModuleLevelTrigger is not copy-constructible
+  ModuleLevelTrigger& operator=(const ModuleLevelTrigger&) = delete; ///< ModuleLevelTrigger is not copy-assignable
+  ModuleLevelTrigger(ModuleLevelTrigger&&) = delete;                 ///< ModuleLevelTrigger is not move-constructible
+  ModuleLevelTrigger& operator=(ModuleLevelTrigger&&) = delete;      ///< ModuleLevelTrigger is not move-assignable
 
   void init(const nlohmann::json& iniobj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;

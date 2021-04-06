@@ -3,14 +3,15 @@
 namespace dunedaq::trigger {
 
 TokenManager::TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
-                           int initial_tokens, dataformats::run_number_t run_number)
+                           int initial_tokens,
+                           dataformats::run_number_t run_number)
   : m_n_initial_tokens(initial_tokens)
   , m_token_source(token_source)
   , m_run_number(run_number)
-    
+
 {
   m_running_flag.store(true);
-  m_read_queue_thread=std::thread(&TokenManager::read_token_queue, this);
+  m_read_queue_thread = std::thread(&TokenManager::read_token_queue, this);
 }
 
 TokenManager::~TokenManager()
@@ -24,7 +25,6 @@ TokenManager::get_n_tokens() const
 {
   return m_n_tokens.load();
 }
-
 
 void
 TokenManager::trigger_sent(dfmessages::trigger_number_t trigger_number)

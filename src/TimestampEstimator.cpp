@@ -96,31 +96,32 @@ TimestampEstimator::estimator_thread_fn(std::unique_ptr<appfwk::DAQSource<dfmess
 TimestampEstimator::WaitStatus
 TimestampEstimator::wait_for_valid_timestamp(std::atomic<bool>& continue_flag)
 {
-  if(!continue_flag.load()) return TimestampEstimator::kInterrupted;
-  
-  while (continue_flag.load() &&
-         get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp) {
+  if (!continue_flag.load())
+    return TimestampEstimator::kInterrupted;
+
+  while (continue_flag.load() && get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    if(!continue_flag.load()) return TimestampEstimator::kInterrupted;
+    if (!continue_flag.load())
+      return TimestampEstimator::kInterrupted;
   }
 
   return TimestampEstimator::kFinished;
 }
-  
+
 TimestampEstimator::WaitStatus
 TimestampEstimator::wait_for_timestamp(dfmessages::timestamp_t ts, std::atomic<bool>& continue_flag)
 {
-  if(!continue_flag.load()) return TimestampEstimator::kInterrupted;
-  
+  if (!continue_flag.load())
+    return TimestampEstimator::kInterrupted;
+
   while (continue_flag.load() &&
-         (get_timestamp_estimate() < ts ||
-          get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp)) {
+         (get_timestamp_estimate() < ts || get_timestamp_estimate() == dfmessages::TypeDefaults::s_invalid_timestamp)) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    if(!continue_flag.load()) return TimestampEstimator::kInterrupted;
+    if (!continue_flag.load())
+      return TimestampEstimator::kInterrupted;
   }
 
   return TimestampEstimator::kFinished;
 }
-  
 
 } // dunedaq::trigger

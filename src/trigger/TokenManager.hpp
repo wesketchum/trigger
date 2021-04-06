@@ -16,9 +16,9 @@
 #include "dfmessages/Types.hpp"
 
 #include <atomic>
-#include <thread>
-#include <set>
 #include <memory>
+#include <set>
+#include <thread>
 
 namespace dunedaq {
 namespace trigger {
@@ -26,9 +26,9 @@ namespace trigger {
 class TokenManager
 {
 public:
-  
   TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
-               int initial_tokens, dataformats::run_number_t run_number);
+               int initial_tokens,
+               dataformats::run_number_t run_number);
 
   ~TokenManager();
 
@@ -37,13 +37,12 @@ public:
   bool triggers_allowed() const { return get_n_tokens() > 0; }
 
   void trigger_sent(dfmessages::trigger_number_t);
-  
-private:
 
+private:
   void read_token_queue();
 
   std::thread m_read_queue_thread;
-  
+
   std::atomic<bool> m_running_flag;
   std::atomic<int> m_n_tokens;
   int m_n_initial_tokens;

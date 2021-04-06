@@ -139,7 +139,7 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
   m_send_trigger_decisions_thread.join();
 
   m_timestamp_estimator.reset(nullptr); // Calls TimestampEstimator dtor
-  m_token_manager.reset(nullptr); // Calls TokenManager dtor
+  m_token_manager.reset(nullptr);       // Calls TokenManager dtor
 }
 
 void
@@ -209,7 +209,7 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_inhibited_trigger_count_tot.store(0);
 
   // Wait for there to be a valid timestamp estimate before we start
-  if(m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag)==TimestampEstimator::kInterrupted){
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimator::kInterrupted) {
     return;
   }
 
@@ -224,11 +224,12 @@ ModuleLevelTrigger::send_trigger_decisions()
   assert(next_trigger_timestamp > ts);
 
   while (true) {
-    if(m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag)==TimestampEstimator::kInterrupted){
+    if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag) ==
+        TimestampEstimator::kInterrupted) {
       break;
     }
 
-    bool tokens_allow_triggers=m_token_manager->triggers_allowed();
+    bool tokens_allow_triggers = m_token_manager->triggers_allowed();
     if (!m_paused.load() && tokens_allow_triggers) {
 
       dfmessages::TriggerDecision decision = create_decision(next_trigger_timestamp);
@@ -250,8 +251,7 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_inhibited_trigger_count++;
       m_inhibited_trigger_count_tot++;
     } else {
-      TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision for timestamp "
-                    << next_trigger_timestamp;
+      TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision for timestamp " << next_trigger_timestamp;
     }
 
     next_trigger_timestamp += m_trigger_interval_ticks.load();
