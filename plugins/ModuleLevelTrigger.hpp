@@ -70,10 +70,7 @@ private:
   void do_resume(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
-  // Thread functions
   void send_trigger_decisions();
-
-  // ...and the std::threads that hold them
   std::thread m_send_trigger_decisions_thread;
 
   std::unique_ptr<TimestampEstimator> m_timestamp_estimator;
@@ -138,6 +135,7 @@ private:
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
 
+  // Opmon variables
   std::atomic<uint64_t> m_trigger_count{ 0 };
   std::atomic<uint64_t> m_trigger_count_tot{ 0 };
   std::atomic<uint64_t> m_inhibited_trigger_count{ 0 };
