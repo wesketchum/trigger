@@ -16,5 +16,5 @@ namespace dunedaq {
       uint16_t version             = {0};
       uint32_t flag                = {0};
     };
-  }
-}
+  } //namespace trigger
+} //namespace dunedaq

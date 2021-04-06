@@ -22,5 +22,5 @@ namespace dunedaq {
 
       std::vector<TriggerPrimitive> primitive_list;
     };
-  }
-}
+  } //namespace trigger
+} //namespace dunedaq

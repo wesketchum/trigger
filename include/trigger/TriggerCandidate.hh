@@ -16,5 +16,5 @@ namespace dunedaq {
 
       std::vector<TriggerActivity> activity_list;
     };
-  }
-}
+  } //namespace trigger
+} //namespace dunedaq

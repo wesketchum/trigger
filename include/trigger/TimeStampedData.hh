@@ -8,5 +8,5 @@ namespace dunedaq{
       uint64_t  time_stamp     = {0};
       uint32_t  counter	    = {0};
     };
-  }
-}
+  } //namespace trigger
+} //namespace dunedaq
