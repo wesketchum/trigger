@@ -21,6 +21,7 @@ daq_add_library( LINK_LIBRARIES appfwk::appfwk logging::logging)
 # Plugins
 
 # daq_add_plugin(... ... LINK_LIBRARIES trigger)
+daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
