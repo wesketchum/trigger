@@ -17,6 +17,8 @@
 #include "trigger/TimestampEstimator.hpp"
 #include "trigger/TokenManager.hpp"
 
+#include "dune-trigger-algs/TriggerCandidate.hh"
+
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -70,53 +72,19 @@ private:
   void send_trigger_decisions();
   std::thread m_send_trigger_decisions_thread;
 
-  std::unique_ptr<TimestampEstimator> m_timestamp_estimator;
   std::unique_ptr<TokenManager> m_token_manager;
 
   // Create the next trigger decision
-  dfmessages::TriggerDecision create_decision(dfmessages::timestamp_t timestamp);
+  dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 
   // Queue sources and sinks
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>> m_time_sync_source;
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
-
-  // Variables controlling how we produce triggers
-
-  // Triggers are produced for timestamps:
-  //    m_trigger_offset + n*m_trigger_interval_ticks;
-  // with n integer.
-  //
-  // A trigger for timestamp t is emitted approximately
-  // `m_trigger_delay_ticks` ticks after the timestamp t is
-  // estimated to occur, so we can try not to emit trigger requests
-  // for data that's in the future
-  dfmessages::timestamp_t m_trigger_offset{ 0 };
-  std::atomic<dfmessages::timestamp_t> m_trigger_interval_ticks{ 0 };
-  int trigger_delay_ticks_{ 0 };
-
-  // The offset and width of the windows to be requested in the trigger
-  dataformats::timestamp_diff_t m_trigger_window_offset{ 0 };
-  dfmessages::timestamp_t m_min_readout_window_ticks{ 0 };
-  dfmessages::timestamp_t m_max_readout_window_ticks{ 0 };
-
-  // The trigger type for the trigger requests
-  dfmessages::trigger_type_t m_trigger_type{ 0xff };
-
-  // The link IDs which should be read out in the trigger decision
+  std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
+  
   std::vector<dfmessages::GeoID> m_links;
-  int m_min_links_in_request;
-  int m_max_links_in_request;
 
   int m_repeat_trigger_count{ 1 };
-
-  uint64_t m_clock_frequency_hz; // NOLINT
-
-  // At stop, send this number of triggers in one go. The idea here is
-  // to put lots of triggers into the system to check that the stop
-  // sequence is clean, in the sense of all the in-flight triggers
-  // getting to disk
-  int m_stop_burst_count{ 0 };
 
   // paused state, in which we don't send triggers
   std::atomic<bool> m_paused;
