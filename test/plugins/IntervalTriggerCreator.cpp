@@ -19,7 +19,7 @@
 
 #include "trigger/Issues.hpp"
 #include "trigger/TimestampEstimator.hpp"
-#include "trigger/moduleleveltrigger/Nljs.hpp"
+#include "trigger/intervaltriggercreator/Nljs.hpp"
 
 #include "appfwk/app/Nljs.hpp"
 
@@ -68,7 +68,7 @@ IntervalTriggerCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
 void
 IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)
 {
-  auto params = confobj.get<moduleleveltrigger::ConfParams>();
+  auto params = confobj.get<intervaltriggercreator::ConfParams>();
 
   m_min_readout_window_ticks = params.min_readout_window_ticks;
   m_max_readout_window_ticks = params.max_readout_window_ticks;
