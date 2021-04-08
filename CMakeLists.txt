@@ -19,7 +19,7 @@ find_package(dfmessages REQUIRED)
 # TODO PAR 2021-04-07: triggeralgs doesn't export a
 # triggeralgs::triggeralgs target, but instead exports one called
 # "SupernovaTrigger". Need to fix that, but go with the flow for now
-daq_add_library(TokenManager.cpp TimestampEstimator.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages SupernovaTrigger)
+daq_add_library(TokenManager.cpp TimestampEstimator.cpp TimestampEstimatorBase.cpp TimestampEstimatorSystem.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages SupernovaTrigger)
 
 ##############################################################################
 # Codegen

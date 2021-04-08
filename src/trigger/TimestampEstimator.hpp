@@ -9,6 +9,8 @@
 #ifndef TRIGGER_SRC_TRIGGER_TIMESTAMPESTIMATOR_HPP_
 #define TRIGGER_SRC_TRIGGER_TIMESTAMPESTIMATOR_HPP_
 
+#include "trigger/TimestampEstimatorBase.hpp"
+
 #include "appfwk/DAQSource.hpp"
 
 #include "dfmessages/TimeSync.hpp"
@@ -20,39 +22,16 @@
 namespace dunedaq {
 namespace trigger {
 
-class TimestampEstimator
+  class TimestampEstimator : public TimestampEstimatorBase
 {
 public:
   TimestampEstimator(std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>>& time_sync_source,
                      uint64_t clock_frequency_hz);
 
-  ~TimestampEstimator();
+  virtual ~TimestampEstimator();
 
   dfmessages::timestamp_t get_timestamp_estimate() const { return m_current_timestamp_estimate.load(); }
-
-  enum WaitStatus
-  {
-    kFinished,
-    kInterrupted
-  };
-
-  /**
-     Wait for the current timestamp estimate to become valid, or for
-     continue_flag to become false. The timestamp becomes valid once at
-     least one TimeSync message has been received.
-
-     Returns kFinished if the timestamp became valid, or kInterrupted if continue_flag became false first
-  */
-  WaitStatus wait_for_valid_timestamp(std::atomic<bool>& continue_flag);
-
-  /**
-   Wait for the current timestamp estimate to reach ts, or for
-   continue_flag to become false.
-
-   Returns kFinished if the timestamp became valid, or kInterrupted if continue_flag became false first
-*/
-  WaitStatus wait_for_timestamp(dfmessages::timestamp_t ts, std::atomic<bool>& continue_flag);
-
+  
 private:
   void estimator_thread_fn(std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>>& time_sync_source);
 

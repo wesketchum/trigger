@@ -169,7 +169,7 @@ IntervalTriggerCreator::send_trigger_decisions()
   m_last_trigger_number = 0;
 
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimator::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimatorBase::kInterrupted) {
     return;
   }
 
@@ -185,7 +185,7 @@ IntervalTriggerCreator::send_trigger_decisions()
 
   while (true) {
     if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag) ==
-        TimestampEstimator::kInterrupted) {
+        TimestampEstimatorBase::kInterrupted) {
       break;
     }
 
