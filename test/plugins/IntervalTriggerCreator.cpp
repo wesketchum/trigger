@@ -54,7 +54,7 @@ IntervalTriggerCreator::init(const nlohmann::json& iniobj)
     if (qi.name == "time_sync_source") {
       m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
     }
-    if (qi.name == "trigger_decision_sink") {
+    if (qi.name == "trigger_candidate_sink") {
       m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(qi.inst));
     }
   }

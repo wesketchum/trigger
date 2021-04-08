@@ -62,6 +62,9 @@ ModuleLevelTrigger::init(const nlohmann::json& iniobj)
     if (qi.name == "token_source") {
       m_token_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(qi.inst));
     }
+    if (qi.name == "trigger_candidate_source") {
+      m_candidate_source.reset(new appfwk::DAQSource<triggeralgs::TriggerCandidate>(qi.inst));
+    }
   }
 }
 
@@ -162,7 +165,7 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_inhibited_trigger_count.store(0);
   m_inhibited_trigger_count_tot.store(0);
 
-  while (true) {
+  while (m_running_flag.load()) {
     triggeralgs::TriggerCandidate tc;
     try{
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
@@ -178,7 +181,12 @@ ModuleLevelTrigger::send_trigger_decisions()
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
                     << decision.trigger_timestamp << " number of links " << decision.components.size();
-      m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+      try{
+        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+      }
+      catch(appfwk::QueueTimeoutExpired& e){
+        ers::error(e);
+      }
       m_token_manager->trigger_sent(decision.trigger_number);
       decision.trigger_number++;
       m_last_trigger_number++;

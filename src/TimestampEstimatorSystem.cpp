@@ -1,5 +1,7 @@
 #include "trigger/TimestampEstimatorSystem.hpp"
 
+#include "logging/Logging.hpp"
+
 #include <chrono>
 
 namespace dunedaq::trigger
@@ -7,6 +9,7 @@ namespace dunedaq::trigger
   TimestampEstimatorSystem::TimestampEstimatorSystem(uint64_t clock_frequency_hz)
     : m_clock_frequency_hz(clock_frequency_hz)
   {
+    TLOG_DEBUG(0) << "Clock frequency is " << m_clock_frequency_hz << " clock_frequency_hz/1'000'000=" << (m_clock_frequency_hz/1'000'000);
   }
 
   dfmessages::timestamp_t

@@ -20,7 +20,7 @@
 
 #include "trigger/Issues.hpp"
 #include "trigger/TimestampEstimator.hpp"
-
+#include "trigger/TimestampEstimatorSystem.hpp"
 
 #include "appfwk/app/Nljs.hpp"
 
@@ -55,7 +55,7 @@ IntervalTCCreator::init(const nlohmann::json& iniobj)
     if (qi.name == "time_sync_source") {
       m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
     }
-    if (qi.name == "trigger_decision_sink") {
+    if (qi.name == "trigger_candidate_sink") {
       m_trigger_candidate_sink.reset(new appfwk::DAQSink<triggeralgs::TriggerCandidate>(qi.inst));
     }
   }
@@ -81,10 +81,12 @@ IntervalTCCreator::do_start(const nlohmann::json& startobj)
 
   switch(m_conf.timestamp_method){
   case dunedaq::trigger::intervaltccreator::timestamp_estimation::kTimeSync:
-    m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
+    TLOG_DEBUG(0) << "Creating TimestampEstimator";
+    m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_conf.clock_frequency_hz));
     break;
   case dunedaq::trigger::intervaltccreator::timestamp_estimation::kSystemClock:
-    m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
+    TLOG_DEBUG(0) << "Creating TimestampEstimatorSystem";
+    m_timestamp_estimator.reset(new TimestampEstimatorSystem(m_conf.clock_frequency_hz));
     break;
   }
   
@@ -146,7 +148,7 @@ IntervalTCCreator::send_trigger_candidates()
 
   assert(next_trigger_timestamp > ts);
 
-  while (true) {
+  while (m_running_flag.load()) {
     if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp, m_running_flag) ==
         TimestampEstimatorBase::kInterrupted) {
       break;

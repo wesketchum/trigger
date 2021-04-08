@@ -78,8 +78,6 @@ private:
   dfmessages::trigger_number_t m_last_trigger_number;
   dfmessages::run_number_t m_run_number;
 
-  uint64_t m_clock_frequency_hz;
-  
   // Are we in the RUNNING state?
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
