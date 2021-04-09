@@ -4,6 +4,7 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
+#include "TriggerCandidateType.hh"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
 #include "dune-trigger-algs/TimeStampedData.hh"

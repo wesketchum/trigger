@@ -29,7 +29,7 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   std::vector<triggeralgs::TriggerPrimitive> primitive_list;
   std::vector<triggeralgs::TriggerActivity> activity_list;
 
-  uint32_t detid = 0;
+  uint32_t detid = data.signal_type;
   triggeralgs::TriggerPrimitive primitive{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   triggeralgs::TriggerActivity activity{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, primitive_list };
 
@@ -41,11 +41,11 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   auto now = std::chrono::steady_clock::now();
 
   candidate.time_start = data.time_stamp - m_map[data.signal_type].first,  // time_start
-    candidate.time_end = data.time_stamp + m_map[data.signal_type].second, // time_end,
-    candidate.time_candidate = int64_t(internal_clock(now.time_since_epoch()).count());
+  candidate.time_end = data.time_stamp + m_map[data.signal_type].second, // time_end,
+  candidate.time_candidate = data.time_stamp;
   candidate.detid = detid_list;
-  candidate.type = data.signal_type;
-  candidate.algorithm = data.counter;
+  candidate.type = TriggerCandidateType::kTiming;
+  candidate.algorithm = uint32_t(internal_clock(now.time_since_epoch()).count());
   candidate.version = 0;
   candidate.ta_list = activity_list;
 
