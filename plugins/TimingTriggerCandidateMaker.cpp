@@ -21,23 +21,23 @@ TimingTriggerCandidateMaker::TimingTriggerCandidateMaker(const std::string& name
   register_command("scrap", &TimingTriggerCandidateMaker::do_scrap);
 }
 
-TriggerCandidate
-TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const TimeStampedData& data)
+triggeralgs::TriggerCandidate
+TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
 {
   // Fill unused fields
   std::vector<uint16_t> detid_list;
-  std::vector<TriggerPrimitive> primitive_list;
-  std::vector<TriggerActivity> activity_list;
+  std::vector<triggeralgs::TriggerPrimitive> primitive_list;
+  std::vector<triggeralgs::TriggerActivity> activity_list;
 
   uint32_t detid = 0;
-  TriggerPrimitive primitive{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-  TriggerActivity activity{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, primitive_list };
+  triggeralgs::TriggerPrimitive primitive{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  triggeralgs::TriggerActivity activity{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, primitive_list };
 
   detid_list.push_back(detid);
   primitive_list.push_back(primitive);
   activity_list.push_back(activity);
 
-  TriggerCandidate candidate;
+  triggeralgs::TriggerCandidate candidate;
   auto now = std::chrono::steady_clock::now();
 
   candidate.time_start = data.time_stamp - m_map[data.signal_type].first,  // time_start
@@ -47,7 +47,7 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const TimeStamped
   candidate.type = data.signal_type;
   candidate.algorithm = data.counter;
   candidate.version = 0;
-  candidate.activity_list = activity_list;
+  candidate.ta_list = activity_list;
 
   return candidate;
 }
@@ -102,10 +102,10 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
   int receivedCount = 0;
   int sentCount = 0;
-  TimeStampedData data;
+  triggeralgs::TimeStampedData data;
 
   while (running_flag.load()) {
-    std::vector<TriggerCandidate> candidates;
+    std::vector<triggeralgs::TriggerCandidate> candidates;
 
     try {
       inputQueue_->pop(data, queueTimeout_);

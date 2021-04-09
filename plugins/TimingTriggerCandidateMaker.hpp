@@ -6,10 +6,10 @@
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
-#include "trigger/TimeStampedData.hh"
-#include "trigger/TriggerActivity.hh"
-#include "trigger/TriggerCandidate.hh"
-#include "trigger/TriggerPrimitive.hh"
+#include "dune-trigger-algs/TimeStampedData.hh"
+#include "dune-trigger-algs/TriggerActivity.hh"
+#include "dune-trigger-algs/TriggerCandidate.hh"
+#include "dune-trigger-algs/TriggerPrimitive.hh"
 
 #include <chrono>
 
@@ -35,13 +35,13 @@ private:
 
   dunedaq::appfwk::ThreadHelper thread_;
 
-  TriggerCandidate TimeStampedDataToTriggerCandidate(const TimeStampedData& data);
+  triggeralgs::TriggerCandidate TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data);
   void do_work(std::atomic<bool>&);
 
-  using source_t = dunedaq::appfwk::DAQSource<TimeStampedData>;
+  using source_t = dunedaq::appfwk::DAQSource<triggeralgs::TimeStampedData>;
   std::unique_ptr<source_t> inputQueue_;
 
-  using sink_t = dunedaq::appfwk::DAQSink<TriggerCandidate>;
+  using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TriggerCandidate>;
   std::unique_ptr<sink_t> outputQueue_;
 
   std::chrono::milliseconds queueTimeout_;
