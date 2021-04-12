@@ -1,9 +1,9 @@
 
 #include "TimingTriggerCandidateMaker.hpp"
 
-#include <chrono>
+//#include <chrono>
 
-using internal_clock = std::chrono::duration<double, std::ratio<1, 50'000'000>>;
+//using internal_clock = std::chrono::duration<double, std::ratio<1, 50'000'000>>;
 
 namespace dunedaq {
 namespace trigger {
@@ -45,7 +45,8 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   candidate.time_candidate = data.time_stamp;
   candidate.detid = detid_list;
   candidate.type = TriggerCandidateType::kTiming;
-  candidate.algorithm = uint32_t(internal_clock(now.time_since_epoch()).count());
+//  candidate.algorithm = uint32_t(internal_clock(now.time_since_epoch()).count());
+  candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = activity_list;
 
