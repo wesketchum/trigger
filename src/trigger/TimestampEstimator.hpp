@@ -22,7 +22,12 @@
 namespace dunedaq {
 namespace trigger {
 
-  class TimestampEstimator : public TimestampEstimatorBase
+/**
+ * @brief TimestampEstimator is an implementation of
+ * TimestampEstimatorBase that uses TimeSync messages from an input
+ * queue to estimate the current timestamp
+ **/
+class TimestampEstimator : public TimestampEstimatorBase
 {
 public:
   TimestampEstimator(std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>>& time_sync_source,
@@ -30,7 +35,7 @@ public:
 
   virtual ~TimestampEstimator();
 
-  dfmessages::timestamp_t get_timestamp_estimate() const { return m_current_timestamp_estimate.load(); }
+  dfmessages::timestamp_t get_timestamp_estimate() const override { return m_current_timestamp_estimate.load(); }
   
 private:
   void estimator_thread_fn(std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>>& time_sync_source);

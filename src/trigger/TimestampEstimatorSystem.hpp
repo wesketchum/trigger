@@ -15,6 +15,10 @@
 namespace dunedaq {
 namespace trigger {
 
+/**
+ * @brief TimestampEstimatorSystem is an implementation of
+ * TimestampEstimatorBase that uses the system clock to give the current timestamp
+ **/
 class TimestampEstimatorSystem : public TimestampEstimatorBase
 {
 public:

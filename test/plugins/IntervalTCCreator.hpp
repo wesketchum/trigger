@@ -35,7 +35,10 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief IntervalTCCreator creates TriggerCandidates at regular intervals, based on input from a TimeSync queue or the system clock
+ * @brief IntervalTCCreator creates TriggerCandidates at regular
+ * intervals, based on input from a TimeSync queue or the system
+ * clock. The TCs can be fed directly into the MLT, to allow testing
+ * the MLT separately from the Timing Message -> TC conversion logic
  */
 class IntervalTCCreator : public dunedaq::appfwk::DAQModule
 {

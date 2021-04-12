@@ -40,8 +40,9 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief ModuleLevelTrigger reads lists of integers from one queue,
- * reverses the order of the list, and writes out the reversed list.
+ * @brief ModuleLevelTrigger is the last level of the data selection
+ * system, which reads in trigger candidates and sends trigger
+ * decisions, subject to availability of TriggerDecisionTokens
  */
 class ModuleLevelTrigger : public dunedaq::appfwk::DAQModule
 {

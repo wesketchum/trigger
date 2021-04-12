@@ -16,6 +16,11 @@
 namespace dunedaq {
 namespace trigger {
 
+/**
+ * @brief TimestampEstimatorBase is the base class for timestamp-based
+ * logic in test systems where the current timestamp must be estimated
+ * somehow (eg, because there is no hardware timing system).
+ **/
 class TimestampEstimatorBase
 {
 public:
