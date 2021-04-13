@@ -32,7 +32,8 @@ jobs:
     container:
       image: dunedaq/sl7-minimal:dev
     defaults:
-      shell: bash
+      run:
+        shell: bash
     env:
       DBT_AREA_FILE: "dbt-settings"
 
