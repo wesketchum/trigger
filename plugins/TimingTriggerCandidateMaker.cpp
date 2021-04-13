@@ -40,8 +40,8 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   triggeralgs::TriggerCandidate candidate;
   auto now = std::chrono::steady_clock::now();
 
-  candidate.time_start = data.time_stamp - m_map[data.signal_type].first,  // time_start
-  candidate.time_end = data.time_stamp + m_map[data.signal_type].second, // time_end,
+  candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first,  // time_start
+  candidate.time_end = data.time_stamp + m_detid_offsets_map[data.signal_type].second, // time_end,
   candidate.time_candidate = data.time_stamp;
   candidate.detid = detid_list;
   candidate.type = TriggerCandidateType::kTiming;
@@ -57,30 +57,24 @@ TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
 {
   auto params = config.get<dunedaq::trigger::timingtriggercandidatemaker::Conf>();
   try {
-    m_map.push_back({ params.s0.time_before, params.s0.time_after });
-    m_map.push_back({ params.s1.time_before, params.s1.time_after });
-    m_map.push_back({ params.s2.time_before, params.s2.time_after });
-  } catch(...)  {
-    ERS_LOG(get_name() << " unsuccessfully configured");
+    m_detid_offsets_map.push_back({ params.s0.time_before, params.s0.time_after });
+    m_detid_offsets_map.push_back({ params.s1.time_before, params.s1.time_after });
+    m_detid_offsets_map.push_back({ params.s2.time_before, params.s2.time_after });
+  } catch (const ers::Issue& excpt) {
+    throw dunedaq::trigger::ConfigurationError(ERS_HERE, get_name(), "unsuccessfully configured", excpt);
   }
-  ERS_LOG(get_name() << " successfully configured");
 }
 
 void
 TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 {
-  auto qi = appfwk::queue_index(iniobj, { "input", "output" });
-  // try {
-  inputQueue_.reset(new source_t(qi["input"].inst));
-  //} catch (const ers::Issue& excpt) {
-  //	throw dunedaq::dunetrigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input", excpt);
-  //}
-
-  // try {
-  outputQueue_.reset(new sink_t(qi["output"].inst));
-  //} catch (const ers::Issue& excpt) {
-  //	throw dunedaq::dunetrigger::InvalidQueueFatalError(ERS_HERE, get_name(), "output", excpt);
-  //}
+  try {
+    auto qi = appfwk::queue_index(iniobj, { "input", "output" });
+    inputQueue_.reset(new source_t(qi["input"].inst));
+    outputQueue_.reset(new sink_t(qi["output"].inst));
+  } catch (const ers::Issue& excpt) {
+    throw dunedaq::trigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input/output", excpt);
+  }
 }
 
 void

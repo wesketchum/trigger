@@ -4,6 +4,8 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
+#include "CommonIssues.hpp"
+
 #include "TriggerCandidateType.hh"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
@@ -11,6 +13,7 @@
 #include "dune-trigger-algs/TriggerActivity.hh"
 #include "dune-trigger-algs/TriggerCandidate.hh"
 #include "dune-trigger-algs/TriggerPrimitive.hh"
+
 
 #include <chrono>
 
@@ -47,7 +50,7 @@ private:
 
   std::chrono::milliseconds queueTimeout_;
 
-  std::vector<std::pair<int64_t, int64_t>> m_map;
+  std::vector<std::pair<int64_t, int64_t>> m_detid_offsets_map;
 };
 } // namespace trigger
 } // namespace dunedaq
