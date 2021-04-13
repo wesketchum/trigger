@@ -67,7 +67,7 @@ jobs:
           cp $GITHUB_WORKSPACE/daq-release/configs/dunedaq-develop/release_manifest.sh .
           export BR="develop"
           [[ -z ${!GITHUB_SHA+x} ]] || export BR=$GITHUB_SHA
-          $GITHUB_WORKSPACE/daq-release/scripts/checkout-package.sh -f ./release_manifest.sh -p $REPO -b ${BR} -o sourcecode
+          $GITHUB_WORKSPACE/daq-release/scripts/checkout-package.sh -f ./release_manifest.sh -n -p $REPO -b ${BR} -o sourcecode
           
     - name: checkout triggeralgs for CI
       uses: actions/checkout@v2
