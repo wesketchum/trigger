@@ -81,7 +81,8 @@ void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
   thread_.start_working_thread();
-  // ERS_LOG(get_name() << " successfully started");
+  std::string oss_prog = get_name() + " successfully started";
+  ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
 }
 
 void
@@ -107,20 +108,24 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 
     candidate = TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(data);
 
-  // std::string oss_prog = "Activity received #"+std::to_string(receivedCount);
-  // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
+    std::string oss_prog = "Activity received.";
+    ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
 
     bool successfullyWasSent = false;
     while (!successfullyWasSent) {
-      // todo: handle timeout exception
-      outputQueue_->push(candidate, queueTimeout_);
-      successfullyWasSent = true;
+      try {
+        outputQueue_->push(candidate, queueTimeout_);
+        successfullyWasSent = true;
+      } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+        std::ostringstream oss_warn;
+        oss_warn << "push to output queue \"" << outputQueue_->get_name() << "\"";
+        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
+          std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
+      }
     }
 
-    // std::ostringstream oss_summ;
-    // oss_summ << ": Exiting do_work() method, received " << receivedCount
-    //	 << " TCs and successfully sent " << sentCount << " TCs. ";
-    // ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+    oss_prog = "Exiting do_work() method, received and successfully sent.";
+    ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
   }
 }
 
