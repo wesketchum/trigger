@@ -56,14 +56,14 @@ void
 TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
 {
   auto params = config.get<dunedaq::trigger::timingtriggercandidatemaker::Conf>();
-  //			try {
-  m_map.push_back({ params.s0.time_before, params.s0.time_after });
-  m_map.push_back({ params.s1.time_before, params.s1.time_after });
-  m_map.push_back({ params.s2.time_before, params.s2.time_after });
-  //			} catch(...)  {
-  //				ERS_LOG(get_name() << " unsuccessfully configured");
-  //			}
-  //			ERS_LOG(get_name() << " successfully configured");
+  try {
+    m_map.push_back({ params.s0.time_before, params.s0.time_after });
+    m_map.push_back({ params.s1.time_before, params.s1.time_after });
+    m_map.push_back({ params.s2.time_before, params.s2.time_after });
+  } catch(...)  {
+    ERS_LOG(get_name() << " unsuccessfully configured");
+  }
+  ERS_LOG(get_name() << " successfully configured");
 }
 
 void
