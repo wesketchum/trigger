@@ -56,7 +56,7 @@ jobs:
         repository: DUNE-DAQ/daq-release
         path: daq-release
         
-    - name: setup dev area
+    - name: setup dev area and checkout code
       run: |
           export REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
           export DBT_ROOT=$GITHUB_WORKSPACE/daq-buildtools
@@ -65,18 +65,17 @@ jobs:
           dbt-create.sh -r /releases dunedaq-develop dev
           cd dev
           cp $GITHUB_WORKSPACE/daq-release/configs/dunedaq-develop/release_manifest.sh .
+          export BR="develop"
+          [[ -z ${!GITHUB_SHA+x} ]] || export BR=$GITHUB_SHA
+          $GITHUB_WORKSPACE/daq-release/scripts/checkout-package.sh -f ./release_manifest.sh -p $REPO -b ${BR} -o sourcecode
           
-    - name: checkout package for CI
-      uses: actions/checkout@v2
-      with:
-        path: ${{ github.repository }}
-        
     - name: checkout triggeralgs for CI
       uses: actions/checkout@v2
       with:
         repository: DUNE-DAQ/triggeralgs
         path: ${{ github.repository }}
-    
+        ref: develop
+
     - name: setup build env and build the dev release
       run: |
           export REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
@@ -96,7 +95,7 @@ jobs:
           setup_ups_products dune_daqpackages || true
           setup_repo_env="SETUP_$REPO"
           [[ -z ${!setup_env_repo+x} ]] || unsetup $REPO
-          cp -pr $GITHUB_WORKSPACE/DUNE-DAQ/* $GITHUB_WORKSPACE/dev/sourcecode
+          cp -pr $GITHUB_WORKSPACE/DUNE-DAQ/triggeralgs $GITHUB_WORKSPACE/dev/sourcecode
           export DBT_INSTALL_DIR=${DBT_AREA_ROOT}/install
           export DBT_SETUP_BUILD_ENVIRONMENT_SCRIPT_SOURCED=1
           dbt-build.sh --install
@@ -113,3 +112,4 @@ jobs:
       with:
         name: build_log
         path: ${{ github.workspace }}/dev/log
+        
