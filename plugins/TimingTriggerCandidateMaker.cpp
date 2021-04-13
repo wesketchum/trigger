@@ -100,41 +100,34 @@ TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
-  int receivedCount = 0;
-  int sentCount = 0;
   triggeralgs::TimeStampedData data;
 
   while (running_flag.load()) {
-    std::vector<triggeralgs::TriggerCandidate> candidates;
+    triggeralgs::TriggerCandidate candidate;
 
     try {
       inputQueue_->pop(data, queueTimeout_);
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       continue;
     }
-    ++receivedCount;
 
-    candidates.push_back(TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(data));
+    candidate = TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(data);
 
-    // std::string oss_prog = "Activity received #"+std::to_string(receivedCount);
-    // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
+  // std::string oss_prog = "Activity received #"+std::to_string(receivedCount);
+  // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
 
-    while (candidates.size()) {
-      bool successfullyWasSent = false;
-      while (!successfullyWasSent && running_flag.load()) {
-        // todo: handle timeout exception
-        outputQueue_->push(candidates.back(), queueTimeout_);
-        candidates.pop_back();
-        successfullyWasSent = true;
-        ++sentCount;
-      }
+    bool successfullyWasSent = false;
+    while (!successfullyWasSent) {
+      // todo: handle timeout exception
+      outputQueue_->push(candidate, queueTimeout_);
+      successfullyWasSent = true;
     }
-  }
 
-  // std::ostringstream oss_summ;
-  // oss_summ << ": Exiting do_work() method, received " << receivedCount
-  //	 << " TCs and successfully sent " << sentCount << " TCs. ";
-  // ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+    // std::ostringstream oss_summ;
+    // oss_summ << ": Exiting do_work() method, received " << receivedCount
+    //	 << " TCs and successfully sent " << sentCount << " TCs. ";
+    // ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+  }
 }
 
 void
