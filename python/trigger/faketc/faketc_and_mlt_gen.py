@@ -13,6 +13,7 @@ moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('trigger/intervaltccreator.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
+moo.otypes.load_types('trigger/fakedataflow.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -21,6 +22,7 @@ import dunedaq.appfwk.cmd as cmd # AddressedCmd,
 import dunedaq.appfwk.app as app # AddressedCmd,
 import dunedaq.trigger.intervaltccreator as itcc
 import dunedaq.trigger.moduleleveltrigger as mlt
+import dunedaq.trigger.fakedataflow as fdf
 
 
 from appfwk.utils import mcmd, mrccmd, mspec
@@ -78,6 +80,11 @@ def generate(
 
 
     mod_specs = [
+        mspec("fdf", "FakeDataFlow", [
+            app.QueueInfo(name="trigger_decision_source", inst="trigger_candidate_q", dir="input"),
+            app.QueueInfo(name="trigger_complete_sink", inst="token_q", dir="output"),
+        ]),
+        
         mspec("mlt", "ModuleLevelTrigger", [
             app.QueueInfo(name="token_source", inst="token_q", dir="input"),
             app.QueueInfo(name="trigger_decision_sink", inst="trigger_decision_q", dir="output"),
@@ -93,6 +100,8 @@ def generate(
     cmd_data['init'] = app.Init(queues=queue_specs, modules=mod_specs)
 
     cmd_data['conf'] = acmd([
+        ("fdf", fdf.ConfParams(
+        )),
         ("mlt", mlt.ConfParams(
             links=[idx for idx in range(3)],
             initial_token_count=TOKEN_COUNT                    
@@ -108,11 +117,13 @@ def generate(
 
     startpars = rccmd.StartParams(run=1, disable_data_storage=False)
     cmd_data['start'] = acmd([
+        ("fdf", startpars),
         ("mlt", startpars),
         ("itcc", startpars),
     ])
 
     cmd_data['stop'] = acmd([
+        ("fdf", None),
         ("mlt", None),
         ("itcc", None),
     ])
