@@ -88,7 +88,8 @@ jobs:
           setup_ups_products dune_systems || true
           setup_ups_products dune_externals || true
           setup_ups_products dune_daqpackages || true
-          unsetup $REPO
+          setup_repo_env="SETUP_$REPO"
+          [[ -z "${!setup_repo_env}" ]] && unsetup $REPO
           cp -pr $GITHUB_WORKSPACE/DUNE-DAQ/$REPO $GITHUB_WORKSPACE/dev/sourcecode
           export DBT_INSTALL_DIR=${DBT_AREA_ROOT}/install
           export DBT_SETUP_BUILD_ENVIRONMENT_SCRIPT_SOURCED=1
