@@ -92,7 +92,7 @@ jobs:
           export DBT_INSTALL_DIR=${DBT_AREA_ROOT}/install
           export DBT_SETUP_BUILD_ENVIRONMENT_SCRIPT_SOURCED=1
           dbt-build.sh --install
-          $GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs
+          $GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs -p trigger
           
     - name: upload UPS tarball and log file
       uses: actions/upload-artifact@v2
