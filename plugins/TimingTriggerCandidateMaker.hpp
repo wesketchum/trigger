@@ -50,7 +50,7 @@ private:
 
   std::chrono::milliseconds queueTimeout_;
 
-  std::vector<std::pair<int64_t, int64_t>> m_detid_offsets_map;
+  std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map;
 };
 } // namespace trigger
 } // namespace dunedaq

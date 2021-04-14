@@ -57,9 +57,9 @@ void
 TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
 {
   auto params = config.get<dunedaq::trigger::timingtriggercandidatemaker::Conf>();
-  m_detid_offsets_map.push_back({ params.s0.time_before, params.s0.time_after });
-  m_detid_offsets_map.push_back({ params.s1.time_before, params.s1.time_after });
-  m_detid_offsets_map.push_back({ params.s2.time_before, params.s2.time_after });
+  m_detid_offsets_map[ params.s0.signal_type ] = { params.s0.time_before, params.s0.time_after };
+  m_detid_offsets_map[ params.s1.signal_type ] = { params.s1.time_before, params.s1.time_after };
+  m_detid_offsets_map[ params.s2.signal_type ] = { params.s2.time_before, params.s2.time_after };
   TLOG_DEBUG(2) << get_name() + " configured.";
 }
 
