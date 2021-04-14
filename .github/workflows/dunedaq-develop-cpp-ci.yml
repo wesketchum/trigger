@@ -64,7 +64,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: DUNE-DAQ/daq-buildtools
-        path: $GITHUB_WORKSPACE/DUNE-DAQ/triggeralgs
+        path:  ${{ github.workspace }}/DUNE-DAQ/triggeralgs
     
     - name: setup build env and build the dev release
       run: |
