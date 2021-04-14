@@ -81,7 +81,7 @@ def generate(
 
     mod_specs = [
         mspec("fdf", "FakeDataFlow", [
-            app.QueueInfo(name="trigger_decision_source", inst="trigger_candidate_q", dir="input"),
+            app.QueueInfo(name="trigger_decision_source", inst="trigger_decision_q", dir="input"),
             app.QueueInfo(name="trigger_complete_sink", inst="token_q", dir="output"),
         ]),
         

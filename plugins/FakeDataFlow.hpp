@@ -70,11 +70,6 @@ private:
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
 
-  // Opmon variables
-  std::atomic<uint64_t> m_trigger_count{ 0 };
-  std::atomic<uint64_t> m_trigger_count_tot{ 0 };
-  std::atomic<uint64_t> m_inhibited_trigger_count{ 0 };
-  std::atomic<uint64_t> m_inhibited_trigger_count_tot{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq
