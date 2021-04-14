@@ -11,11 +11,16 @@ find_package(serialization REQUIRED)
 find_package(logging REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(triggeralgs REQUIRED)
+find_package(dfmessages REQUIRED)
 
 ##############################################################################
 # Main library
 
 daq_add_library(LINK_LIBRARIES appfwk::appfwk logging::logging )
+# TODO PAR 2021-04-07: triggeralgs doesn't export a
+# triggeralgs::triggeralgs target, but instead exports one called
+# "SupernovaTrigger". Need to fix that, but go with the flow for now
+daq_add_library(TokenManager.cpp TimestampEstimator.cpp TimestampEstimatorBase.cpp TimestampEstimatorSystem.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages SupernovaTrigger)
 
 ##############################################################################
 # Codegen
@@ -25,8 +30,11 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 ##############################################################################
 # Plugins
 
-# daq_add_plugin(... ... LINK_LIBRARIES trigger)
 daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger SupernovaTrigger)
+daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
 
 ##############################################################################
 # Integration tests
