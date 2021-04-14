@@ -4,19 +4,6 @@
 #include <string>
 
 namespace dunedaq {
-ERS_DECLARE_ISSUE_BASE(trigger,
-                       ProgressUpdate,
-                       appfwk::GeneralDAQModuleIssue,
-                       message,
-                       ((std::string)name),
-                       ((std::string)message))
-
-ERS_DECLARE_ISSUE_BASE(trigger,
-                       ConfigurationError,
-                       appfwk::GeneralDAQModuleIssue,
-                       "The " << message << " was not successfully configured.",
-                       ((std::string)name),
-                       ((std::string)message))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,

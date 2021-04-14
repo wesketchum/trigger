@@ -60,6 +60,7 @@ TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
   m_detid_offsets_map.push_back({ params.s0.time_before, params.s0.time_after });
   m_detid_offsets_map.push_back({ params.s1.time_before, params.s1.time_after });
   m_detid_offsets_map.push_back({ params.s2.time_before, params.s2.time_after });
+  TLOG_DEBUG(2) << get_name() + " configured.";
 }
 
 void
@@ -78,15 +79,14 @@ void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
   thread_.start_working_thread();
-  std::string oss_prog = get_name() + " successfully started";
-  ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
+  TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
 void
 TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 {
   thread_.stop_working_thread();
-  // ERS_LOG(get_name() << " successfully stopped");
+  TLOG_DEBUG(2) << get_name() + " successfully stopped.";
 }
 
 void
@@ -105,8 +105,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 
     candidate = TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(data);
 
-    std::string oss_prog = "Activity received.";
-    ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
+    TLOG_DEBUG(2) << "Activity received.";
 
     bool successfullyWasSent = false;
     while (!successfullyWasSent) {
@@ -121,8 +120,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
       }
     }
 
-    oss_prog = "Exiting do_work() method, received and successfully sent.";
-    ers::debug(dunedaq::trigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog));
+    TLOG_DEBUG(2) << "Exiting do_work() method, received and successfully sent.";
   }
 }
 
