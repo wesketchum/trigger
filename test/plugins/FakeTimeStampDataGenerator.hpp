@@ -1,9 +1,4 @@
 /**
- * @file RandomDataListGenerator.hpp
- *
- * RandomDataListGenerator is a simple DAQModule implementation that
- * periodically generates a list of random integers.
- *
  * This is part of the DUNE DAQ Software Suite, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
@@ -25,8 +20,6 @@
 #include <vector>
 #include <chrono>
 #include <random>
-
-using namespace triggeralgs;
 
 namespace dunedaq {
 namespace trigger {
@@ -61,31 +54,31 @@ private:
   void do_configure(const nlohmann::json& obj);
   void do_start(const nlohmann::json& obj);
   void do_stop(const nlohmann::json& obj);
-  void do_unconfigure(const nlohmann::json& obj);
+  void do_scrap(const nlohmann::json& obj);
 
   // Threading
   dunedaq::appfwk::ThreadHelper thread_;
   void do_work(std::atomic<bool>&);
 
   // Configuration
-  using sink_t = dunedaq::appfwk::DAQSink<TimeStampedData>;
-  std::unique_ptr<sink_t> outputQueues_;
+  using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
+  std::unique_ptr<sink_t> outputQueue_;
   std::chrono::milliseconds queueTimeout_;
 
   // Random Generatior
-  std::vector<TimeStampedData> GetTimestamp();
+  std::vector<triggeralgs::TimeStampedData> GetTimestamp();
   std::default_random_engine generator;
   std::uniform_int_distribution<int> rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
 };
 } // namespace trigger
-
+  /*
 ERS_DECLARE_ISSUE_BASE(trigger,
                        NoOutputQueuesAvailableWarning,
                        appfwk::GeneralDAQModuleIssue,
                        "No output queues were available, so the generated list of integers will be dropped. Has initialization been successfully completed?",
                        ((std::string)name),
                        ERS_EMPTY)
-
+  */
 } // namespace dunedaq
 
 #endif // TRIGGER_TEST_PLUGINS_FAKETIMESTAMPDATAGENERATOR_HPP_

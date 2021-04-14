@@ -22,15 +22,13 @@
 
 using pd_clock = std::chrono::duration<double, std::ratio<1, 50000000>>;
 
-using namespace triggeralgs;
-
 namespace dunedaq {
-namespace listrev {
+namespace trigger {
 
 FakeTimeStampDataGenerator::FakeTimeStampDataGenerator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
   , thread_(std::bind(&FakeTimeStampDataGenerator::do_work, this, std::placeholders::_1))
-  , outputQueues_()
+  , outputQueue_()
   , queueTimeout_(100)
   , generator()
 {
@@ -51,12 +49,12 @@ FakeTimeStampDataGenerator::init(const nlohmann::json& init_data)
     }
     try
     {
-      //outputQueues_.emplace_back(new sink_t(qi.inst));
+      //outputQueue_.emplace_back(new sink_t(qi.inst));
       outputQueue_.reset(new sink_t(qi.inst));
     }
     catch (const ers::Issue& excpt)
     {
-      throw InvalidQueueFatalError(ERS_HERE, get_name(), qi.name, excpt);
+      throw dunedaq::dunetrigger::InvalidQueueFatalError(ERS_HERE, get_name(), qi.name, excpt);
     }
   }
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
@@ -68,7 +66,7 @@ FakeTimeStampDataGenerator::get_info(opmonlib::InfoCollector& /*ci*/, int /*leve
 }
 
 void
-FakeTimeStampDataGenerator::do_configure(const nlohmann::json& obj)
+FakeTimeStampDataGenerator::do_configure(const nlohmann::json& /*obj*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
@@ -99,19 +97,19 @@ FakeTimeStampDataGenerator::do_scrap(const nlohmann::json& /*args*/)
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
-std::vector<TimeStampedData>
-FakeTimeStampDataGenerator::GetTimeStamp()
+ std::vector<triggeralgs::TimeStampedData>
+FakeTimeStampDataGenerator::GetTimestamp()
 {
-  std::vector<TimeStampedData> tsds;
-  TimeStampedData tsd{};
+  std::vector<triggeralgs::TimeStampedData> tsds;
+  triggeralgs::TimeStampedData tsd{};
 
   int signaltype = rdm_signaltype(generator);
 
   auto tsd_start_time = std::chrono::steady_clock::now();
   tsd.time_stamp = (uint64_t)pd_clock(tsd_start_time.time_since_epoch()).count();
-  //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
   tsd.signal_type = signaltype;
-  std::cout << "\033[32m" << tsd.time_stamp << ","<< tsd.signal_type << ","<< tsd.counter << "\033[0m\n";
+  std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
+  //std::cout << "\033[32m" << tsd.time_stamp << ","<< tsd.signal_type << ","<< tsd.counter << "\033[0m\n";
   auto now = std::chrono::steady_clock::now();
   tsd.counter = (uint32_t)pd_clock(now.time_since_epoch()).count();
   tsds.push_back(tsd);
@@ -131,51 +129,44 @@ FakeTimeStampDataGenerator::do_work(std::atomic<bool>& running_flag)
     TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
     std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
 
-    std::vector<TimeStampedData> tsds = GetTimestamp();
+    std::vector<triggeralgs::TimeStampedData> tsds = GetTimestamp();
 
     if (tsds.size() == 0) 
     {
       std::ostringstream oss_prog;
       oss_prog << "Last TSDs packet has size 0, continuing!";
-      ers::debug(ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+      ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
       continue; 
     } 
     else 
     {
       std::ostringstream oss_prog;
-      ers::debug(ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+      ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
     }
 
     generatedCount+=tsds.size();
 
-    for (auto& outQueue : outputQueues_)
+    std::string thisQueueName = outputQueue_->get_name();
+    bool successfullyWasSent = false;
+    while (!successfullyWasSent && running_flag.load())
     {
-      std::string thisQueueName = outQueue->get_name();
-      bool successfullyWasSent = false;
-      while (!successfullyWasSent && running_flag.load())
+      TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the generated TSD onto queue " << thisQueueName;
+      for (auto const& tsd: tsds)
       {
-        TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the generated TSD onto queue " << thisQueueName;
-	for (auto const& tsd: tsds)
+	try
 	{
-	  try
-	  {
-	    outQueue->push(tsd, queueTimeout_);
-	    successfullyWasSent = true;
-	    ++sentCount;
-	  }
-	  catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt)
-	  {
-	    std::ostringstream oss_warn;
-	    oss_warn << "push to output queue \"" << thisQueueName << "\"";
-	    ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-							      std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
-	  }
+	  outputQueue_->push(tsd, queueTimeout_);
+	  successfullyWasSent = true;
+	  ++sentCount;
+	}
+	catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt)
+	{
+	  std::ostringstream oss_warn;
+	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
+	  ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
+							    std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
 	}
       }
-    }
-    if (outputQueues_.size() == 0)
-    {
-      ers::warning(NoOutputQueuesAvailableWarning(ERS_HERE, get_name()));
     }
 
   }
@@ -183,7 +174,7 @@ FakeTimeStampDataGenerator::do_work(std::atomic<bool>& running_flag)
   std::ostringstream oss_summ;
   oss_summ << ": Exiting the do_work() method, generated " << generatedCount
            << " TSD set and successfully sent " << sentCount << " copies. ";
-  ers::info(ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+  ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 

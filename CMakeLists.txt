@@ -32,6 +32,7 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeTimeStampDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 
 ##############################################################################
 # Integration tests
