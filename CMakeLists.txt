@@ -32,7 +32,6 @@ daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES t
 # Integration tests
 
 
-
 ##############################################################################
 # Unit Tests
 
