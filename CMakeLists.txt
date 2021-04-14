@@ -16,7 +16,6 @@ find_package(dfmessages REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(LINK_LIBRARIES appfwk::appfwk logging::logging )
 # TODO PAR 2021-04-07: triggeralgs doesn't export a
 # triggeralgs::triggeralgs target, but instead exports one called
 # "SupernovaTrigger". Need to fix that, but go with the flow for now
