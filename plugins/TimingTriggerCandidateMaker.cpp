@@ -1,8 +1,6 @@
 
 #include "TimingTriggerCandidateMaker.hpp"
 
-//#include <chrono>
-
 //using internal_clock = std::chrono::duration<double, std::ratio<1, 50'000'000>>;
 
 namespace dunedaq {
@@ -38,10 +36,12 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   activity_list.push_back(activity);
 
   triggeralgs::TriggerCandidate candidate;
-  auto now = std::chrono::steady_clock::now();
-
-  candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first,  // time_start
-  candidate.time_end = data.time_stamp + m_detid_offsets_map[data.signal_type].second, // time_end,
+  try {
+	  candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
+	  candidate.time_end = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
+  } catch (const ers::Issue& excpt) {
+    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type, excpt);
+  }
   candidate.time_candidate = data.time_stamp;
   candidate.detid = detid_list;
   candidate.type = TriggerCandidateType::kTiming;
@@ -62,7 +62,7 @@ TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
     m_detid_offsets_map.push_back({ params.s1.time_before, params.s1.time_after });
     m_detid_offsets_map.push_back({ params.s2.time_before, params.s2.time_after });
   } catch (const ers::Issue& excpt) {
-    throw dunedaq::trigger::ConfigurationError(ERS_HERE, get_name(), "unsuccessfully configured", excpt);
+    throw dunedaq::trigger::ConfigurationError(ERS_HERE, get_name(), " unsuccessfully configured", excpt);
   }
 }
 

@@ -14,9 +14,16 @@ ERS_DECLARE_ISSUE_BASE(trigger,
 ERS_DECLARE_ISSUE_BASE(trigger,
                        ConfigurationError,
                        appfwk::GeneralDAQModuleIssue,
-                       "The " << message << " queue was not successfully configured.",
+                       "The " << message << " was not successfully configured.",
                        ((std::string)name),
                        ((std::string)message))
+
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       SignalTypeError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "Signal type " << signal_type << " invalid.",
+                       ((std::string)name),
+                       ((uint32_t)signal_type))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        InvalidQueueFatalError,
