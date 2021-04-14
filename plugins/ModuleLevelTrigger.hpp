@@ -82,7 +82,7 @@ private:
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
-  
+
   std::vector<dfmessages::GeoID> m_links;
 
   int m_repeat_trigger_count{ 1 };

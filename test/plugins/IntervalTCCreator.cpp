@@ -63,13 +63,12 @@ IntervalTCCreator::init(const nlohmann::json& iniobj)
 
 void
 IntervalTCCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 IntervalTCCreator::do_configure(const nlohmann::json& confobj)
 {
-  m_conf=confobj.get<intervaltccreator::ConfParams>();
+  m_conf = confobj.get<intervaltccreator::ConfParams>();
 }
 
 void
@@ -79,17 +78,17 @@ IntervalTCCreator::do_start(const nlohmann::json& startobj)
 
   m_running_flag.store(true);
 
-  switch(m_conf.timestamp_method){
-  case dunedaq::trigger::intervaltccreator::timestamp_estimation::kTimeSync:
-    TLOG_DEBUG(0) << "Creating TimestampEstimator";
-    m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_conf.clock_frequency_hz));
-    break;
-  case dunedaq::trigger::intervaltccreator::timestamp_estimation::kSystemClock:
-    TLOG_DEBUG(0) << "Creating TimestampEstimatorSystem";
-    m_timestamp_estimator.reset(new TimestampEstimatorSystem(m_conf.clock_frequency_hz));
-    break;
+  switch (m_conf.timestamp_method) {
+    case dunedaq::trigger::intervaltccreator::timestamp_estimation::kTimeSync:
+      TLOG_DEBUG(0) << "Creating TimestampEstimator";
+      m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_conf.clock_frequency_hz));
+      break;
+    case dunedaq::trigger::intervaltccreator::timestamp_estimation::kSystemClock:
+      TLOG_DEBUG(0) << "Creating TimestampEstimatorSystem";
+      m_timestamp_estimator.reset(new TimestampEstimatorSystem(m_conf.clock_frequency_hz));
+      break;
   }
-  
+
   m_send_trigger_candidates_thread = std::thread(&IntervalTCCreator::send_trigger_candidates, this);
   pthread_setname_np(m_send_trigger_candidates_thread.native_handle(), "tde-trig-dec");
 }
@@ -116,13 +115,13 @@ IntervalTCCreator::create_candidate(dfmessages::timestamp_t timestamp)
   static std::default_random_engine random_engine(m_run_number);
 
   triggeralgs::TriggerCandidate candidate;
-  candidate.time_start     = timestamp;
-  candidate.time_end       = timestamp;
+  candidate.time_start = timestamp;
+  candidate.time_end = timestamp;
   candidate.time_candidate = timestamp;
-  candidate.detid          = {1};
-  candidate.type           = 1;
-  candidate.algorithm      = 1;
-  candidate.version        = 1;
+  candidate.detid = { 1 };
+  candidate.type = 1;
+  candidate.algorithm = 1;
+  candidate.version = 1;
 
   return candidate;
 }

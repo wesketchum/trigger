@@ -11,7 +11,6 @@
 
 #include "trigger/TimestampEstimatorBase.hpp"
 
-
 namespace dunedaq {
 namespace trigger {
 
@@ -22,7 +21,6 @@ namespace trigger {
 class TimestampEstimatorSystem : public TimestampEstimatorBase
 {
 public:
-  
   TimestampEstimatorSystem(uint64_t clock_frequency_hz);
 
   dfmessages::timestamp_t get_timestamp_estimate() const override;

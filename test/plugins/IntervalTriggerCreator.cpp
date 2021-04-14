@@ -62,8 +62,7 @@ IntervalTriggerCreator::init(const nlohmann::json& iniobj)
 
 void
 IntervalTriggerCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)

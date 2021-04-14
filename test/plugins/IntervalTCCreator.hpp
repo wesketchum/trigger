@@ -85,7 +85,6 @@ private:
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
-
 };
 } // namespace trigger
 } // namespace dunedaq
