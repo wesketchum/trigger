@@ -63,7 +63,7 @@ jobs:
     - name: checkout triggeralgs
       uses: actions/checkout@v2
       with:
-        repository: DUNE-DAQ/daq-buildtools
+        repository: DUNE-DAQ/triggeralgs
         path:  ${{ github.workspace }}/DUNE-DAQ/triggeralgs
     
     - name: setup build env and build the dev release
@@ -91,8 +91,8 @@ jobs:
           sed -i '$ s/)/"triggeralgs" "trigger")/g' sourcecode/dbt-build-order.cmake
           export DBT_INSTALL_DIR=${DBT_AREA_ROOT}/install
           export DBT_SETUP_BUILD_ENVIRONMENT_SCRIPT_SOURCED=1
-          #dbt-build.sh --install
-          #$GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs
+          dbt-build.sh --install
+          $GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs
           
     - name: upload UPS tarball and log file
       uses: actions/upload-artifact@v2
