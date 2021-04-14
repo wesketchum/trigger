@@ -43,6 +43,7 @@ daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 
 daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
 daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################
 
