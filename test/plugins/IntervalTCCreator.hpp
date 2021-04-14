@@ -12,7 +12,7 @@
 
 #include "trigger/intervaltccreator/Nljs.hpp"
 
-#include "dune-trigger-algs/TriggerCandidate.hh"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
