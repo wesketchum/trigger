@@ -18,7 +18,7 @@
 #include "trigger/fakedataflow/Nljs.hpp"
 
 #include "appfwk/app/Nljs.hpp"
-
+#include "appfwk/DAQModuleHelper.hpp"
 
 namespace dunedaq {
 namespace trigger {
@@ -37,15 +37,8 @@ FakeDataFlow::FakeDataFlow(const std::string& name)
 void
 FakeDataFlow::init(const nlohmann::json& obj)
 {
-  auto ini = obj.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.name == "trigger_decision_source") {
-      m_trigger_decision_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecision>(qi.inst));
-    }
-    if (qi.name == "trigger_complete_sink") {
-      m_trigger_complete_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecisionToken>(qi.inst));
-    }
-  }
+  m_trigger_decision_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecision>(appfwk::queue_inst(obj, "trigger_decision_source")));
+  m_trigger_complete_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(obj,"trigger_complete_sink")));
 }
 
 void
