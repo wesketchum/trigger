@@ -105,7 +105,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
         std::ostringstream oss_warn;
         oss_warn << "push to output queue \"" << outputQueue_->get_name() << "\"";
         ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-          std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
+          queueTimeout_.count()));
       }
     }
   }
