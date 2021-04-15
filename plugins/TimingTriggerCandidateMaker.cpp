@@ -20,11 +20,13 @@ triggeralgs::TriggerCandidate
 TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
 {
   triggeralgs::TriggerCandidate candidate;
-  try {
-	  candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
-	  candidate.time_end = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
-  } catch (const ers::Issue& excpt) {
-    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type, excpt);
+  if(m_detid_offsets_map.count(data.signal_type)){
+    // clang-format off
+    candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
+    candidate.time_end   = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
+    // clang-format on
+  } else {
+    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type);
   }
   candidate.time_candidate = data.time_stamp;
   candidate.detid = {static_cast<uint16_t>(data.signal_type)};
@@ -75,18 +77,22 @@ TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
-  triggeralgs::TimeStampedData data;
-
   while (running_flag.load()) {
-    triggeralgs::TriggerCandidate candidate;
 
+    triggeralgs::TimeStampedData data;
     try {
       inputQueue_->pop(data, queueTimeout_);
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       continue;
     }
 
-    candidate = TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(data);
+    triggeralgs::TriggerCandidate candidate;
+    try {
+      candidate = TimeStampedDataToTriggerCandidate(data);
+    } catch (SignalTypeError& e) {
+      ers::error(e);
+      continue;
+    }
 
     TLOG_DEBUG(2) << "Activity received.";
 
@@ -102,9 +108,9 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
           std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
       }
     }
-
-    TLOG_DEBUG(2) << "Exiting do_work() method, received and successfully sent.";
   }
+
+  TLOG_DEBUG(2) << "Exiting do_work() method";
 }
 
 void
