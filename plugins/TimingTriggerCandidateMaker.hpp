@@ -6,7 +6,7 @@
 
 #include "CommonIssues.hpp"
 
-#include "TriggerCandidateType.hh"
+#include "trigger/TriggerCandidateType.hpp"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
 #include "dune-trigger-algs/TimeStampedData.hh"
