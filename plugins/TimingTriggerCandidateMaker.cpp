@@ -4,10 +4,10 @@ namespace dunedaq {
 namespace trigger {
 TimingTriggerCandidateMaker::TimingTriggerCandidateMaker(const std::string& name)
   : DAQModule(name)
-  , thread_(std::bind(&TimingTriggerCandidateMaker::do_work, this, std::placeholders::_1))
-  , inputQueue_(nullptr)
-  , outputQueue_(nullptr)
-  , queueTimeout_(100)
+  , m_thread(std::bind(&TimingTriggerCandidateMaker::do_work, this, std::placeholders::_1))
+  , m_input_queue(nullptr)
+  , m_output_queue(nullptr)
+  , m_queue_timeout(100)
 {
 
   register_command("conf", &TimingTriggerCandidateMaker::do_conf);
@@ -53,8 +53,8 @@ TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 {
   try {
     auto qi = appfwk::queue_index(iniobj, { "input", "output" });
-    inputQueue_.reset(new source_t(qi["input"].inst));
-    outputQueue_.reset(new sink_t(qi["output"].inst));
+    m_input_queue.reset(new source_t(qi["input"].inst));
+    m_output_queue.reset(new sink_t(qi["output"].inst));
   } catch (const ers::Issue& excpt) {
     throw dunedaq::trigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input/output", excpt);
   }
@@ -63,14 +63,14 @@ TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
-  thread_.start_working_thread();
+  m_thread.start_working_thread();
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
 void
 TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 {
-  thread_.stop_working_thread();
+  m_thread.stop_working_thread();
   TLOG_DEBUG(2) << get_name() + " successfully stopped.";
 }
 
@@ -81,7 +81,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 
     triggeralgs::TimeStampedData data;
     try {
-      inputQueue_->pop(data, queueTimeout_);
+      m_input_queue->pop(data, m_queue_timeout);
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       continue;
     }
@@ -99,12 +99,12 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
     bool successfullyWasSent = false;
     while (!successfullyWasSent) {
       try {
-        outputQueue_->push(candidate, queueTimeout_);
+        m_output_queue->push(candidate, m_queue_timeout);
         successfullyWasSent = true;
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
         std::ostringstream oss_warn;
-        oss_warn << "push to output queue \"" << outputQueue_->get_name() << "\"";
-        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), queueTimeout_.count()));
+        oss_warn << "push to output queue \"" << m_output_queue->get_name() << "\"";
+        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
       }
     }
   }

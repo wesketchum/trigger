@@ -37,18 +37,18 @@ private:
   void do_stop(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
-  dunedaq::appfwk::ThreadHelper thread_;
+  dunedaq::appfwk::ThreadHelper m_thread;
 
   triggeralgs::TriggerCandidate TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data);
   void do_work(std::atomic<bool>&);
 
   using source_t = dunedaq::appfwk::DAQSource<triggeralgs::TimeStampedData>;
-  std::unique_ptr<source_t> inputQueue_;
+  std::unique_ptr<source_t> m_input_queue;
 
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TriggerCandidate>;
-  std::unique_ptr<sink_t> outputQueue_;
+  std::unique_ptr<sink_t> m_output_queue;
 
-  std::chrono::milliseconds queueTimeout_;
+  std::chrono::milliseconds m_queue_timeout;
 
   std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map;
 };
