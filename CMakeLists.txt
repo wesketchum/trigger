@@ -42,7 +42,9 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages 
 ##############################################################################
 # Unit Tests
 
-# daq_add_unit_test(ComponentRequest_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################
 
