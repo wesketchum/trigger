@@ -1,7 +1,4 @@
-
 #include "TimingTriggerCandidateMaker.hpp"
-
-//using internal_clock = std::chrono::duration<double, std::ratio<1, 50'000'000>>;
 
 namespace dunedaq {
 namespace trigger {
@@ -22,19 +19,6 @@ TimingTriggerCandidateMaker::TimingTriggerCandidateMaker(const std::string& name
 triggeralgs::TriggerCandidate
 TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
 {
-  // Fill unused fields
-  std::vector<uint16_t> detid_list;
-  std::vector<triggeralgs::TriggerPrimitive> primitive_list;
-  std::vector<triggeralgs::TriggerActivity> activity_list;
-
-  uint32_t detid = data.signal_type;
-  triggeralgs::TriggerPrimitive primitive{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-  triggeralgs::TriggerActivity activity{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, primitive_list };
-
-  detid_list.push_back(detid);
-  primitive_list.push_back(primitive);
-  activity_list.push_back(activity);
-
   triggeralgs::TriggerCandidate candidate;
   try {
 	  candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
@@ -43,12 +27,11 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
     throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type, excpt);
   }
   candidate.time_candidate = data.time_stamp;
-  candidate.detid = detid_list;
+  candidate.detid = {static_cast<uint16_t>(data.signal_type)};
   candidate.type = TriggerCandidateType::kTiming;
-//  candidate.algorithm = uint32_t(internal_clock(now.time_since_epoch()).count());
   candidate.algorithm = 0;
   candidate.version = 0;
-  candidate.ta_list = activity_list;
+  candidate.ta_list = {};
 
   return candidate;
 }
