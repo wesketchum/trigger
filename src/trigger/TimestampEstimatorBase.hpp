@@ -48,9 +48,8 @@ public:
      Returns kFinished if the timestamp became valid, or kInterrupted if continue_flag became false first
   */
   WaitStatus wait_for_timestamp(dfmessages::timestamp_t ts, std::atomic<bool>& continue_flag);
-
 };
-  
+
 }
 }
 

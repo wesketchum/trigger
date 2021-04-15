@@ -70,8 +70,7 @@ ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 
 void
 ModuleLevelTrigger::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
@@ -108,7 +107,7 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
 {
   m_running_flag.store(false);
   m_send_trigger_decisions_thread.join();
-  m_token_manager.reset(nullptr);       // Calls TokenManager dtor
+  m_token_manager.reset(nullptr); // Calls TokenManager dtor
 }
 
 void
@@ -139,14 +138,14 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.run_number = m_run_number;
   decision.trigger_timestamp = tc.time_candidate;
   // TODO: work out what to set this to
-  decision.trigger_type = 1; //m_trigger_type;
+  decision.trigger_type = 1; // m_trigger_type;
 
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
     request.component = link;
     // TODO: set these from some config map
     request.window_begin = tc.time_candidate;
-    request.window_end = tc.time_candidate+1000;
+    request.window_end = tc.time_candidate + 1000;
 
     decision.components.push_back(request);
   }
@@ -167,13 +166,12 @@ ModuleLevelTrigger::send_trigger_decisions()
 
   while (m_running_flag.load()) {
     triggeralgs::TriggerCandidate tc;
-    try{
+    try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
-    }
-    catch(appfwk::QueueTimeoutExpired&){
+    } catch (appfwk::QueueTimeoutExpired&) {
       continue;
     }
-    
+
     bool tokens_allow_triggers = m_token_manager->triggers_allowed();
     if (!m_paused.load() && tokens_allow_triggers) {
 
@@ -181,10 +179,9 @@ ModuleLevelTrigger::send_trigger_decisions()
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
                     << decision.trigger_timestamp << " number of links " << decision.components.size();
-      try{
+      try {
         m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
-      }
-      catch(appfwk::QueueTimeoutExpired& e){
+      } catch (appfwk::QueueTimeoutExpired& e) {
         ers::error(e);
       }
       m_token_manager->trigger_sent(decision.trigger_number);
@@ -200,8 +197,6 @@ ModuleLevelTrigger::send_trigger_decisions()
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
   }
-
-
 }
 
 } // namespace trigger

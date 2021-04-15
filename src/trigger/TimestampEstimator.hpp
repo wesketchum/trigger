@@ -36,7 +36,7 @@ public:
   virtual ~TimestampEstimator();
 
   dfmessages::timestamp_t get_timestamp_estimate() const override { return m_current_timestamp_estimate.load(); }
-  
+
 private:
   void estimator_thread_fn(std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>>& time_sync_source);
 
