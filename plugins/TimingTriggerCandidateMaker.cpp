@@ -20,7 +20,7 @@ triggeralgs::TriggerCandidate
 TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
 {
   triggeralgs::TriggerCandidate candidate;
-  if(m_detid_offsets_map.count(data.signal_type)){
+  if (m_detid_offsets_map.count(data.signal_type)) {
     // clang-format off
     candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
     candidate.time_end   = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
@@ -29,7 +29,7 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
     throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type);
   }
   candidate.time_candidate = data.time_stamp;
-  candidate.detid = {static_cast<uint16_t>(data.signal_type)};
+  candidate.detid = { static_cast<uint16_t>(data.signal_type) };
   candidate.type = TriggerCandidateType::kTiming;
   candidate.algorithm = 0;
   candidate.version = 0;
@@ -42,9 +42,9 @@ void
 TimingTriggerCandidateMaker::do_conf(const nlohmann::json& config)
 {
   auto params = config.get<dunedaq::trigger::timingtriggercandidatemaker::Conf>();
-  m_detid_offsets_map[ params.s0.signal_type ] = { params.s0.time_before, params.s0.time_after };
-  m_detid_offsets_map[ params.s1.signal_type ] = { params.s1.time_before, params.s1.time_after };
-  m_detid_offsets_map[ params.s2.signal_type ] = { params.s2.time_before, params.s2.time_after };
+  m_detid_offsets_map[params.s0.signal_type] = { params.s0.time_before, params.s0.time_after };
+  m_detid_offsets_map[params.s1.signal_type] = { params.s1.time_before, params.s1.time_after };
+  m_detid_offsets_map[params.s2.signal_type] = { params.s2.time_before, params.s2.time_after };
   TLOG_DEBUG(2) << get_name() + " configured.";
 }
 
@@ -104,8 +104,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
         std::ostringstream oss_warn;
         oss_warn << "push to output queue \"" << outputQueue_->get_name() << "\"";
-        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-          queueTimeout_.count()));
+        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), queueTimeout_.count()));
       }
     }
   }
