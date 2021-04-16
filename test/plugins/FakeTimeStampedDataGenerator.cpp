@@ -32,6 +32,7 @@ FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& na
   , m_outputQueue()
   , m_queueTimeout(100)
   , m_generator()
+  , m_counts(0)
 {
   register_command("conf",  &FakeTimeStampedDataGenerator::do_configure);
   register_command("start", &FakeTimeStampedDataGenerator::do_start);
@@ -108,8 +109,7 @@ FakeTimeStampedDataGenerator::GetTimestamp()
   auto tsd_start_time = std::chrono::steady_clock::now();
   tsd.time_stamp = (uint64_t)pd_clock(tsd_start_time.time_since_epoch()).count();
   tsd.signal_type = signaltype;
-  auto now = std::chrono::steady_clock::now();
-  tsd.counter = (uint32_t)pd_clock(now.time_since_epoch()).count();
+  tsd.counter = ++m_counts;
 
   //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
   std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";

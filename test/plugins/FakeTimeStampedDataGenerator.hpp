@@ -69,6 +69,7 @@ private:
   std::vector<triggeralgs::TimeStampedData> GetTimestamp();
   std::default_random_engine m_generator;
   std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
+  uint32_t m_counts;
 };
 } // namespace trigger
   /*
