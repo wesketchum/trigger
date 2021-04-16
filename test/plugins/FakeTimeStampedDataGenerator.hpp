@@ -4,8 +4,8 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_FAKETIMESTAMPDATAGENERATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_FAKETIMESTAMPDATAGENERATOR_HPP_
+#ifndef TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
+#define TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 
 #include "dune-trigger-algs/TimeStampedData.hh"
 
@@ -28,23 +28,23 @@ namespace trigger {
  * @brief RandomDataListGenerator creates vectors of ints and writes
  * them to the configured output queues.
  */
-class FakeTimeStampDataGenerator : public dunedaq::appfwk::DAQModule
+class FakeTimeStampedDataGenerator : public dunedaq::appfwk::DAQModule
 {
 public:
   /**
-   * @brief FakeTimeStampDataGenerator Constructor
-   * @param name Instance name for this FakeTimeStampDataGenerator instance
+   * @brief FakeTimeStampedDataGenerator Constructor
+   * @param name Instance name for this FakeTimeStampedDataGenerator instance
    */
-  explicit FakeTimeStampDataGenerator(const std::string& name);
+  explicit FakeTimeStampedDataGenerator(const std::string& name);
 
-  FakeTimeStampDataGenerator(const FakeTimeStampDataGenerator&) =
-    delete; ///< FakeTimeStampDataGenerator is not copy-constructible
-  FakeTimeStampDataGenerator& operator=(const FakeTimeStampDataGenerator&) =
-    delete; ///< FakeTimeStampDataGenerator is not copy-assignable
-  FakeTimeStampDataGenerator(FakeTimeStampDataGenerator&&) =
-    delete; ///< FakeTimeStampDataGenerator is not move-constructible
-  FakeTimeStampDataGenerator& operator=(FakeTimeStampDataGenerator&&) =
-    delete; ///< FakeTimeStampDataGenerator is not move-assignable
+  FakeTimeStampedDataGenerator(const FakeTimeStampedDataGenerator&) =
+    delete; ///< FakeTimeStampedDataGenerator is not copy-constructible
+  FakeTimeStampedDataGenerator& operator=(const FakeTimeStampedDataGenerator&) =
+    delete; ///< FakeTimeStampedDataGenerator is not copy-assignable
+  FakeTimeStampedDataGenerator(FakeTimeStampedDataGenerator&&) =
+    delete; ///< FakeTimeStampedDataGenerator is not move-constructible
+  FakeTimeStampedDataGenerator& operator=(FakeTimeStampedDataGenerator&&) =
+    delete; ///< FakeTimeStampedDataGenerator is not move-assignable
 
   void init(const nlohmann::json& obj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -81,7 +81,7 @@ ERS_DECLARE_ISSUE_BASE(trigger,
   */
 } // namespace dunedaq
 
-#endif // TRIGGER_TEST_PLUGINS_FAKETIMESTAMPDATAGENERATOR_HPP_
+#endif // TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 
 // Local Variables:
 // c-basic-offset: 2

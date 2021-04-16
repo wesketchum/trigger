@@ -1,5 +1,5 @@
 /**
- * @file FakeTimeStampDataGenerator.cpp FakeTimeStampDataGenerator class
+ * @file FakeTimeStampedDataGenerator.cpp FakeTimeStampedDataGenerator class
  * implementation
  *
  * This is part of the DUNE DAQ Software Suite, copyright 2020.
@@ -8,7 +8,7 @@
  */
 
 #include "CommonIssues.hpp"
-#include "FakeTimeStampDataGenerator.hpp"
+#include "FakeTimeStampedDataGenerator.hpp"
 
 #include "appfwk/app/Nljs.hpp"
 
@@ -25,21 +25,21 @@ using pd_clock = std::chrono::duration<double, std::ratio<1, 50000000>>;
 namespace dunedaq {
 namespace trigger {
 
-FakeTimeStampDataGenerator::FakeTimeStampDataGenerator(const std::string& name)
+FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
-  , thread_(std::bind(&FakeTimeStampDataGenerator::do_work, this, std::placeholders::_1))
+  , thread_(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
   , outputQueue_()
   , queueTimeout_(100)
   , generator()
 {
-  register_command("conf",  &FakeTimeStampDataGenerator::do_configure);
-  register_command("start", &FakeTimeStampDataGenerator::do_start);
-  register_command("stop",  &FakeTimeStampDataGenerator::do_stop);
-  register_command("scrap", &FakeTimeStampDataGenerator::do_scrap);
+  register_command("conf",  &FakeTimeStampedDataGenerator::do_configure);
+  register_command("start", &FakeTimeStampedDataGenerator::do_start);
+  register_command("stop",  &FakeTimeStampedDataGenerator::do_stop);
+  register_command("scrap", &FakeTimeStampedDataGenerator::do_scrap);
 }
 
 void
-FakeTimeStampDataGenerator::init(const nlohmann::json& init_data)
+FakeTimeStampedDataGenerator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
   auto ini = init_data.get<appfwk::app::ModInit>();
@@ -61,19 +61,19 @@ FakeTimeStampDataGenerator::init(const nlohmann::json& init_data)
 }
 
 void
-FakeTimeStampDataGenerator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
+FakeTimeStampedDataGenerator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
 {
 }
 
 void
-FakeTimeStampDataGenerator::do_configure(const nlohmann::json& /*obj*/)
+FakeTimeStampedDataGenerator::do_configure(const nlohmann::json& /*obj*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 }
 
 void
-FakeTimeStampDataGenerator::do_start(const nlohmann::json& /*args*/)
+FakeTimeStampedDataGenerator::do_start(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
   thread_.start_working_thread();
@@ -82,7 +82,7 @@ FakeTimeStampDataGenerator::do_start(const nlohmann::json& /*args*/)
 }
 
 void
-FakeTimeStampDataGenerator::do_stop(const nlohmann::json& /*args*/)
+FakeTimeStampedDataGenerator::do_stop(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
   thread_.stop_working_thread();
@@ -91,14 +91,14 @@ FakeTimeStampDataGenerator::do_stop(const nlohmann::json& /*args*/)
 }
 
 void
-FakeTimeStampDataGenerator::do_scrap(const nlohmann::json& /*args*/)
+FakeTimeStampedDataGenerator::do_scrap(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_scrap() method";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
  std::vector<triggeralgs::TimeStampedData>
-FakeTimeStampDataGenerator::GetTimestamp()
+FakeTimeStampedDataGenerator::GetTimestamp()
 {
   std::vector<triggeralgs::TimeStampedData> tsds;
   triggeralgs::TimeStampedData tsd{};
@@ -120,7 +120,7 @@ FakeTimeStampDataGenerator::GetTimestamp()
 }
 
 void
-FakeTimeStampDataGenerator::do_work(std::atomic<bool>& running_flag)
+FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
   size_t generatedCount = 0;
@@ -183,7 +183,7 @@ FakeTimeStampDataGenerator::do_work(std::atomic<bool>& running_flag)
 } // namespace trigger 
 } // namespace dunedaq
 
-DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::FakeTimeStampDataGenerator)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::FakeTimeStampedDataGenerator)
 
 // Local Variables:
 // c-basic-offset: 2

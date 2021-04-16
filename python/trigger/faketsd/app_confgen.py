@@ -35,7 +35,7 @@ def generate(
 
 
     mod_specs = [
-        mspec("ftsdg", "FakeTimeStampDataGenerator", [
+        mspec("ftsdg", "FakeTimeStampedDataGenerator", [
                         app.QueueInfo(name="timestamp_sink", inst="timestamp_q", dir="output"),
                     ]),
         ]
