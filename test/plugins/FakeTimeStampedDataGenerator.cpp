@@ -165,12 +165,10 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 	{
 	  std::ostringstream oss_warn;
 	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
-	  ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-							    std::chrono::duration_cast<std::chrono::milliseconds>(m_queueTimeout).count()));
+	  ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
 	}
       }
     }
-
   }
 
   std::ostringstream oss_summ;

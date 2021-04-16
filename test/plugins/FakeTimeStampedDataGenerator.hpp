@@ -72,14 +72,6 @@ private:
   uint32_t m_counts;
 };
 } // namespace trigger
-  /*
-ERS_DECLARE_ISSUE_BASE(trigger,
-                       NoOutputQueuesAvailableWarning,
-                       appfwk::GeneralDAQModuleIssue,
-                       "No output queues were available, so the generated list of integers will be dropped. Has initialization been successfully completed?",
-                       ((std::string)name),
-                       ERS_EMPTY)
-  */
 } // namespace dunedaq
 
 #endif // TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
