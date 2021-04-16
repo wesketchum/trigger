@@ -7,7 +7,8 @@
  * received with this code.
  */
 
-#include "CommonIssues.hpp"
+//#include "CommonIssues.hpp"
+#include "trigger/Issues.hpp"
 #include "FakeTimeStampedDataGenerator.hpp"
 
 #include "appfwk/app/Nljs.hpp"
