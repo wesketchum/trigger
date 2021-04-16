@@ -4,7 +4,7 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
-#include "CommonIssues.hpp"
+#include "trigger/Issues.hpp"
 
 #include "trigger/TriggerCandidateType.hpp"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
