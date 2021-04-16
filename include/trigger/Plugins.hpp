@@ -33,7 +33,7 @@ namespace dunedaq::trigger {
 inline std::shared_ptr<triggeralgs::TriggerActivityMaker>
 make_ta_maker(std::string const& plugin_name)
 {
-  static cet::BasicPluginFactory bpf("TAMaker", "make");
+  static cet::BasicPluginFactory bpf("duneTAMaker", "make");
 
   // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerActivityMaker>>(plugin_name);
@@ -54,7 +54,7 @@ make_ta_maker(std::string const& plugin_name)
     }                                                                                                                  \
   }
 
-namespace triggeralgs {
+namespace dunedaq::trigger {
 /**
  * @brief Load a TriggerCandidateMaker plugin and return a shared_ptr to the contained
  * class
@@ -64,12 +64,13 @@ namespace triggeralgs {
 inline std::shared_ptr<triggeralgs::TriggerCandidateMaker>
 make_tc_maker(std::string const& plugin_name)
 {
-  static cet::BasicPluginFactory bpf("TCMaker", "make");
+  static cet::BasicPluginFactory bpf("duneTCMaker", "make");
 
   // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerCandidateMaker>>(plugin_name);
 }
 
+}
 
 /**
  * @brief Declare the function that will be called by the plugin loader
@@ -94,7 +95,7 @@ namespace dunedaq::trigger {
 inline std::shared_ptr<triggeralgs::TriggerDecisionMaker>
 make_td_maker(std::string const& plugin_name)
 {
-  static cet::BasicPluginFactory bpf("TDMaker", "make");
+  static cet::BasicPluginFactory bpf("duneTDMaker", "make");
 
   // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerDecisionMaker>>(plugin_name);
