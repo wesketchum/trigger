@@ -69,7 +69,7 @@ jobs:
           [[ -z ${!setup_env_repo+x} ]] || unsetup $REPO
           cp -pr $GITHUB_WORKSPACE/DUNE-DAQ/* $GITHUB_WORKSPACE/dev/sourcecode
           dbt-build.sh --install
-          $GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs
+          $GITHUB_WORKSPACE/daq-release/scripts/upsify-daq-pkgs.py -w $GITHUB_WORKSPACE/dev -o /tarballs -p trigger
           
     - name: upload UPS tarball and log file
       uses: actions/upload-artifact@v2
