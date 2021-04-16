@@ -15,8 +15,8 @@
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
-#include "triggeralgs/TriggerCandidate.hpp"
 #include "logging/Logging.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 #include "trigger/Issues.hpp"
 #include "trigger/TimestampEstimator.hpp"

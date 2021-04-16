@@ -5,15 +5,16 @@
 
 #include "logging/Logging.hpp"
 
-#include "triggeralgs/TriggerPrimitive.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerActivityMaker.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
 
 #include <memory>
 #include <string>
 
 namespace dunedaq::trigger {
-class TriggerActivityMaker: public dunedaq::appfwk::DAQModule {
+class TriggerActivityMaker : public dunedaq::appfwk::DAQModule
+{
 public:
   explicit TriggerActivityMaker(const std::string& name);
 
@@ -23,10 +24,10 @@ public:
   TriggerActivityMaker& operator=(TriggerActivityMaker&&) = delete;
 
   void init(const nlohmann::json& obj) override;
-      
+
 private:
-  void do_start    (const nlohmann::json& obj);
-  void do_stop     (const nlohmann::json& obj);
+  void do_start(const nlohmann::json& obj);
+  void do_stop(const nlohmann::json& obj);
   void do_configure(const nlohmann::json& obj);
 
   dunedaq::appfwk::ThreadHelper m_thread;

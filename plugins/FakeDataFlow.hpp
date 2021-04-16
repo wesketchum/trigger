@@ -64,16 +64,13 @@ private:
   // Queue sources and sinks
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecision>> m_trigger_decision_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecisionToken>> m_trigger_complete_sink;
-  
+
   // Are we in the RUNNING state?
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
-
 };
 } // namespace trigger
 } // namespace dunedaq
 
-
 #endif // TRIGGER_PLUGINS_FAKEDATAFLOW_HPP_
-

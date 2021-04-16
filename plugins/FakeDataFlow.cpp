@@ -19,7 +19,6 @@
 
 #include "appfwk/app/Nljs.hpp"
 
-
 namespace dunedaq {
 namespace trigger {
 
@@ -33,7 +32,7 @@ FakeDataFlow::FakeDataFlow(const std::string& name)
   register_command("stop", &FakeDataFlow::do_stop);
   register_command("scrap", &FakeDataFlow::do_scrap);
 }
-  
+
 void
 FakeDataFlow::init(const nlohmann::json& obj)
 {
@@ -50,8 +49,7 @@ FakeDataFlow::init(const nlohmann::json& obj)
 
 void
 FakeDataFlow::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 FakeDataFlow::do_configure(const nlohmann::json& /*obj*/)
@@ -87,24 +85,20 @@ FakeDataFlow::respond_to_trigger_decisions()
     dfmessages::TriggerDecision td;
     try {
       m_trigger_decision_source->pop(td, std::chrono::milliseconds(1000));
-    }
-    catch (appfwk::QueueTimeoutExpired&) {
+    } catch (appfwk::QueueTimeoutExpired&) {
       continue;
     }
-    
+
     TLOG_DEBUG(1) << "Responding to decision with"
-                  << " triggernumber " << td.trigger_number 
-                  << " timestamp " << td.trigger_timestamp 
-                  << " type " << td.trigger_type 
-                  << " number of links " << td.components.size();
-                  
+                  << " triggernumber " << td.trigger_number << " timestamp " << td.trigger_timestamp << " type "
+                  << td.trigger_type << " number of links " << td.components.size();
+
     dfmessages::TriggerDecisionToken td_token;
     td_token.run_number = td.run_number;
     td_token.trigger_number = td.trigger_number;
     try {
       m_trigger_complete_sink->push(td_token, std::chrono::milliseconds(10));
-    }
-    catch (appfwk::QueueTimeoutExpired& e) {
+    } catch (appfwk::QueueTimeoutExpired& e) {
       ers::error(e);
     }
   }

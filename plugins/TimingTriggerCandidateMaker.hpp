@@ -14,7 +14,6 @@
 #include "triggeralgs/TriggerCandidate.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
 
-
 #include <chrono>
 
 namespace dunedaq {
