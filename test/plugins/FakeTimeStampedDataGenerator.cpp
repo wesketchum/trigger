@@ -28,10 +28,10 @@ namespace trigger {
 
 FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
-  , thread_(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
-  , outputQueue_()
-  , queueTimeout_(100)
-  , generator()
+  , m_thread(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
+  , m_outputQueue()
+  , m_queueTimeout(100)
+  , m_generator()
 {
   register_command("conf",  &FakeTimeStampedDataGenerator::do_configure);
   register_command("start", &FakeTimeStampedDataGenerator::do_start);
@@ -50,8 +50,7 @@ FakeTimeStampedDataGenerator::init(const nlohmann::json& init_data)
     }
     try
     {
-      //outputQueue_.emplace_back(new sink_t(qi.inst));
-      outputQueue_.reset(new sink_t(qi.inst));
+      m_outputQueue.reset(new sink_t(qi.inst));
     }
     catch (const ers::Issue& excpt)
     {
@@ -77,7 +76,7 @@ void
 FakeTimeStampedDataGenerator::do_start(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
-  thread_.start_working_thread();
+  m_thread.start_working_thread();
   TLOG() << get_name() << " successfully started";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
 }
@@ -86,7 +85,7 @@ void
 FakeTimeStampedDataGenerator::do_stop(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
-  thread_.stop_working_thread();
+  m_thread.stop_working_thread();
   TLOG() << get_name() << " successfully stopped";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
 }
@@ -104,7 +103,7 @@ FakeTimeStampedDataGenerator::GetTimestamp()
   std::vector<triggeralgs::TimeStampedData> tsds;
   triggeralgs::TimeStampedData tsd{};
 
-  int signaltype = rdm_signaltype(generator);
+  int signaltype = m_rdm_signaltype(m_generator);
 
   auto tsd_start_time = std::chrono::steady_clock::now();
   tsd.time_stamp = (uint64_t)pd_clock(tsd_start_time.time_since_epoch()).count();
@@ -149,7 +148,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 
     generatedCount+=tsds.size();
 
-    std::string thisQueueName = outputQueue_->get_name();
+    std::string thisQueueName = m_outputQueue->get_name();
     bool successfullyWasSent = false;
     while (!successfullyWasSent && running_flag.load())
     {
@@ -158,7 +157,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
       {
 	try
 	{
-	  outputQueue_->push(tsd, queueTimeout_);
+	  m_outputQueue->push(tsd, m_queueTimeout);
 	  successfullyWasSent = true;
 	  ++sentCount;
 	}
@@ -167,7 +166,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 	  std::ostringstream oss_warn;
 	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
 	  ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-							    std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
+							    std::chrono::duration_cast<std::chrono::milliseconds>(m_queueTimeout).count()));
 	}
       }
     }

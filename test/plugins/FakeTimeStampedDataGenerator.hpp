@@ -57,18 +57,18 @@ private:
   void do_scrap(const nlohmann::json& obj);
 
   // Threading
-  dunedaq::appfwk::ThreadHelper thread_;
+  dunedaq::appfwk::ThreadHelper m_thread;
   void do_work(std::atomic<bool>&);
 
   // Configuration
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
-  std::unique_ptr<sink_t> outputQueue_;
-  std::chrono::milliseconds queueTimeout_;
+  std::unique_ptr<sink_t> m_outputQueue;
+  std::chrono::milliseconds m_queueTimeout;
 
   // Random Generatior
   std::vector<triggeralgs::TimeStampedData> GetTimestamp();
-  std::default_random_engine generator;
-  std::uniform_int_distribution<int> rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
+  std::default_random_engine m_generator;
+  std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
 };
 } // namespace trigger
   /*
