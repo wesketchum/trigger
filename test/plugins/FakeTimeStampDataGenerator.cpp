@@ -108,10 +108,12 @@ FakeTimeStampDataGenerator::GetTimestamp()
   auto tsd_start_time = std::chrono::steady_clock::now();
   tsd.time_stamp = (uint64_t)pd_clock(tsd_start_time.time_since_epoch()).count();
   tsd.signal_type = signaltype;
-  std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
-  //std::cout << "\033[32m" << tsd.time_stamp << ","<< tsd.signal_type << ","<< tsd.counter << "\033[0m\n";
   auto now = std::chrono::steady_clock::now();
   tsd.counter = (uint32_t)pd_clock(now.time_since_epoch()).count();
+
+  //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
+  std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
+
   tsds.push_back(tsd);
   
   return tsds;
