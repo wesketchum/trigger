@@ -29,6 +29,7 @@ namespace trigger {
 FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
   , m_thread(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
+  , m_sleep_time(1000000000)
   , m_outputQueue()
   , m_queueTimeout(100)
   , m_generator()
@@ -126,7 +127,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
   while (running_flag.load()) 
   {
     TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
-    std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
+    std::this_thread::sleep_for(std::chrono::nanoseconds(m_sleep_time));
 
     triggeralgs::TimeStampedData tsd = get_time_stamped_data();
 

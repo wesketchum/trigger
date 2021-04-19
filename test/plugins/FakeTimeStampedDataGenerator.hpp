@@ -59,6 +59,7 @@ private:
   // Threading
   dunedaq::appfwk::ThreadHelper m_thread;
   void do_work(std::atomic<bool>&);
+  uint64_t m_sleep_time;
 
   // Configuration
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
