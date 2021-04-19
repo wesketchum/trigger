@@ -111,7 +111,8 @@ FakeTimeStampedDataGenerator::get_time_stamped_data()
   tsd.counter = ++m_counts;
 
   //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
-  std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
+  //std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
+  TLOG_DEBUG(0) << get_name() << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter <<"\n";
 
   return tsd;
 }
