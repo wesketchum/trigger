@@ -6,9 +6,9 @@
 
 #include "trigger/Issues.hpp"
 
-#include "trigger/TriggerCandidateType.hpp"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
+#include "dune-trigger-algs/TriggerCandidateType.hpp"
 #include "dune-trigger-algs/TimeStampedData.hh"
 #include "dune-trigger-algs/TriggerActivity.hh"
 #include "dune-trigger-algs/TriggerCandidate.hh"
