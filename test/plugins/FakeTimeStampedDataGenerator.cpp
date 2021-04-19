@@ -21,17 +21,16 @@
 #include <string>
 #include <vector>
 
-using pd_clock = std::chrono::duration<double, std::ratio<1, 50000000>>;
-
 namespace dunedaq {
 namespace trigger {
 
 FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
   , m_thread(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
-  , m_sleep_time(1000000000)
   , m_outputQueue()
   , m_queueTimeout(100)
+  , m_sleep_time(1000000000)
+  , m_frequency(50000000)
   , m_generator()
   , m_counts(0)
 {
@@ -107,7 +106,10 @@ FakeTimeStampedDataGenerator::get_time_stamped_data()
   int signaltype = m_rdm_signaltype(m_generator);
 
   auto tsd_start_time = std::chrono::steady_clock::now();
-  tsd.time_stamp = (uint64_t)pd_clock(tsd_start_time.time_since_epoch()).count();
+
+  std::chrono::duration<double> elapsed_time = tsd_start_time.time_since_epoch();
+
+  tsd.time_stamp = ( (uint64_t)elapsed_time.count()) * m_frequency;
   tsd.signal_type = signaltype;
   tsd.counter = ++m_counts;
 

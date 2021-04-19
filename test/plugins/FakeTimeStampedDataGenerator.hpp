@@ -59,12 +59,13 @@ private:
   // Threading
   dunedaq::appfwk::ThreadHelper m_thread;
   void do_work(std::atomic<bool>&);
-  uint64_t m_sleep_time;
 
   // Configuration
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
   std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
+  uint64_t m_sleep_time;
+  uint64_t m_frequency;
 
   // Random Generatior
   triggeralgs::TimeStampedData get_time_stamped_data();
