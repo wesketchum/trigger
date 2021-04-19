@@ -110,9 +110,8 @@ FakeTimeStampedDataGenerator::get_time_stamped_data()
   tsd.signal_type = signaltype;
   tsd.counter = ++m_counts;
 
-  //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
   //std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
-  TLOG_DEBUG(0) << get_name() << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter <<"\n";
+  TLOG_DEBUG(TLVL_GENERATION) << get_name() << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter <<"\n";
 
   return tsd;
 }
@@ -135,13 +134,14 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
     {
       std::ostringstream oss_prog;
       oss_prog << "Last TSD packet has size 0, continuing!";
-      ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+      TLOG_DEBUG(TLVL_GENERATION) << get_name() << " " <<oss_prog.str()<<"\n";
       continue; 
     } 
     else 
     {
       std::ostringstream oss_prog;
-      ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+      oss_prog << "Last TSD packet has data.";
+      TLOG_DEBUG(TLVL_GENERATION) << get_name() << " " <<oss_prog.str()<<"\n";
     }
 
     generatedCount+=tsd.counter;
