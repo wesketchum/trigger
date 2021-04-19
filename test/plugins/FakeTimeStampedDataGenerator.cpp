@@ -98,10 +98,9 @@ FakeTimeStampedDataGenerator::do_scrap(const nlohmann::json& /*args*/)
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
- std::vector<triggeralgs::TimeStampedData>
-FakeTimeStampedDataGenerator::GetTimestamp()
+triggeralgs::TimeStampedData
+FakeTimeStampedDataGenerator::get_time_stamped_data()
 {
-  std::vector<triggeralgs::TimeStampedData> tsds;
   triggeralgs::TimeStampedData tsd{};
 
   int signaltype = m_rdm_signaltype(m_generator);
@@ -114,9 +113,7 @@ FakeTimeStampedDataGenerator::GetTimestamp()
   //std::cout << "\033[32mtsd.timestamp: " << tsd.time_stamp << "\033[0m  ";
   std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
 
-  tsds.push_back(tsd);
-  
-  return tsds;
+  return tsd;
 }
 
 void
@@ -131,12 +128,12 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
     TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
     std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
 
-    std::vector<triggeralgs::TimeStampedData> tsds = GetTimestamp();
+    triggeralgs::TimeStampedData tsd = get_time_stamped_data();
 
-    if (tsds.size() == 0) 
+    if (tsd.counter == 0) 
     {
       std::ostringstream oss_prog;
-      oss_prog << "Last TSDs packet has size 0, continuing!";
+      oss_prog << "Last TSD packet has size 0, continuing!";
       ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
       continue; 
     } 
@@ -146,27 +143,24 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
       ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
     }
 
-    generatedCount+=tsds.size();
+    generatedCount+=tsd.counter;
 
     std::string thisQueueName = m_outputQueue->get_name();
     bool successfullyWasSent = false;
     while (!successfullyWasSent && running_flag.load())
     {
       TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the generated TSD onto queue " << thisQueueName;
-      for (auto const& tsd: tsds)
+      try
       {
-	try
-	{
-	  m_outputQueue->push(tsd, m_queueTimeout);
-	  successfullyWasSent = true;
-	  ++sentCount;
-	}
-	catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt)
-	{
-	  std::ostringstream oss_warn;
-	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
-	  ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
-	}
+	m_outputQueue->push(tsd, m_queueTimeout);
+	successfullyWasSent = true;
+	++sentCount;
+      }
+      catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt)
+      {
+	std::ostringstream oss_warn;
+	oss_warn << "push to output queue \"" << thisQueueName << "\"";
+	ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
       }
     }
   }
