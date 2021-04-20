@@ -62,7 +62,7 @@ TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
-  m_thread.start_working_thread();
+  m_thread.start_working_thread("timing-tc-maker");
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
