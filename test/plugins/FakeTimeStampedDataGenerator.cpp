@@ -126,21 +126,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 
     triggeralgs::TimeStampedData tsd = get_time_stamped_data();
 
-    if (tsd.counter == 0) 
-    {
-      std::ostringstream oss_prog;
-      oss_prog << "Last TSD packet has size 0, continuing!";
-      TLOG_DEBUG(TLVL_GENERATION) << get_name() << " " <<oss_prog.str()<<"\n";
-      continue; 
-    } 
-    else 
-    {
-      std::ostringstream oss_prog;
-      oss_prog << "Last TSD packet has data.";
-      TLOG_DEBUG(TLVL_GENERATION) << get_name() << " " <<oss_prog.str()<<"\n";
-    }
-
-    generatedCount+=tsd.counter;
+    generatedCount++;
 
     std::string thisQueueName = m_outputQueue->get_name();
     bool successfullyWasSent = false;
