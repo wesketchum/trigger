@@ -9,12 +9,14 @@ moo.otypes.load_types('cmdlib/cmd.jsonnet')
 moo.otypes.load_types('rcif/cmd.jsonnet')
 moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
+moo.otypes.load_types('trigger/faketimestampeddatagenerator.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as bcmd # base command, 
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd, 
 import dunedaq.rcif.cmd as rc # Addressed run control Cmd, 
+import dunedaq.trigger.faketimestampeddatagenerator as ftsdg
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -35,7 +37,7 @@ def generate(
 
 
     mod_specs = [
-        mspec("ftsdg", "FakeTimeStampedDataGenerator", [
+        mspec("ftsdgen", "FakeTimeStampedDataGenerator", [
                         app.QueueInfo(name="time_stamped_data_sink", inst="timestamp_q", dir="output"),
                     ]),
         ]
@@ -53,7 +55,9 @@ def generate(
     )
 
     confcmd = mrccmd("conf", "INITIAL", "CONFIGURED", [
-            (".*", None),
+            ("ftsdgen", ftsdg.Conf(
+                sleep_time = 1000000000,
+                frequency  = 50000000))
             ])
     
     jstr = json.dumps(confcmd.pod(), indent=4, sort_keys=True)

@@ -9,6 +9,7 @@
 
 //#include "CommonIssues.hpp"
 #include "trigger/Issues.hpp"
+#include "trigger/faketimestampeddatagenerator/Nljs.hpp"
 #include "FakeTimeStampedDataGenerator.hpp"
 
 #include "appfwk/app/Nljs.hpp"
@@ -30,8 +31,6 @@ FakeTimeStampedDataGenerator::FakeTimeStampedDataGenerator(const std::string& na
   , m_thread(std::bind(&FakeTimeStampedDataGenerator::do_work, this, std::placeholders::_1))
   , m_outputQueue()
   , m_queueTimeout(100)
-  , m_sleep_time(1000000000)
-  , m_frequency(50000000)
   , m_generator()
   , m_counts(0)
 {
@@ -57,9 +56,15 @@ FakeTimeStampedDataGenerator::get_info(opmonlib::InfoCollector& /*ci*/, int /*le
 }
 
 void
-FakeTimeStampedDataGenerator::do_configure(const nlohmann::json& /*obj*/)
+FakeTimeStampedDataGenerator::do_configure(const nlohmann::json& obj)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
+
+  auto params = obj.get<faketimestampeddatagenerator::Conf>();
+
+  m_sleep_time = params.sleep_time;
+  m_frequency = params.frequency;
+
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 }
 

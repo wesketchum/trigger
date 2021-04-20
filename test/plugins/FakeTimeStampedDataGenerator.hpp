@@ -9,6 +9,8 @@
 
 #include "dune-trigger-algs/TimeStampedData.hh"
 
+#include "trigger/faketimestampeddatagenerator/Structs.hpp"
+
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/ThreadHelper.hpp"
@@ -64,14 +66,16 @@ private:
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
   std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
-  uint64_t m_sleep_time;
-  uint64_t m_frequency;
 
   // Random Generatior
   triggeralgs::TimeStampedData get_time_stamped_data();
   std::default_random_engine m_generator;
   std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
   uint32_t m_counts;
+
+  uint64_t m_sleep_time;
+  uint64_t m_frequency;
+
 };
 } // namespace trigger
 } // namespace dunedaq
