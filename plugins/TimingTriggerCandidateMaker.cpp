@@ -116,3 +116,5 @@ TimingTriggerCandidateMaker::do_scrap(const nlohmann::json&)
 {}
 } // namespace trigger
 } // namespace dunedaq
+
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TimingTriggerCandidateMaker)
