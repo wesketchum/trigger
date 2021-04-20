@@ -35,7 +35,10 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief IntervalTCCreator creates TriggerCandidates at regular intervals, based on input from a TimeSync queue or the system clock
+ * @brief IntervalTCCreator creates TriggerCandidates at regular
+ * intervals, based on input from a TimeSync queue or the system
+ * clock. The TCs can be fed directly into the MLT, to allow testing
+ * the MLT separately from the Timing Message -> TC conversion logic
  */
 class IntervalTCCreator : public dunedaq::appfwk::DAQModule
 {
@@ -82,7 +85,6 @@ private:
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
-
 };
 } // namespace trigger
 } // namespace dunedaq

@@ -16,6 +16,11 @@
 namespace dunedaq {
 namespace trigger {
 
+/**
+ * @brief TimestampEstimatorBase is the base class for timestamp-based
+ * logic in test systems where the current timestamp must be estimated
+ * somehow (eg, because there is no hardware timing system).
+ **/
 class TimestampEstimatorBase
 {
 public:
@@ -43,9 +48,8 @@ public:
      Returns kFinished if the timestamp became valid, or kInterrupted if continue_flag became false first
   */
   WaitStatus wait_for_timestamp(dfmessages::timestamp_t ts, std::atomic<bool>& continue_flag);
-
 };
-  
+
 }
 }
 

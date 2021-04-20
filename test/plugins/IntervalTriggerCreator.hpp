@@ -42,10 +42,12 @@ public:
    */
   explicit IntervalTriggerCreator(const std::string& name);
 
+  // clang-format off
   IntervalTriggerCreator(const IntervalTriggerCreator&) = delete;            ///< IntervalTriggerCreator is not copy-constructible
   IntervalTriggerCreator& operator=(const IntervalTriggerCreator&) = delete; ///< IntervalTriggerCreator is not copy-assignable
   IntervalTriggerCreator(IntervalTriggerCreator&&) = delete;                 ///< IntervalTriggerCreator is not move-constructible
   IntervalTriggerCreator& operator=(IntervalTriggerCreator&&) = delete;      ///< IntervalTriggerCreator is not move-assignable
+  // clang-format on
 
   void init(const nlohmann::json& iniobj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -113,7 +115,6 @@ private:
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
-
 };
 } // namespace trigger
 } // namespace dunedaq

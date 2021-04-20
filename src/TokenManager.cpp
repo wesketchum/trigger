@@ -5,7 +5,7 @@ namespace dunedaq::trigger {
 TokenManager::TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
                            int initial_tokens,
                            dataformats::run_number_t run_number)
-  : m_n_initial_tokens(initial_tokens)
+  : m_n_tokens(initial_tokens)
   , m_token_source(token_source)
   , m_run_number(run_number)
 

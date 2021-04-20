@@ -40,8 +40,9 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief ModuleLevelTrigger reads lists of integers from one queue,
- * reverses the order of the list, and writes out the reversed list.
+ * @brief ModuleLevelTrigger is the last level of the data selection
+ * system, which reads in trigger candidates and sends trigger
+ * decisions, subject to availability of TriggerDecisionTokens
  */
 class ModuleLevelTrigger : public dunedaq::appfwk::DAQModule
 {
@@ -81,7 +82,7 @@ private:
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
-  
+
   std::vector<dfmessages::GeoID> m_links;
 
   int m_repeat_trigger_count{ 1 };

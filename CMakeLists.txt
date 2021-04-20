@@ -29,20 +29,23 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 ##############################################################################
 # Plugins
 
+daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger SupernovaTrigger)
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
 
 ##############################################################################
 # Integration tests
 
 
-
 ##############################################################################
 # Unit Tests
 
-# daq_add_unit_test(ComponentRequest_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################
 

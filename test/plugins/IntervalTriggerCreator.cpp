@@ -22,6 +22,7 @@
 #include "trigger/intervaltriggercreator/Nljs.hpp"
 
 #include "appfwk/app/Nljs.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -49,21 +50,13 @@ IntervalTriggerCreator::IntervalTriggerCreator(const std::string& name)
 void
 IntervalTriggerCreator::init(const nlohmann::json& iniobj)
 {
-  auto ini = iniobj.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.name == "time_sync_source") {
-      m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
-    }
-    if (qi.name == "trigger_candidate_sink") {
-      m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(qi.inst));
-    }
-  }
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj,"time_sync_source")));
+  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj,"trigger_candidate_sink")));
 }
 
 void
 IntervalTriggerCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)

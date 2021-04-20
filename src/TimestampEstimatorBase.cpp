@@ -2,8 +2,7 @@
 
 #include <thread>
 
-namespace dunedaq::trigger
-{
+namespace dunedaq::trigger {
 TimestampEstimatorBase::WaitStatus
 TimestampEstimatorBase::wait_for_valid_timestamp(std::atomic<bool>& continue_flag)
 {
