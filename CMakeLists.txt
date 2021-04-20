@@ -33,6 +33,7 @@ daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES t
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
 
 ##############################################################################
