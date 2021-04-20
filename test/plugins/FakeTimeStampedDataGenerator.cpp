@@ -130,7 +130,10 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 
     std::string thisQueueName = m_outputQueue->get_name();
     bool successfullyWasSent = false;
-    while (!successfullyWasSent && running_flag.load())
+    // do...while instead of while... so that we always try at least
+    // once to send everything we generate, even if running_flag is
+    // changed to false between the top of the main loop and here
+    do
     {
       TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the generated TSD onto queue " << thisQueueName;
       try
@@ -145,7 +148,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 	oss_warn << "push to output queue \"" << thisQueueName << "\"";
 	ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
       }
-    }
+    } while (!successfullyWasSent && running_flag.load());
   }
 
   std::ostringstream oss_summ;
