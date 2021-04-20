@@ -106,10 +106,9 @@ FakeTimeStampedDataGenerator::get_time_stamped_data()
   int signaltype = m_rdm_signaltype(m_generator);
 
   auto tsd_start_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1,50000000>> elapsed_time = tsd_start_time.time_since_epoch();
 
-  std::chrono::duration<double> elapsed_time = tsd_start_time.time_since_epoch();
-
-  tsd.time_stamp = ( (uint64_t)elapsed_time.count()) * m_frequency;
+  tsd.time_stamp = ( (uint64_t)elapsed_time.count()) * m_frequency/50000000;
   tsd.signal_type = signaltype;
   tsd.counter = ++m_counts;
 
