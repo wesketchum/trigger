@@ -105,9 +105,8 @@ FakeTimeStampedDataGenerator::get_time_stamped_data()
 
   tsd.time_stamp = ( (uint64_t)elapsed_time.count()) * m_frequency/50000000;
   tsd.signal_type = signaltype;
-  tsd.counter = ++m_counts;
+  tsd.counter = m_counts++;
 
-  //std::cout << "\033[32m" << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter << "\033[0m\n";
   TLOG_DEBUG(TLVL_GENERATION) << get_name() << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter <<"\n";
 
   return tsd;
