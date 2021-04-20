@@ -3,7 +3,7 @@ local ns = "dunedaq.trigger.faketimestampeddatagenerator";
 local s = moo.oschema.schema(ns);
 
 local types = {
-    size: s.number("Size", dtype="u8"),
+    size: s.number("Size", dtype="i8"),
 
     conf: s.record("Conf", [
 
