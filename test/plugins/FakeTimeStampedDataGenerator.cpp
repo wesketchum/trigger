@@ -12,6 +12,7 @@
 #include "FakeTimeStampedDataGenerator.hpp"
 
 #include "appfwk/app/Nljs.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include "logging/Logging.hpp"
 
@@ -44,20 +45,9 @@ void
 FakeTimeStampedDataGenerator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
-  auto ini = init_data.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.dir != "output") {
-      continue;                 // skip all but "output" direction
-    }
-    try
-    {
-      m_outputQueue.reset(new sink_t(qi.inst));
-    }
-    catch (const ers::Issue& excpt)
-    {
-      throw dunedaq::dunetrigger::InvalidQueueFatalError(ERS_HERE, get_name(), qi.name, excpt);
-    }
-  }
+
+  m_outputQueue.reset(new appfwk::DAQSink<triggeralgs::TimeStampedData>(appfwk::queue_inst(init_data,"time_stamped_data_sink")));
+
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
 }
 

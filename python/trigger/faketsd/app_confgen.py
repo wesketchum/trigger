@@ -36,7 +36,7 @@ def generate(
 
     mod_specs = [
         mspec("ftsdg", "FakeTimeStampedDataGenerator", [
-                        app.QueueInfo(name="timestamp_sink", inst="timestamp_q", dir="output"),
+                        app.QueueInfo(name="time_stamped_data_sink", inst="timestamp_q", dir="output"),
                     ]),
         ]
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     @click.command(context_settings=CONTEXT_SETTINGS)
     @click.option('-r', '--run-number', default=333)
-    @click.argument('json_file', type=click.Path(), default='listrev-app.json')
+    @click.argument('json_file', type=click.Path(), default='faketsd-app.json')
     def cli(run_number, json_file):
         """
           JSON_FILE: Input raw data file.
