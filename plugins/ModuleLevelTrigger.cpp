@@ -23,6 +23,7 @@
 // #include "trigger/moduleleveltriggerinfo/Nljs.hpp"
 
 #include "appfwk/app/Nljs.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -54,18 +55,9 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
-  auto ini = iniobj.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.name == "trigger_decision_sink") {
-      m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(qi.inst));
-    }
-    if (qi.name == "token_source") {
-      m_token_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(qi.inst));
-    }
-    if (qi.name == "trigger_candidate_source") {
-      m_candidate_source.reset(new appfwk::DAQSource<triggeralgs::TriggerCandidate>(qi.inst));
-    }
-  }
+  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
+  m_token_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj,"token_source")));
+  m_candidate_source.reset(new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj,"trigger_candidate_source")));
 }
 
 void

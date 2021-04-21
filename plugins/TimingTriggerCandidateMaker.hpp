@@ -4,16 +4,15 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
-#include "CommonIssues.hpp"
+#include "trigger/Issues.hpp"
 
-#include "TriggerCandidateType.hh"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
 #include "triggeralgs/TimeStampedData.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
-
+#include "triggeralgs/TriggerCandidateType.hpp"
 
 #include <chrono>
 

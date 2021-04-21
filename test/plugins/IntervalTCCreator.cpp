@@ -23,6 +23,7 @@
 #include "trigger/TimestampEstimatorSystem.hpp"
 
 #include "appfwk/app/Nljs.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -50,15 +51,8 @@ IntervalTCCreator::IntervalTCCreator(const std::string& name)
 void
 IntervalTCCreator::init(const nlohmann::json& iniobj)
 {
-  auto ini = iniobj.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.name == "time_sync_source") {
-      m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
-    }
-    if (qi.name == "trigger_candidate_sink") {
-      m_trigger_candidate_sink.reset(new appfwk::DAQSink<triggeralgs::TriggerCandidate>(qi.inst));
-    }
-  }
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj,"time_sync_source")));
+  m_trigger_candidate_sink.reset(new appfwk::DAQSink<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_sink")));
 }
 
 void

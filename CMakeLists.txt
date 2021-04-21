@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 0.0.1)
+project(trigger VERSION 0.0.2)
 
 find_package(daq-cmake REQUIRED)
 
@@ -30,6 +30,7 @@ daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES t
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
 
 ##############################################################################
@@ -39,7 +40,9 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages 
 ##############################################################################
 # Unit Tests
 
-# daq_add_unit_test(ComponentRequest_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
+daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################
 

@@ -30,7 +30,7 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   }
   candidate.time_candidate = data.time_stamp;
   candidate.detid = { static_cast<uint16_t>(data.signal_type) };
-  candidate.type = TriggerCandidateType::kTiming;
+  candidate.type = (uint32_t)triggeralgs::TriggerCandidateType::kTiming;
   candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = {};
@@ -52,9 +52,8 @@ void
 TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 {
   try {
-    auto qi = appfwk::queue_index(iniobj, { "input", "output" });
-    m_input_queue.reset(new source_t(qi["input"].inst));
-    m_output_queue.reset(new sink_t(qi["output"].inst));
+    m_input_queue.reset(new source_t(appfwk::queue_inst(iniobj, "input")));
+    m_output_queue.reset(new sink_t(appfwk::queue_inst(iniobj, "output")));
   } catch (const ers::Issue& excpt) {
     throw dunedaq::trigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input/output", excpt);
   }
@@ -63,7 +62,7 @@ TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
-  m_thread.start_working_thread();
+  m_thread.start_working_thread("timing-tc-maker");
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
@@ -117,3 +116,5 @@ TimingTriggerCandidateMaker::do_scrap(const nlohmann::json&)
 {}
 } // namespace trigger
 } // namespace dunedaq
+
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TimingTriggerCandidateMaker)
