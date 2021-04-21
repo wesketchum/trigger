@@ -8,12 +8,11 @@
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
-#include "dune-trigger-algs/TriggerCandidateType.hpp"
-#include "dune-trigger-algs/TimeStampedData.hh"
-#include "dune-trigger-algs/TriggerActivity.hh"
-#include "dune-trigger-algs/TriggerCandidate.hh"
-#include "dune-trigger-algs/TriggerPrimitive.hh"
-
+#include "triggeralgs/TimeStampedData.hpp"
+#include "triggeralgs/TriggerActivity.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
+#include "triggeralgs/TriggerCandidateType.hpp"
 
 #include <chrono>
 

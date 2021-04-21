@@ -17,7 +17,7 @@
 #include "trigger/TimestampEstimator.hpp"
 #include "trigger/TokenManager.hpp"
 
-#include "dune-trigger-algs/TriggerCandidate.hh"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"

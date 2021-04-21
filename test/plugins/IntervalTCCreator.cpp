@@ -15,7 +15,7 @@
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
-#include "dune-trigger-algs/TriggerCandidate.hh"
+#include "triggeralgs/TriggerCandidate.hpp"
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
