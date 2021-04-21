@@ -7,7 +7,7 @@
 #ifndef TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 
-#include "dune-trigger-algs/TimeStampedData.hh"
+#include "triggeralgs/TimeStampedData.hpp"
 
 #include "trigger/faketimestampeddatagenerator/Structs.hpp"
 
