@@ -92,8 +92,15 @@ import click
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-t', '--trigger-rate-hz', default=1.0)
 @click.option('-c', '--token-count', default=10)
+@click.option('-F', '--forget-decision-prob', default=0.0)
+@click.option('-H', '--hold-decision-prob', default=0.0)
+@click.option('-M', '--hold-max-size', default=0)
+@click.option('-m', '--hold-min-size', default=0)
+@click.option('-T', '--hold-min-ms', default=0)
+@click.option('-R', '--release-randomly-prob', default=0.0)
 @click.argument('json_dir', type=click.Path())
-def cli(trigger_rate_hz, token_count, json_dir):
+def cli(trigger_rate_hz, token_count, forget_decision_prob, hold_decision_prob, 
+        hold_max_size, hold_min_size, hold_min_ms, release_randomly_prob, json_dir):
     """
       JSON_DIR: Json file output folder
     """
@@ -112,7 +119,13 @@ def cli(trigger_rate_hz, token_count, json_dir):
         TRIGGER_RATE_HZ = trigger_rate_hz,
         OUTPUT_PATH = json_dir,
         TOKEN_COUNT = trigemu_token_count,
-        CLOCK_SPEED_HZ = CLOCK_SPEED_HZ
+        CLOCK_SPEED_HZ = CLOCK_SPEED_HZ,
+        FORGET_DECISION_PROB = forget_decision_prob,
+        HOLD_DECISION_PROB = hold_decision_prob,
+        HOLD_MAX_SIZE = hold_max_size,
+        HOLD_MIN_SIZE = hold_min_size,
+        HOLD_MIN_MS = hold_min_ms,
+        RELEASE_RANDOMLY_PROB = release_randomly_prob
     )
 
     console.log("trg cmd data:", cmd_data_trg)
