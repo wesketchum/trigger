@@ -30,7 +30,7 @@ TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs
   }
   candidate.time_candidate = data.time_stamp;
   candidate.detid = { static_cast<uint16_t>(data.signal_type) };
-  candidate.type = (uint32_t)triggeralgs::TriggerCandidateType::kTiming;
+  candidate.type = triggeralgs::TriggerCandidateType::kTiming;
   candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = {};
