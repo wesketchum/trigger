@@ -51,7 +51,8 @@ def generate_boot( tremu_spec: dict) -> dict:
                 "DUNEDAQ_SHARE_PATH": "getenv",
                 "LD_LIBRARY_PATH": "getenv",
                 "PATH": "getenv",
-                "DUNEDAQ_ERS_DEBUG_LEVEL": "1"
+                "DUNEDAQ_ERS_DEBUG_LEVEL": "getenv",
+                "DUNEDAQ_ERS_VERBOSITY_LEVEL": "getenv",
             },
             "cmd": [
                 "CMD_FAC=rest://localhost:${APP_PORT}",
@@ -64,7 +65,7 @@ def generate_boot( tremu_spec: dict) -> dict:
 
     boot = {
         "env": {
-            "DUNEDAQ_ERS_VERBOSITY_LEVEL": 1
+            "DUNEDAQ_ERS_VERBOSITY_LEVEL": "getenv"
         },
         "apps": {
             tremu_spec["name"]: {
