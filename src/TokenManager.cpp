@@ -12,6 +12,7 @@ TokenManager::TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::Trigger
 {
   m_running_flag.store(true);
   m_read_queue_thread = std::thread(&TokenManager::read_token_queue, this);
+  pthread_setname_np(m_read_queue_thread.native_handle(), "token-mgr");
 }
 
 TokenManager::~TokenManager()
