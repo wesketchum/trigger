@@ -119,10 +119,17 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
   size_t generatedCount = 0;
   size_t sentCount = 0;
 
-  while (running_flag.load()) 
+  auto start_time=std::chrono::steady_clock::now();
+  auto period=std::chrono::nanoseconds(m_sleep_time);
+  auto next_time_step=start_time+period;
+
+  while (running_flag.load())
   {
     TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
-    std::this_thread::sleep_for(std::chrono::nanoseconds(m_sleep_time));
+
+    std::this_thread::sleep_until(next_time_step);
+
+    next_time_step+=period;
 
     triggeralgs::TimeStampedData tsd = get_time_stamped_data();
 
@@ -151,14 +158,17 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
     } while (!successfullyWasSent && running_flag.load());
   }
 
+  auto end_time=std::chrono::steady_clock::now();
+  using doublesec=std::chrono::duration<double, std::ratio<1>>;
+  double khz=1e-3*generatedCount/doublesec(end_time-start_time).count();
   std::ostringstream oss_summ;
   oss_summ << ": Exiting the do_work() method, generated " << generatedCount
-           << " TSD set and successfully sent " << sentCount << " copies. ";
+           << " TSD set and successfully sent " << sentCount << " copies. " << khz << "kHz";
   ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 
-} // namespace trigger 
+} // namespace trigger
 } // namespace dunedaq
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::FakeTimeStampedDataGenerator)
