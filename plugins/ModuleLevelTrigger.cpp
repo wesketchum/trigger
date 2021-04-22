@@ -155,11 +155,14 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_trigger_count_tot.store(0);
   m_inhibited_trigger_count.store(0);
   m_inhibited_trigger_count_tot.store(0);
-
+  size_t n_tc_received=0;
+  size_t n_paused=0;
+  
   while (m_running_flag.load()) {
     triggeralgs::TriggerCandidate tc;
     try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
+      ++n_tc_received;
     } catch (appfwk::QueueTimeoutExpired&) {
       continue;
     }
@@ -182,13 +185,17 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_trigger_count++;
       m_trigger_count_tot++;
     } else if (!tokens_allow_triggers) {
-      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for timestamp ";
+      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp " << tc.time_candidate;
       m_inhibited_trigger_count++;
       m_inhibited_trigger_count_tot++;
     } else {
+      ++n_paused;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
   }
+
+  TLOG() << "Received " << n_tc_received << " TCs. Sent " << m_trigger_count_tot.load() << " TDs. "
+                << n_paused << " TDs were created during pause, and " <<  m_inhibited_trigger_count_tot.load() << " TDs were inhibited.";
 }
 
 } // namespace trigger
