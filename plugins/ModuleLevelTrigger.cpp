@@ -22,8 +22,8 @@
 #include "trigger/moduleleveltrigger/Nljs.hpp"
 // #include "trigger/moduleleveltriggerinfo/Nljs.hpp"
 
-#include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -55,9 +55,12 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
-  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
-  m_token_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj,"token_source")));
-  m_candidate_source.reset(new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj,"trigger_candidate_source")));
+  m_trigger_decision_sink.reset(
+    new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
+  m_token_source.reset(
+    new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj, "token_source")));
+  m_candidate_source.reset(
+    new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_source")));
 }
 
 void
@@ -155,9 +158,9 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_trigger_count_tot.store(0);
   m_inhibited_trigger_count.store(0);
   m_inhibited_trigger_count_tot.store(0);
-  size_t n_tc_received=0;
-  size_t n_paused=0;
-  
+  size_t n_tc_received = 0;
+  size_t n_paused = 0;
+
   while (m_running_flag.load()) {
     triggeralgs::TriggerCandidate tc;
     try {
@@ -185,7 +188,8 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_trigger_count++;
       m_trigger_count_tot++;
     } else if (!tokens_allow_triggers) {
-      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp " << tc.time_candidate;
+      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
+                    << tc.time_candidate;
       m_inhibited_trigger_count++;
       m_inhibited_trigger_count_tot++;
     } else {
@@ -194,8 +198,8 @@ ModuleLevelTrigger::send_trigger_decisions()
     }
   }
 
-  TLOG() << "Received " << n_tc_received << " TCs. Sent " << m_trigger_count_tot.load() << " TDs. "
-                << n_paused << " TDs were created during pause, and " <<  m_inhibited_trigger_count_tot.load() << " TDs were inhibited.";
+  TLOG() << "Received " << n_tc_received << " TCs. Sent " << m_trigger_count_tot.load() << " TDs. " << n_paused
+         << " TDs were created during pause, and " << m_inhibited_trigger_count_tot.load() << " TDs were inhibited.";
 }
 
 } // namespace trigger

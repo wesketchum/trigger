@@ -76,9 +76,9 @@ TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
-  size_t n_tsd_received=0;
-  size_t n_tc_sent=0;
-  
+  size_t n_tsd_received = 0;
+  size_t n_tc_sent = 0;
+
   while (running_flag.load()) {
 
     triggeralgs::TimeStampedData data;
@@ -108,12 +108,14 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
         std::ostringstream oss_warn;
         oss_warn << "push to output queue \"" << m_output_queue->get_name() << "\"";
-        ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
+        ers::warning(
+          dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
       }
     }
   }
 
-  TLOG() << "Received " << n_tsd_received << " TimeStampedData messages. Successfully sent " << n_tc_sent << " TriggerCandidates";
+  TLOG() << "Received " << n_tsd_received << " TimeStampedData messages. Successfully sent " << n_tc_sent
+         << " TriggerCandidates";
   TLOG_DEBUG(2) << "Exiting do_work() method";
 }
 
