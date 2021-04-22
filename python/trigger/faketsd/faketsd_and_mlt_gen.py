@@ -142,11 +142,15 @@ def generate(
         ("ttcm", startpars),
     ])
 
+    # We issue stop commands in the order "upstream to downstream" so
+    # that each module can drain its input queue at stop, and be
+    # guaranteed to get all inputs (at least when everything lives in
+    # the same module)
     cmd_data['stop'] = acmd([
-        ("fdf", None),
-        ("mlt", None),
         ("ftsdg", None),
         ("ttcm", None),
+        ("mlt", None),
+        ("fdf", None),
     ])
 
     cmd_data['pause'] = acmd([

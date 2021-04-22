@@ -161,13 +161,19 @@ ModuleLevelTrigger::send_trigger_decisions()
   size_t n_tc_received = 0;
   size_t n_paused = 0;
 
-  while (m_running_flag.load()) {
+  while (true) {
     triggeralgs::TriggerCandidate tc;
     try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
       ++n_tc_received;
     } catch (appfwk::QueueTimeoutExpired&) {
-      continue;
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!m_running_flag.load()) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     bool tokens_allow_triggers = m_token_manager->triggers_allowed();
