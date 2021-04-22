@@ -8,6 +8,7 @@
 
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
+#include "trigger/LivetimeCounter.hpp"
 #include "trigger/TokenManager.hpp"
 
 /**
@@ -54,9 +55,11 @@ BOOST_AUTO_TEST_CASE(Basics)
   auto sink = std::make_unique<sink_t>("dummy");
   auto source = std::make_unique<source_t>("dummy");
 
+  auto livetime_counter=std::make_shared<trigger::LivetimeCounter>(trigger::LivetimeCounter::State::kPaused);
+  
   int initial_tokens = 10;
   dataformats::run_number_t run_number = 1;
-  trigger::TokenManager tm(source, initial_tokens, run_number);
+  trigger::TokenManager tm(source, initial_tokens, run_number, livetime_counter);
 
   BOOST_CHECK_EQUAL(tm.get_n_tokens(), initial_tokens);
   BOOST_CHECK_EQUAL(tm.triggers_allowed(), true);
