@@ -79,14 +79,20 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
   size_t n_tsd_received = 0;
   size_t n_tc_sent = 0;
 
-  while (running_flag.load()) {
+  while (true) {
 
     triggeralgs::TimeStampedData data;
     try {
       m_input_queue->pop(data, m_queue_timeout);
       ++n_tsd_received;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-      continue;
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!running_flag.load()) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     triggeralgs::TriggerCandidate candidate;

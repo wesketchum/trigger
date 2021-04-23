@@ -161,28 +161,42 @@ ModuleLevelTrigger::send_trigger_decisions()
   size_t n_tc_received = 0;
   size_t n_paused = 0;
 
-  while (m_running_flag.load()) {
+  while (true) {
     triggeralgs::TriggerCandidate tc;
     try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
       ++n_tc_received;
     } catch (appfwk::QueueTimeoutExpired&) {
-      continue;
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!m_running_flag.load()) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     bool tokens_allow_triggers = m_token_manager->triggers_allowed();
+
     if (!m_paused.load() && tokens_allow_triggers) {
 
       dfmessages::TriggerDecision decision = create_decision(tc);
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
                     << decision.trigger_timestamp << " number of links " << decision.components.size();
+
+      // Have to notify the token manager of the trigger _before_
+      // actually pushing it, otherwise the DF could reply with
+      // TriggerComplete before we get to the notification. If that
+      // happens, then the token manager sees a TriggerComplete for a
+      // token it doesn't know about, and ignores it
+      m_token_manager->trigger_sent(decision.trigger_number);
       try {
         m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
       } catch (appfwk::QueueTimeoutExpired& e) {
         ers::error(e);
       }
-      m_token_manager->trigger_sent(decision.trigger_number);
+
       decision.trigger_number++;
       m_last_trigger_number++;
       m_trigger_count++;
