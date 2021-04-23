@@ -23,21 +23,30 @@ LivetimeCounter::~LivetimeCounter()
 }
 
 void
-LivetimeCounter::set_state(LivetimeCounter::State state)
+LivetimeCounter::update_map()
 {
-  std::lock_guard<std::mutex> l(m_mutex);
+  // Caller must lock the mutex, so we don't here
   auto current_time=now();
   auto delta=(current_time-m_last_state_change_time);
   m_state_times[m_state]+=delta;
-  TLOG_DEBUG(1) << "Changing state from " << get_state_name(m_state) << " to " << get_state_name(state) << " after " << delta << "ms";
-  m_state=state;
   m_last_state_change_time=current_time;
+}
+
+
+void
+LivetimeCounter::set_state(LivetimeCounter::State state)
+{
+  std::lock_guard<std::mutex> l(m_mutex);
+  update_map(); // Add the time to the old state
+  TLOG_DEBUG(1) << "Changing state from " << get_state_name(m_state) << " to " << get_state_name(state);
+  m_state=state;
 }
 
 std::map<LivetimeCounter::State, LivetimeCounter::state_time_t>
 LivetimeCounter::get_time_map()
 {
   std::lock_guard<std::mutex> l(m_mutex);
+  update_map();
   return m_state_times;
 }
 
@@ -45,6 +54,7 @@ LivetimeCounter::state_time_t
 LivetimeCounter::get_time(LivetimeCounter::State state)
 {
   std::lock_guard<std::mutex> l(m_mutex);
+  update_map();
   return m_state_times[state];
 }
 
@@ -59,9 +69,10 @@ std::string
 LivetimeCounter::get_report_string()
 {
   std::lock_guard<std::mutex> l(m_mutex);
+  update_map();
   std::ostringstream oss;
   for(auto const& [state, t]: m_state_times){
-    oss << get_state_name(state) << ": " << t << " ";
+    oss << get_state_name(state) << ": " << t << "ms ";
   }
   return oss.str();
 }
