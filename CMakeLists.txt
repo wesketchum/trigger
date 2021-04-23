@@ -27,6 +27,7 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 # Plugins
 
 daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
+daq_add_plugin(RandomTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
