@@ -128,7 +128,7 @@ FakeDataFlow::respond_to_trigger_decisions()
   bool hold_full = false;
   std::chrono::steady_clock::time_point hold_full_time;
   while (m_running_flag.load()) {
-    if (held_decisions.size() >= m_hold_max_size) {
+    if (held_decisions.size() && held_decisions.size() >= m_hold_max_size) {
       if (hold_full) {
         std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
         int delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - hold_full_time).count();
