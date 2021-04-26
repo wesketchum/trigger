@@ -123,6 +123,9 @@ int
 RandomTriggerCandidateMaker::get_interval(std::mt19937 &gen)
 {
   switch (m_conf.time_distribution) {
+    default: // Treat an unknown distribution as kUniform, but warn
+      TLOG_DEBUG(1) << get_name() << " unknown distribution! Using kUniform.";
+      /* fall through */
     case randomtriggercandidatemaker::distribution_type::kUniform:
       return m_conf.trigger_interval_ticks;
     case randomtriggercandidatemaker::distribution_type::kPoisson:
@@ -141,7 +144,9 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
   }
 
   dfmessages::timestamp_t initial_timestamp = m_timestamp_estimator->get_timestamp_estimate();
-  dfmessages::timestamp_t next_trigger_timestamp = initial_timestamp + get_interval(gen);
+  dfmessages::timestamp_t first_interval = get_interval(gen);
+  // Round up to the next multiple of trigger_interval_ticks
+  dfmessages::timestamp_t next_trigger_timestamp = (initial_timestamp / first_interval + 1) * first_interval;
   TLOG_DEBUG(1) << get_name() << " initial timestamp estimate is " << initial_timestamp 
                 << ", next_trigger_timestamp is " << next_trigger_timestamp;
 
