@@ -78,7 +78,7 @@ def generate(
         app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=100),
         app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=20),
         app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=20),
-        app.QueueSpec(inst="trigger_candidate_q", kind='FollySPSCQueue', capacity=20),
+        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=20), #No MPSC Queue?
     ]
 
     # Only needed to reproduce the same order as when using jsonnet

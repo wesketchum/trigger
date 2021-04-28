@@ -11,22 +11,19 @@ moo.otypes.load_types('rcif/cmd.jsonnet')
 moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
-moo.otypes.load_types('trigger/intervaltccreator.jsonnet')
+moo.otypes.load_types('trigger/randomtriggercandidatemaker.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
 moo.otypes.load_types('trigger/fakedataflow.jsonnet')
-moo.otypes.load_types('trigger/faketimestampeddatagenerator.jsonnet')
-moo.otypes.load_types('trigger/timingtriggercandidatemaker.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
 import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd,
-import dunedaq.trigger.intervaltccreator as itcc
+import dunedaq.trigger.randomtriggercandidatemaker as rtcm
 import dunedaq.trigger.moduleleveltrigger as mlt
 import dunedaq.trigger.fakedataflow as fdf
-import dunedaq.trigger.faketimestampeddatagenerator as ftsdg
-import dunedaq.trigger.timingtriggercandidatemaker as ttcm
+
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -74,15 +71,14 @@ def generate(
     cmd_data = {}
 
     # Derived parameters
-    TRIGGER_INTERVAL_NS = math.floor((1e9/TRIGGER_RATE_HZ))
+    TRG_INTERVAL_TICKS = math.floor((1/TRIGGER_RATE_HZ) * CLOCK_SPEED_HZ)
 
     # Define modules and queues
     queue_bare_specs = [
-        app.QueueSpec(inst="timestamped_data_q", kind='FollyMPMCQueue', capacity=1000),
-        app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=1000),
-        app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=2000),
-        app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=2000),
-        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=2000), #No MPSC Queue?
+        app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=100),
+        app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=20),
+        app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=20),
+        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=20), #No MPSC Queue?
     ]
 
     # Only needed to reproduce the same order as when using jsonnet
@@ -101,13 +97,14 @@ def generate(
             app.QueueInfo(name="trigger_candidate_source", inst="trigger_candidate_q", dir="output"),
         ]),
 
-        mspec("ftsdg", "FakeTimeStampedDataGenerator", [
-            app.QueueInfo(name="time_stamped_data_sink", inst="timestamped_data_q", dir="output"),
+        mspec("rtcm_poisson", "RandomTriggerCandidateMaker", [
+            app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
+            app.QueueInfo(name="trigger_candidate_sink", inst="trigger_candidate_q", dir="output"),
         ]),
-
-        mspec("ttcm", "TimingTriggerCandidateMaker", [
-            app.QueueInfo(name="input", inst="timestamped_data_q", dir="input"),
-            app.QueueInfo(name="output", inst="trigger_candidate_q", dir="output"),
+        
+        mspec("rtcm_uniform", "RandomTriggerCandidateMaker", [
+            app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
+            app.QueueInfo(name="trigger_candidate_sink", inst="trigger_candidate_q", dir="output"),
         ]),
     ]
 
@@ -126,11 +123,17 @@ def generate(
             links=[idx for idx in range(3)],
             initial_token_count=TOKEN_COUNT                    
         )),
-        ("ftsdg", ftsdg.Conf(
-            sleep_time=TRIGGER_INTERVAL_NS,
-            frequency=CLOCK_SPEED_HZ
+        ("rtcm_poisson", rtcm.ConfParams(
+            trigger_interval_ticks=TRG_INTERVAL_TICKS,
+            clock_frequency_hz=CLOCK_SPEED_HZ,
+            timestamp_method="kSystemClock",
+            time_distribution="kPoisson"
         )),
-        ("ttcm", ttcm.Conf(
+        ("rtcm_uniform", rtcm.ConfParams(
+            trigger_interval_ticks=TRG_INTERVAL_TICKS,
+            clock_frequency_hz=CLOCK_SPEED_HZ,
+            timestamp_method="kSystemClock",
+            time_distribution="kUniform"
         )),
     ])
 
@@ -138,19 +141,15 @@ def generate(
     cmd_data['start'] = acmd([
         ("fdf", startpars),
         ("mlt", startpars),
-        ("ftsdg", startpars),
-        ("ttcm", startpars),
+        ("rtcm_poisson", startpars),
+        ("rtcm_uniform", startpars),
     ])
 
-    # We issue stop commands in the order "upstream to downstream" so
-    # that each module can drain its input queue at stop, and be
-    # guaranteed to get all inputs (at least when everything lives in
-    # the same module)
     cmd_data['stop'] = acmd([
-        ("ftsdg", None),
-        ("ttcm", None),
-        ("mlt", None),
         ("fdf", None),
+        ("mlt", None),
+        ("rtcm_poisson", None),
+        ("rtcm_uniform", None),
     ])
 
     cmd_data['pause'] = acmd([
