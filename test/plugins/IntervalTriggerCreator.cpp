@@ -18,8 +18,9 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/intervaltriggercreator/Nljs.hpp"
+
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
@@ -100,7 +101,7 @@ IntervalTriggerCreator::do_start(const nlohmann::json& startobj)
 
   m_running_flag.store(true);
 
-  m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
+  m_timestamp_estimator.reset(new timinglibs::TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
 
   m_send_trigger_decisions_thread = std::thread(&IntervalTriggerCreator::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "tde-trig-dec");
@@ -162,7 +163,7 @@ IntervalTriggerCreator::send_trigger_decisions()
   m_last_trigger_number = 0;
 
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 
@@ -178,7 +179,7 @@ IntervalTriggerCreator::send_trigger_decisions()
 
   while (true) {
     if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag) ==
-        TimestampEstimatorBase::kInterrupted) {
+        timinglibs::TimestampEstimatorBase::kInterrupted) {
       break;
     }
 

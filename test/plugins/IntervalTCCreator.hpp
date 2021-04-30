@@ -7,7 +7,6 @@
 #ifndef TRIGGER_TEST_PLUGINS_INTERVALTRIGGERCREATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_INTERVALTRIGGERCREATOR_HPP_
 
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/TokenManager.hpp"
 
 #include "trigger/intervaltccreator/Nljs.hpp"
@@ -20,6 +19,8 @@
 #include "dfmessages/TriggerDecisionToken.hpp"
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
+
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -67,7 +68,7 @@ private:
   void send_trigger_candidates();
   std::thread m_send_trigger_candidates_thread;
 
-  std::unique_ptr<TimestampEstimatorBase> m_timestamp_estimator;
+  std::unique_ptr<timinglibs::TimestampEstimatorBase> m_timestamp_estimator;
 
   // Create the next trigger decision
   triggeralgs::TriggerCandidate create_candidate(dfmessages::timestamp_t timestamp);
