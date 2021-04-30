@@ -17,20 +17,22 @@ TimingTriggerCandidateMaker::TimingTriggerCandidateMaker(const std::string& name
 }
 
 triggeralgs::TriggerCandidate
-TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
+TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data)
 {
   triggeralgs::TriggerCandidate candidate;
-  if (m_detid_offsets_map.count(data.signal_type)) {
+  // TODO the signal field ia now a signal bit map, rather than unique value -> change logic of below?
+  if (m_detid_offsets_map.count(data.signal_map)) {
     // clang-format off
-    candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
-    candidate.time_end   = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
+    candidate.time_start = data.timestamp - m_detid_offsets_map[data.signal_map].first;  // time_start
+    candidate.time_end   = data.timestamp + m_detid_offsets_map[data.signal_map].second; // time_end,
     // clang-format on
   } else {
-    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type);
+    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_map);
   }
-  candidate.time_candidate = data.time_stamp;
-  candidate.detid = { static_cast<uint16_t>(data.signal_type) };
-  candidate.type = triggeralgs::TriggerCandidateType::kTiming;
+  candidate.time_candidate = data.timestamp;
+  // throw away bits 31-16 of header, that's OK for now
+  candidate.detid = { static_cast<uint16_t>(data.header) };
+  candidate.type = (uint32_t)triggeralgs::TriggerCandidateType::kTiming;
   candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = {};
@@ -81,7 +83,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 
   while (true) {
 
-    triggeralgs::TimeStampedData data;
+    dfmessages::HSIEvent data;
     try {
       m_input_queue->pop(data, m_queue_timeout);
       ++n_tsd_received;
@@ -97,7 +99,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 
     triggeralgs::TriggerCandidate candidate;
     try {
-      candidate = TimeStampedDataToTriggerCandidate(data);
+      candidate = HSIEventToTriggerCandidate(data);
     } catch (SignalTypeError& e) {
       ers::error(e);
       continue;
@@ -120,7 +122,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
     }
   }
 
-  TLOG() << "Received " << n_tsd_received << " TimeStampedData messages. Successfully sent " << n_tc_sent
+  TLOG() << "Received " << n_tsd_received << " HSIEvent messages. Successfully sent " << n_tc_sent
          << " TriggerCandidates";
   TLOG_DEBUG(2) << "Exiting do_work() method";
 }

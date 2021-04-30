@@ -16,7 +16,7 @@ find_package(dfmessages REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp TimestampEstimator.cpp TimestampEstimatorBase.cpp TimestampEstimatorSystem.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
@@ -42,8 +42,6 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 ##############################################################################
 # Unit Tests
 
-daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
-daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################

@@ -7,7 +7,7 @@
 #ifndef TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 
-#include "triggeralgs/TimeStampedData.hpp"
+#include "dfmessages/HSIEvent.hpp"
 
 #include "trigger/faketimestampeddatagenerator/Structs.hpp"
 
@@ -63,12 +63,12 @@ private:
   void do_work(std::atomic<bool>&);
 
   // Configuration
-  using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
+  using sink_t = dunedaq::appfwk::DAQSink<dfmessages::HSIEvent>;
   std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
 
   // Random Generatior
-  triggeralgs::TimeStampedData get_time_stamped_data();
+  dfmessages::HSIEvent get_hsievent();
   std::default_random_engine m_generator;
   std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
   uint32_t m_counts;

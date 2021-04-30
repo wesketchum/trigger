@@ -8,7 +8,7 @@
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
 
-#include "triggeralgs/TimeStampedData.hpp"
+#include "dfmessages/HSIEvent.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
@@ -38,10 +38,10 @@ private:
 
   dunedaq::appfwk::ThreadHelper m_thread;
 
-  triggeralgs::TriggerCandidate TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data);
+  triggeralgs::TriggerCandidate HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data);
   void do_work(std::atomic<bool>&);
 
-  using source_t = dunedaq::appfwk::DAQSource<triggeralgs::TimeStampedData>;
+  using source_t = dunedaq::appfwk::DAQSource<dfmessages::HSIEvent>;
   std::unique_ptr<source_t> m_input_queue;
 
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TriggerCandidate>;

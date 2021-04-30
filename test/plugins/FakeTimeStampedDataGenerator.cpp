@@ -45,7 +45,7 @@ FakeTimeStampedDataGenerator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
 
-  m_outputQueue.reset(new appfwk::DAQSink<triggeralgs::TimeStampedData>(appfwk::queue_inst(init_data,"time_stamped_data_sink")));
+  m_outputQueue.reset(new appfwk::DAQSink<dfmessages::HSIEvent>(appfwk::queue_inst(init_data,"hsievent_sink")));
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
 }
@@ -93,21 +93,22 @@ FakeTimeStampedDataGenerator::do_scrap(const nlohmann::json& /*args*/)
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
-triggeralgs::TimeStampedData
-FakeTimeStampedDataGenerator::get_time_stamped_data()
+dfmessages::HSIEvent
+FakeTimeStampedDataGenerator::get_hsievent()
 {
-  triggeralgs::TimeStampedData tsd{};
+  dfmessages::HSIEvent tsd{};
 
   int signaltype = m_rdm_signaltype(m_generator);
 
   auto tsd_start_time = std::chrono::steady_clock::now();
   std::chrono::duration<double, std::ratio<1,50000000>> elapsed_time = tsd_start_time.time_since_epoch();
 
-  tsd.time_stamp = ( (uint64_t)elapsed_time.count()) * m_frequency/50000000;
-  tsd.signal_type = signaltype;
-  tsd.counter = m_counts++;
+  // leave header as 0
+  tsd.timestamp = ( (uint64_t)elapsed_time.count()) * m_frequency/50000000;
+  tsd.signal_map = signaltype;
+  tsd.sequence_counter = m_counts++;
 
-  TLOG_DEBUG(TLVL_GENERATION) << get_name() << tsd.time_stamp << ", "<< tsd.signal_type << ", "<< tsd.counter <<"\n";
+  TLOG_DEBUG(TLVL_GENERATION) << get_name() << tsd.timestamp << ", "<< tsd.signal_map << ", "<< tsd.sequence_counter <<"\n";
 
   return tsd;
 }
@@ -131,7 +132,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
 
     next_time_step+=period;
 
-    triggeralgs::TimeStampedData tsd = get_time_stamped_data();
+    dfmessages::HSIEvent tsd = get_hsievent();
 
     generatedCount++;
 

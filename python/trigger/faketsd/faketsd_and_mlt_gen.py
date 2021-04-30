@@ -78,7 +78,7 @@ def generate(
 
     # Define modules and queues
     queue_bare_specs = [
-        app.QueueSpec(inst="timestamped_data_q", kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst="hsievent_q", kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=1000),
         app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=2000),
         app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=2000),
@@ -102,11 +102,11 @@ def generate(
         ]),
 
         mspec("ftsdg", "FakeTimeStampedDataGenerator", [
-            app.QueueInfo(name="time_stamped_data_sink", inst="timestamped_data_q", dir="output"),
+            app.QueueInfo(name="hsievent_sink", inst="hsievent_q", dir="output"),
         ]),
 
         mspec("ttcm", "TimingTriggerCandidateMaker", [
-            app.QueueInfo(name="input", inst="timestamped_data_q", dir="input"),
+            app.QueueInfo(name="input", inst="hsievent_q", dir="input"),
             app.QueueInfo(name="output", inst="trigger_candidate_q", dir="output"),
         ]),
     ]

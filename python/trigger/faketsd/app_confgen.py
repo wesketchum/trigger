@@ -29,7 +29,7 @@ def generate(
 
     # Define modules and queues
     queue_bare_specs = [
-            app.QueueSpec(inst="timestamp_q", kind='FollyMPMCQueue', capacity=1000),
+            app.QueueSpec(inst="hsievent_q", kind='FollyMPMCQueue', capacity=1000),
         ]
     
     # Only needed to reproduce the same order as when using jsonnet
@@ -38,7 +38,7 @@ def generate(
 
     mod_specs = [
         mspec("ftsdgen", "FakeTimeStampedDataGenerator", [
-                        app.QueueInfo(name="time_stamped_data_sink", inst="timestamp_q", dir="output"),
+                        app.QueueInfo(name="hsievent_sink", inst="hsievent_q", dir="output"),
                     ]),
         ]
 
