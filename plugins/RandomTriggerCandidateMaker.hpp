@@ -7,12 +7,12 @@
 #ifndef TRIGGER_PLUGINS_RANDOMTRIGGERCANDIDATEMAKER_HPP_
 #define TRIGGER_PLUGINS_RANDOMTRIGGERCANDIDATEMAKER_HPP_
 
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/TokenManager.hpp"
 
 #include "trigger/randomtriggercandidatemaker/Nljs.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -67,7 +67,7 @@ private:
   void send_trigger_candidates();
   std::thread m_send_trigger_candidates_thread;
 
-  std::unique_ptr<TimestampEstimatorBase> m_timestamp_estimator;
+  std::unique_ptr<timinglibs::TimestampEstimatorBase> m_timestamp_estimator;
 
   // Create the next trigger decision
   triggeralgs::TriggerCandidate create_candidate(dfmessages::timestamp_t timestamp);

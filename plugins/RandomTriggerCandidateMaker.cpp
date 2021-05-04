@@ -19,8 +19,9 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/TimestampEstimator.hpp"
-#include "trigger/TimestampEstimatorSystem.hpp"
+
+#include "timinglibs/TimestampEstimator.hpp"
+#include "timinglibs/TimestampEstimatorSystem.hpp"
 
 #include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
@@ -76,11 +77,11 @@ RandomTriggerCandidateMaker::do_start(const nlohmann::json& obj)
   switch (m_conf.timestamp_method) {
     case randomtriggercandidatemaker::timestamp_estimation::kTimeSync:
       TLOG_DEBUG(0) << "Creating TimestampEstimator";
-      m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_conf.clock_frequency_hz));
+      m_timestamp_estimator.reset(new timinglibs::TimestampEstimator(m_time_sync_source, m_conf.clock_frequency_hz));
       break;
     case randomtriggercandidatemaker::timestamp_estimation::kSystemClock:
       TLOG_DEBUG(0) << "Creating TimestampEstimatorSystem";
-      m_timestamp_estimator.reset(new TimestampEstimatorSystem(m_conf.clock_frequency_hz));
+      m_timestamp_estimator.reset(new timinglibs::TimestampEstimatorSystem(m_conf.clock_frequency_hz));
       break;
   }
 
@@ -139,7 +140,7 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
 {
   std::mt19937 gen(m_run_number);
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 
@@ -152,7 +153,7 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
 
   while (m_running_flag.load()) {
     if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp, m_running_flag) ==
-        TimestampEstimatorBase::kInterrupted) {
+        timinglibs::TimestampEstimatorBase::kInterrupted) {
       break;
     }
 

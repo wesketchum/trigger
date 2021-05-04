@@ -18,9 +18,10 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
 // #include "trigger/moduleleveltriggerinfo/Nljs.hpp"
+
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"

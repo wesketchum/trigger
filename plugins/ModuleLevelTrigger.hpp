@@ -14,7 +14,6 @@
 #ifndef TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 #define TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/TokenManager.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
@@ -25,6 +24,8 @@
 #include "dfmessages/TriggerDecisionToken.hpp"
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
+
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
