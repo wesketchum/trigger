@@ -52,13 +52,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: ${{ github.repository }}
-        
-    - name: checkout triggeralgs
-      uses: actions/checkout@v2
-      with:
-        repository: DUNE-DAQ/triggeralgs
-        path:  ${{ github.workspace }}/DUNE-DAQ/triggeralgs
-    
+      
     - name: setup build env and build the dev release
       run: |
           export REPO=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')
