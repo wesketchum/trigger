@@ -78,7 +78,7 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     // For the future: Set APA properly
-    m_links.push_back(dfmessages::GeoID{ 0, static_cast<uint32_t>(link) }); // NOLINT
+    m_links.push_back(dfmessages::GeoID{dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
   }
 
   m_configured_flag.store(true);
@@ -135,6 +135,7 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_timestamp = tc.time_candidate;
   // TODO: work out what to set this to
   decision.trigger_type = 1; // m_trigger_type;
+  decision.readout_type = dfmessages::ReadoutType::kLocalized;
 
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
