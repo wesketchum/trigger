@@ -135,6 +135,7 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_timestamp = tc.time_candidate;
   // TODO: work out what to set this to
   decision.trigger_type = 1; // m_trigger_type;
+  decision.readout_type = dfmessages::ReadoutType::kLocalized;
 
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
