@@ -14,6 +14,7 @@
 #ifndef TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 #define TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 
+#include "trigger/moduleleveltriggerinfo/Nljs.hpp"
 #include "trigger/TokenManager.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
@@ -103,10 +104,13 @@ private:
   std::atomic<bool> m_configured_flag{ false };
 
   // Opmon variables
-  std::atomic<uint64_t> m_trigger_count{ 0 };
-  std::atomic<uint64_t> m_trigger_count_tot{ 0 };
-  std::atomic<uint64_t> m_inhibited_trigger_count{ 0 };
-  std::atomic<uint64_t> m_inhibited_trigger_count_tot{ 0 };
+  using metric_counter_type = decltype(moduleleveltriggerinfo::Info::tc_received_count);
+  std::atomic<metric_counter_type> m_tc_received_count                 { 0 };
+  std::atomic<metric_counter_type> m_td_sent_count                     { 0 };
+  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
+  std::atomic<metric_counter_type> m_td_inhibited_count                { 0 };
+  std::atomic<metric_counter_type> m_td_paused_count                   { 0 };
+  std::atomic<metric_counter_type> m_td_total_count                    { 0 };
 };
 } // namespace trigger
 } // namespace dunedaq

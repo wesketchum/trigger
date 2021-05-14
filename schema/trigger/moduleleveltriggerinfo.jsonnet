@@ -13,12 +13,13 @@ local info = {
 
    info: s.record("Info", [
        s.field("class_name", self.cl, "moduleleveltriggerinfo", doc="Info class name"),
-       s.field("trigger_decisions", self.uint8, 0, doc="Number of trigger decisions in the book"), 
-       s.field("populated_trigger_ids", self.uint8, 0, doc="Number of trigger IDs with at least one fragment"), 
-       s.field("total_fragments", self.uint8, 0, doc="Total number of fragments in the book"),
-       s.field("old_fragments", self.uint8, 0, doc="Number of fragments that are late with respect to present time. How late is configurable"),
-       s.field("old_trigger_ids", self.uint8, 0, doc="Number of populated trigger IDs that are late with respect to present time. How late is configurable")       
-   ], doc="Fragment receiver information")
+       s.field("tc_received_count",                  self.uint8, 0, doc="Number of trigger candidates received."), 
+       s.field("td_sent_count",                      self.uint8, 0, doc="Number of trigger decisions added to queue."), 
+       s.field("td_queue_timeout_expired_err_count", self.uint8, 0, doc="Number of trigger decisions failed to be added to queue due to timeout."), 
+       s.field("td_inhibited_count",                 self.uint8, 0, doc="Number of trigger decisions inhibited."), 
+       s.field("td_paused_count",                    self.uint8, 0, doc="Number of trigger decisions created during pause mode."), 
+       s.field("td_total_count",                     self.uint8, 0, doc="Total number of trigger decisions created."), 
+   ], doc="Module level trigger information")
 };
 
 moo.oschema.sort_select(info) 

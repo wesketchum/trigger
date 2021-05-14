@@ -78,15 +78,18 @@ TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
-  size_t n_tsd_received = 0;
-  size_t n_tc_sent = 0;
+  // OpMon.
+  m_tsd_received_count   .store(0);
+  m_tc_sent_count        .store(0);
+  m_tc_sig_type_err_count.store(0);
+  m_tc_total_count       .store(0);
 
   while (true) {
 
     dfmessages::HSIEvent data;
     try {
       m_input_queue->pop(data, m_queue_timeout);
-      ++n_tsd_received;
+      ++m_tsd_received_count;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       // The condition to exit the loop is that we've been stopped and
       // there's nothing left on the input queue
@@ -101,6 +104,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
     try {
       candidate = HSIEventToTriggerCandidate(data);
     } catch (SignalTypeError& e) {
+      m_tc_sig_type_err_count++;
       ers::error(e);
       continue;
     }
@@ -112,7 +116,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
       try {
         m_output_queue->push(candidate, m_queue_timeout);
         successfullyWasSent = true;
-        ++n_tc_sent;
+        ++m_tc_sent_count;
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
         std::ostringstream oss_warn;
         oss_warn << "push to output queue \"" << m_output_queue->get_name() << "\"";
@@ -120,9 +124,11 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
           dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
       }
     }
+
+    m_tc_total_count++;
   }
 
-  TLOG() << "Received " << n_tsd_received << " HSIEvent messages. Successfully sent " << n_tc_sent
+  TLOG() << "Received " << m_tsd_received_count << " HSIEvent messages. Successfully sent " << m_tc_sent_count
          << " TriggerCandidates";
   TLOG_DEBUG(2) << "Exiting do_work() method";
 }
@@ -130,6 +136,20 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 void
 TimingTriggerCandidateMaker::do_scrap(const nlohmann::json&)
 {}
+
+void
+TimingTriggerCandidateMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+{
+  timingtriggercandidatemakerinfo::Info i;
+
+  i.tsd_received_count    = m_tsd_received_count   .load();
+  i.tc_sent_count         = m_tc_sent_count        .load();
+  i.tc_sig_type_err_count = m_tc_sig_type_err_count.load();
+  i.tc_total_count        = m_tc_total_count       .load();
+
+  ci.add(i);
+}
+
 } // namespace trigger
 } // namespace dunedaq
 

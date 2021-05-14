@@ -57,8 +57,13 @@ RandomTriggerCandidateMaker::init(const nlohmann::json& obj)
 }
 
 void
-RandomTriggerCandidateMaker::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
+RandomTriggerCandidateMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/)
 {
+  randomtriggercandidatemakerinfo::Info i;
+
+  i.tc_sent_count = m_tc_sent_count.load();
+
+  ci.add(i);
 }
 
 void
@@ -138,6 +143,9 @@ RandomTriggerCandidateMaker::get_interval(std::mt19937 &gen)
 void
 RandomTriggerCandidateMaker::send_trigger_candidates()
 {
+  // OpMon.
+  m_tc_sent_count.store(0);
+
   std::mt19937 gen(m_run_number);
   // Wait for there to be a valid timestamp estimate before we start
   if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
@@ -162,6 +170,7 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
     TLOG_DEBUG(1) << get_name() << " at timestamp " << m_timestamp_estimator->get_timestamp_estimate()
                   << ", pushing a candidate with timestamp " << candidate.time_candidate;
     m_trigger_candidate_sink->push(candidate, std::chrono::milliseconds(10));
+    m_tc_sent_count++;
 
     next_trigger_timestamp += get_interval(gen);
   }
