@@ -10,6 +10,7 @@
 #include "trigger/TokenManager.hpp"
 
 #include "trigger/randomtriggercandidatemaker/Nljs.hpp"
+#include "trigger/randomtriggercandidatemakerinfo/Nljs.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
@@ -86,6 +87,11 @@ private:
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
+
+  // OpMon variables
+  using metric_counter_type = decltype(randomtriggercandidatemakerinfo::Info::tc_sent_count);
+  std::atomic<metric_counter_type> m_tc_sent_count{ 0 };
+
 };
 } // namespace trigger
 } // namespace dunedaq

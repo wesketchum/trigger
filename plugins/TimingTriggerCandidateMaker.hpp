@@ -7,6 +7,7 @@
 #include "trigger/Issues.hpp"
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
+#include "trigger/timingtriggercandidatemakerinfo/Nljs.hpp"
 
 #include "dfmessages/HSIEvent.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
@@ -29,6 +30,7 @@ public:
   TimingTriggerCandidateMaker& operator=(TimingTriggerCandidateMaker&&) = delete;
 
   void init(const nlohmann::json& iniobj) override;
+  void get_info(opmonlib::InfoCollector& ci, int level) override;
 
 private:
   void do_conf(const nlohmann::json& config);
@@ -50,6 +52,13 @@ private:
   std::chrono::milliseconds m_queue_timeout;
 
   std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map;
+
+  // Opmon variables
+  using metric_counter_type = decltype(timingtriggercandidatemakerinfo::Info::tsd_received_count);
+  std::atomic<metric_counter_type> m_tsd_received_count   { 0 };
+  std::atomic<metric_counter_type> m_tc_sent_count        { 0 };
+  std::atomic<metric_counter_type> m_tc_sig_type_err_count{ 0 };
+  std::atomic<metric_counter_type> m_tc_total_count       { 0 };
 };
 } // namespace trigger
 } // namespace dunedaq

@@ -19,7 +19,6 @@
 
 #include "trigger/Issues.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
-// #include "trigger/moduleleveltriggerinfo/Nljs.hpp"
 
 #include "timinglibs/TimestampEstimator.hpp"
 
@@ -65,8 +64,19 @@ ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 }
 
 void
-ModuleLevelTrigger::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{}
+ModuleLevelTrigger::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+{
+  moduleleveltriggerinfo::Info i;
+
+  i.tc_received_count                  = m_tc_received_count                 .load();
+  i.td_sent_count                      = m_td_sent_count                     .load();
+  i.td_queue_timeout_expired_err_count = m_td_queue_timeout_expired_err_count.load();
+  i.td_inhibited_count                 = m_td_inhibited_count                .load();
+  i.td_paused_count                    = m_td_paused_count                   .load();
+  i.td_total_count                     = m_td_total_count                    .load();
+
+  ci.add(i);
+}
 
 void
 ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
@@ -156,18 +166,20 @@ ModuleLevelTrigger::send_trigger_decisions()
 
   // We get here at start of run, so reset the trigger number
   m_last_trigger_number = 0;
-  m_trigger_count.store(0);
-  m_trigger_count_tot.store(0);
-  m_inhibited_trigger_count.store(0);
-  m_inhibited_trigger_count_tot.store(0);
-  size_t n_tc_received = 0;
-  size_t n_paused = 0;
+
+  // OpMon.
+  m_tc_received_count                 .store(0);
+  m_td_sent_count                     .store(0);
+  m_td_queue_timeout_expired_err_count.store(0);
+  m_td_inhibited_count                .store(0);
+  m_td_paused_count                   .store(0);
+  m_td_total_count                    .store(0);
 
   while (true) {
     triggeralgs::TriggerCandidate tc;
     try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
-      ++n_tc_received;
+      ++m_tc_received_count;
     } catch (appfwk::QueueTimeoutExpired&) {
       // The condition to exit the loop is that we've been stopped and
       // there's nothing left on the input queue
@@ -195,27 +207,27 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_token_manager->trigger_sent(decision.trigger_number);
       try {
         m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+        m_td_sent_count++;
       } catch (appfwk::QueueTimeoutExpired& e) {
+        m_td_queue_timeout_expired_err_count++;
         ers::error(e);
       }
 
       decision.trigger_number++;
       m_last_trigger_number++;
-      m_trigger_count++;
-      m_trigger_count_tot++;
     } else if (!tokens_allow_triggers) {
       TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
-      m_inhibited_trigger_count++;
-      m_inhibited_trigger_count_tot++;
+      m_td_inhibited_count++;
     } else {
-      ++n_paused;
+      ++m_td_paused_count;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
+    m_td_total_count++;
   }
 
-  TLOG() << "Received " << n_tc_received << " TCs. Sent " << m_trigger_count_tot.load() << " TDs. " << n_paused
-         << " TDs were created during pause, and " << m_inhibited_trigger_count_tot.load() << " TDs were inhibited.";
+  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. " << m_td_paused_count
+         << " TDs were created during pause, and " << m_td_inhibited_count.load() << " TDs were inhibited.";
 }
 
 } // namespace trigger
