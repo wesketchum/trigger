@@ -11,7 +11,7 @@ moo.otypes.load_types('rcif/cmd.jsonnet')
 moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
-moo.otypes.load_types('trigger/intervaltccreator.jsonnet')
+moo.otypes.load_types('trigger/randomtriggercandidatemaker.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
 moo.otypes.load_types('trigger/fakedataflow.jsonnet')
 
@@ -20,7 +20,7 @@ import dunedaq.cmdlib.cmd as basecmd # AddressedCmd,
 import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd,
-import dunedaq.trigger.intervaltccreator as itcc
+import dunedaq.trigger.randomtriggercandidatemaker as rtcm
 import dunedaq.trigger.moduleleveltrigger as mlt
 import dunedaq.trigger.fakedataflow as fdf
 
@@ -97,7 +97,12 @@ def generate(
             app.QueueInfo(name="trigger_candidate_source", inst="trigger_candidate_q", dir="output"),
         ]),
 
-        mspec("itcc", "IntervalTCCreator", [
+        mspec("rtcm_poisson", "RandomTriggerCandidateMaker", [
+            app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
+            app.QueueInfo(name="trigger_candidate_sink", inst="trigger_candidate_q", dir="output"),
+        ]),
+        
+        mspec("rtcm_uniform", "RandomTriggerCandidateMaker", [
             app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
             app.QueueInfo(name="trigger_candidate_sink", inst="trigger_candidate_q", dir="output"),
         ]),
@@ -118,12 +123,17 @@ def generate(
             links=[idx for idx in range(3)],
             initial_token_count=TOKEN_COUNT                    
         )),
-        ("itcc", itcc.ConfParams(
+        ("rtcm_poisson", rtcm.ConfParams(
             trigger_interval_ticks=TRG_INTERVAL_TICKS,
             clock_frequency_hz=CLOCK_SPEED_HZ,
-            repeat_trigger_count=1,
-            stop_burst_count=0,
-            timestamp_method="kSystemClock"
+            timestamp_method="kSystemClock",
+            time_distribution="kPoisson"
+        )),
+        ("rtcm_uniform", rtcm.ConfParams(
+            trigger_interval_ticks=TRG_INTERVAL_TICKS,
+            clock_frequency_hz=CLOCK_SPEED_HZ,
+            timestamp_method="kSystemClock",
+            time_distribution="kUniform"
         )),
     ])
 
@@ -131,13 +141,15 @@ def generate(
     cmd_data['start'] = acmd([
         ("fdf", startpars),
         ("mlt", startpars),
-        ("itcc", startpars),
+        ("rtcm_poisson", startpars),
+        ("rtcm_uniform", startpars),
     ])
 
     cmd_data['stop'] = acmd([
         ("fdf", None),
         ("mlt", None),
-        ("itcc", None),
+        ("rtcm_poisson", None),
+        ("rtcm_uniform", None),
     ])
 
     cmd_data['pause'] = acmd([

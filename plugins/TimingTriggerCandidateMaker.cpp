@@ -17,20 +17,22 @@ TimingTriggerCandidateMaker::TimingTriggerCandidateMaker(const std::string& name
 }
 
 triggeralgs::TriggerCandidate
-TimingTriggerCandidateMaker::TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data)
+TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data)
 {
   triggeralgs::TriggerCandidate candidate;
-  if (m_detid_offsets_map.count(data.signal_type)) {
+  // TODO the signal field ia now a signal bit map, rather than unique value -> change logic of below?
+  if (m_detid_offsets_map.count(data.signal_map)) {
     // clang-format off
-    candidate.time_start = data.time_stamp - m_detid_offsets_map[data.signal_type].first;  // time_start
-    candidate.time_end   = data.time_stamp + m_detid_offsets_map[data.signal_type].second; // time_end,
+    candidate.time_start = data.timestamp - m_detid_offsets_map[data.signal_map].first;  // time_start
+    candidate.time_end   = data.timestamp + m_detid_offsets_map[data.signal_map].second; // time_end,
     // clang-format on
   } else {
-    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_type);
+    throw dunedaq::trigger::SignalTypeError(ERS_HERE, get_name(), data.signal_map);
   }
-  candidate.time_candidate = data.time_stamp;
-  candidate.detid = { static_cast<uint16_t>(data.signal_type) };
-  candidate.type = TriggerCandidateType::kTiming;
+  candidate.time_candidate = data.timestamp;
+  // throw away bits 31-16 of header, that's OK for now
+  candidate.detid = { static_cast<uint16_t>(data.header) };
+  candidate.type = triggeralgs::TriggerCandidateType::kTiming;;
   candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = {};
@@ -52,9 +54,8 @@ void
 TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 {
   try {
-    auto qi = appfwk::queue_index(iniobj, { "input", "output" });
-    m_input_queue.reset(new source_t(qi["input"].inst));
-    m_output_queue.reset(new sink_t(qi["output"].inst));
+    m_input_queue.reset(new source_t(appfwk::queue_inst(iniobj, "input")));
+    m_output_queue.reset(new sink_t(appfwk::queue_inst(iniobj, "output")));
   } catch (const ers::Issue& excpt) {
     throw dunedaq::trigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input/output", excpt);
   }
@@ -63,7 +64,7 @@ TimingTriggerCandidateMaker::init(const nlohmann::json& iniobj)
 void
 TimingTriggerCandidateMaker::do_start(const nlohmann::json&)
 {
-  m_thread.start_working_thread();
+  m_thread.start_working_thread("timing-tc-maker");
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
@@ -77,19 +78,33 @@ TimingTriggerCandidateMaker::do_stop(const nlohmann::json&)
 void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
-  while (running_flag.load()) {
+  // OpMon.
+  m_tsd_received_count   .store(0);
+  m_tc_sent_count        .store(0);
+  m_tc_sig_type_err_count.store(0);
+  m_tc_total_count       .store(0);
 
-    triggeralgs::TimeStampedData data;
+  while (true) {
+
+    dfmessages::HSIEvent data;
     try {
       m_input_queue->pop(data, m_queue_timeout);
+      ++m_tsd_received_count;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-      continue;
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!running_flag.load()) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     triggeralgs::TriggerCandidate candidate;
     try {
-      candidate = TimeStampedDataToTriggerCandidate(data);
+      candidate = HSIEventToTriggerCandidate(data);
     } catch (SignalTypeError& e) {
+      m_tc_sig_type_err_count++;
       ers::error(e);
       continue;
     }
@@ -101,6 +116,7 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
       try {
         m_output_queue->push(candidate, m_queue_timeout);
         successfullyWasSent = true;
+        ++m_tc_sent_count;
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
         std::ostringstream oss_warn;
         oss_warn << "push to output queue \"" << m_output_queue->get_name() << "\"";
@@ -108,13 +124,33 @@ TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
           dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
       }
     }
+
+    m_tc_total_count++;
   }
 
+  TLOG() << "Received " << m_tsd_received_count << " HSIEvent messages. Successfully sent " << m_tc_sent_count
+         << " TriggerCandidates";
   TLOG_DEBUG(2) << "Exiting do_work() method";
 }
 
 void
 TimingTriggerCandidateMaker::do_scrap(const nlohmann::json&)
 {}
+
+void
+TimingTriggerCandidateMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+{
+  timingtriggercandidatemakerinfo::Info i;
+
+  i.tsd_received_count    = m_tsd_received_count   .load();
+  i.tc_sent_count         = m_tc_sent_count        .load();
+  i.tc_sig_type_err_count = m_tc_sig_type_err_count.load();
+  i.tc_total_count        = m_tc_total_count       .load();
+
+  ci.add(i);
+}
+
 } // namespace trigger
 } // namespace dunedaq
+
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TimingTriggerCandidateMaker)

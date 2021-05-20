@@ -14,6 +14,8 @@ moo.otypes.load_types('appfwk/app.jsonnet')
 moo.otypes.load_types('trigger/intervaltccreator.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
 moo.otypes.load_types('trigger/fakedataflow.jsonnet')
+moo.otypes.load_types('trigger/faketimestampeddatagenerator.jsonnet')
+moo.otypes.load_types('trigger/timingtriggercandidatemaker.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -23,7 +25,8 @@ import dunedaq.appfwk.app as app # AddressedCmd,
 import dunedaq.trigger.intervaltccreator as itcc
 import dunedaq.trigger.moduleleveltrigger as mlt
 import dunedaq.trigger.fakedataflow as fdf
-
+import dunedaq.trigger.faketimestampeddatagenerator as ftsdg
+import dunedaq.trigger.timingtriggercandidatemaker as ttcm
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -71,14 +74,15 @@ def generate(
     cmd_data = {}
 
     # Derived parameters
-    TRG_INTERVAL_TICKS = math.floor((1/TRIGGER_RATE_HZ) * CLOCK_SPEED_HZ)
+    TRIGGER_INTERVAL_NS = math.floor((1e9/TRIGGER_RATE_HZ))
 
     # Define modules and queues
     queue_bare_specs = [
-        app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=100),
-        app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=20),
-        app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=20),
-        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=20), #No MPSC Queue?
+        app.QueueSpec(inst="hsievent_q", kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=1000),
+        app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=2000),
+        app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=2000),
+        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=2000), #No MPSC Queue?
     ]
 
     # Only needed to reproduce the same order as when using jsonnet
@@ -97,9 +101,13 @@ def generate(
             app.QueueInfo(name="trigger_candidate_source", inst="trigger_candidate_q", dir="output"),
         ]),
 
-        mspec("itcc", "IntervalTCCreator", [
-            app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
-            app.QueueInfo(name="trigger_candidate_sink", inst="trigger_candidate_q", dir="output"),
+        mspec("ftsdg", "FakeTimeStampedDataGenerator", [
+            app.QueueInfo(name="hsievent_sink", inst="hsievent_q", dir="output"),
+        ]),
+
+        mspec("ttcm", "TimingTriggerCandidateMaker", [
+            app.QueueInfo(name="input", inst="hsievent_q", dir="input"),
+            app.QueueInfo(name="output", inst="trigger_candidate_q", dir="output"),
         ]),
     ]
 
@@ -118,12 +126,11 @@ def generate(
             links=[idx for idx in range(3)],
             initial_token_count=TOKEN_COUNT                    
         )),
-        ("itcc", itcc.ConfParams(
-            trigger_interval_ticks=TRG_INTERVAL_TICKS,
-            clock_frequency_hz=CLOCK_SPEED_HZ,
-            repeat_trigger_count=1,
-            stop_burst_count=0,
-            timestamp_method="kSystemClock"
+        ("ftsdg", ftsdg.Conf(
+            sleep_time=TRIGGER_INTERVAL_NS,
+            frequency=CLOCK_SPEED_HZ
+        )),
+        ("ttcm", ttcm.Conf(
         )),
     ])
 
@@ -131,13 +138,19 @@ def generate(
     cmd_data['start'] = acmd([
         ("fdf", startpars),
         ("mlt", startpars),
-        ("itcc", startpars),
+        ("ftsdg", startpars),
+        ("ttcm", startpars),
     ])
 
+    # We issue stop commands in the order "upstream to downstream" so
+    # that each module can drain its input queue at stop, and be
+    # guaranteed to get all inputs (at least when everything lives in
+    # the same module)
     cmd_data['stop'] = acmd([
-        ("fdf", None),
+        ("ftsdg", None),
+        ("ttcm", None),
         ("mlt", None),
-        ("itcc", None),
+        ("fdf", None),
     ])
 
     cmd_data['pause'] = acmd([

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 0.0.1)
+project(trigger VERSION 1.0.0)
 
 find_package(daq-cmake REQUIRED)
 
@@ -12,11 +12,12 @@ find_package(logging REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
+find_package(timinglibs REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp TimestampEstimator.cpp TimestampEstimatorBase.cpp TimestampEstimatorSystem.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
@@ -27,11 +28,13 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 # Plugins
 
 daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
-daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerActivityMaker duneDAQModule LINK_LIBRARIES trigger)
-daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
-daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
-daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
+daq_add_plugin(RandomTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
+daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
+daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
+daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
+daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 
 # Algorithm plugins
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
@@ -43,7 +46,7 @@ daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES tr
 ##############################################################################
 # Unit Tests
 
-# daq_add_unit_test(ComponentRequest_test        LINK_LIBRARIES trigger)
+daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################
 

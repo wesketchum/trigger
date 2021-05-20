@@ -18,10 +18,12 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/intervaltriggercreator/Nljs.hpp"
 
+#include "timinglibs/TimestampEstimator.hpp"
+
 #include "appfwk/app/Nljs.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -49,15 +51,8 @@ IntervalTriggerCreator::IntervalTriggerCreator(const std::string& name)
 void
 IntervalTriggerCreator::init(const nlohmann::json& iniobj)
 {
-  auto ini = iniobj.get<appfwk::app::ModInit>();
-  for (const auto& qi : ini.qinfos) {
-    if (qi.name == "time_sync_source") {
-      m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(qi.inst));
-    }
-    if (qi.name == "trigger_candidate_sink") {
-      m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(qi.inst));
-    }
-  }
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj,"time_sync_source")));
+  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj,"trigger_candidate_sink")));
 }
 
 void
@@ -88,7 +83,7 @@ IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     // For the future: Set APA properly
-    m_links.push_back(dfmessages::GeoID{ 0, static_cast<uint32_t>(link) }); // NOLINT
+    m_links.push_back(dfmessages::GeoID{ dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
   }
 
   // Sanity-check the values
@@ -106,7 +101,7 @@ IntervalTriggerCreator::do_start(const nlohmann::json& startobj)
 
   m_running_flag.store(true);
 
-  m_timestamp_estimator.reset(new TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
+  m_timestamp_estimator.reset(new timinglibs::TimestampEstimator(m_time_sync_source, m_clock_frequency_hz));
 
   m_send_trigger_decisions_thread = std::thread(&IntervalTriggerCreator::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "tde-trig-dec");
@@ -168,7 +163,7 @@ IntervalTriggerCreator::send_trigger_decisions()
   m_last_trigger_number = 0;
 
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 
@@ -184,7 +179,7 @@ IntervalTriggerCreator::send_trigger_decisions()
 
   while (true) {
     if (m_timestamp_estimator->wait_for_timestamp(next_trigger_timestamp + trigger_delay_ticks_, m_running_flag) ==
-        TimestampEstimatorBase::kInterrupted) {
+        timinglibs::TimestampEstimatorBase::kInterrupted) {
       break;
     }
 

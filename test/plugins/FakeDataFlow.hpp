@@ -58,6 +58,14 @@ private:
   void do_resume(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
+  size_t m_hold_max_size;
+  size_t m_hold_min_size;
+  int m_hold_min_ms;
+  double m_release_randomly_prob;
+  double m_forget_decision_prob;
+  double m_hold_decision_prob;
+  
+  void respond_with_token(const dfmessages::TriggerDecision &td);
   void respond_to_trigger_decisions();
   std::thread m_fake_data_flow_thread;
 

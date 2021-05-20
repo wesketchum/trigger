@@ -31,7 +31,7 @@ local types = {
 		s.field("s1",
 			self.map_t,
 			{
-				signal_type: 0,
+				signal_type: 1,
 				time_before: 100000,
 				time_after: 200000
 			},
@@ -39,7 +39,7 @@ local types = {
 		s.field("s2",
 			self.map_t,
 			{
-				signal_type: 0,
+				signal_type: 2,
 				time_before: 1000000,
 				time_after: 2000000
 			},
