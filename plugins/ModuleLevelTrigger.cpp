@@ -68,12 +68,12 @@ ModuleLevelTrigger::get_info(opmonlib::InfoCollector& ci, int /*level*/)
 {
   moduleleveltriggerinfo::Info i;
 
-  i.tc_received_count                  = m_tc_received_count                 .load();
-  i.td_sent_count                      = m_td_sent_count                     .load();
+  i.tc_received_count = m_tc_received_count.load();
+  i.td_sent_count = m_td_sent_count.load();
   i.td_queue_timeout_expired_err_count = m_td_queue_timeout_expired_err_count.load();
-  i.td_inhibited_count                 = m_td_inhibited_count                .load();
-  i.td_paused_count                    = m_td_paused_count                   .load();
-  i.td_total_count                     = m_td_total_count                    .load();
+  i.td_inhibited_count = m_td_inhibited_count.load();
+  i.td_paused_count = m_td_paused_count.load();
+  i.td_total_count = m_td_total_count.load();
 
   ci.add(i);
 }
@@ -88,7 +88,8 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     // For the future: Set APA properly
-    m_links.push_back(dfmessages::GeoID{dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
+    m_links.push_back(
+      dfmessages::GeoID{ dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
   }
 
   m_configured_flag.store(true);
@@ -168,12 +169,12 @@ ModuleLevelTrigger::send_trigger_decisions()
   m_last_trigger_number = 0;
 
   // OpMon.
-  m_tc_received_count                 .store(0);
-  m_td_sent_count                     .store(0);
+  m_tc_received_count.store(0);
+  m_td_sent_count.store(0);
   m_td_queue_timeout_expired_err_count.store(0);
-  m_td_inhibited_count                .store(0);
-  m_td_paused_count                   .store(0);
-  m_td_total_count                    .store(0);
+  m_td_inhibited_count.store(0);
+  m_td_paused_count.store(0);
+  m_td_total_count.store(0);
 
   while (true) {
     triggeralgs::TriggerCandidate tc;
@@ -226,8 +227,9 @@ ModuleLevelTrigger::send_trigger_decisions()
     m_td_total_count++;
   }
 
-  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. " << m_td_paused_count
-         << " TDs were created during pause, and " << m_td_inhibited_count.load() << " TDs were inhibited.";
+  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
+         << m_td_paused_count << " TDs were created during pause, and " << m_td_inhibited_count.load()
+         << " TDs were inhibited.";
 }
 
 } // namespace trigger

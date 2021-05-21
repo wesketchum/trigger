@@ -22,8 +22,8 @@
 
 #include "timinglibs/TimestampEstimator.hpp"
 
-#include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -51,8 +51,9 @@ IntervalTriggerCreator::IntervalTriggerCreator(const std::string& name)
 void
 IntervalTriggerCreator::init(const nlohmann::json& iniobj)
 {
-  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj,"time_sync_source")));
-  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj,"trigger_candidate_sink")));
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj, "time_sync_source")));
+  m_trigger_decision_sink.reset(
+    new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_candidate_sink")));
 }
 
 void
@@ -83,7 +84,8 @@ IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     // For the future: Set APA properly
-    m_links.push_back(dfmessages::GeoID{ dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
+    m_links.push_back(
+      dfmessages::GeoID{ dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
   }
 
   // Sanity-check the values
@@ -163,7 +165,8 @@ IntervalTriggerCreator::send_trigger_decisions()
   m_last_trigger_number = 0;
 
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) ==
+      timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 

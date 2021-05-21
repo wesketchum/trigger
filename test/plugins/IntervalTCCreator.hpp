@@ -4,8 +4,8 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_INTERVALTRIGGERCREATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_INTERVALTRIGGERCREATOR_HPP_
+#ifndef TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
+#define TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
 
 #include "trigger/TokenManager.hpp"
 
@@ -90,7 +90,7 @@ private:
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_TEST_PLUGINS_INTERVALTRIGGERCREATOR_HPP_
+#endif // TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
 
 // Local Variables:
 // c-basic-offset: 2

@@ -1,5 +1,5 @@
 /**
- * @file TimestampEstimator.hpp TimestampEstimator Class
+ * @file TokenManager.hpp
  *
  * This is part of the DUNE DAQ Application Framework, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -41,7 +41,12 @@ public:
                int initial_tokens,
                dataformats::run_number_t run_number);
 
-  ~TokenManager();
+  virtual ~TokenManager();
+
+  TokenManager(TokenManager const&) = delete;
+  TokenManager(TokenManager&&) = default;
+  TokenManager& operator=(TokenManager const&) = delete;
+  TokenManager& operator=(TokenManager&&) = default;
 
   /**
    *  Get the number of available tokens
@@ -81,7 +86,7 @@ private:
   dataformats::run_number_t m_run_number;
 };
 
-}
-}
+} // namespace trigger
+} // namespace dunedaq
 
 #endif // TRIGGER_SRC_TRIGGER_TOKENMANAGER_HPP_

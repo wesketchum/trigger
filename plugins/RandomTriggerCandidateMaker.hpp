@@ -12,8 +12,8 @@
 #include "trigger/randomtriggercandidatemaker/Nljs.hpp"
 #include "trigger/randomtriggercandidatemakerinfo/Nljs.hpp"
 
-#include "triggeralgs/TriggerCandidate.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 #include "dataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -27,10 +27,10 @@
 #include "appfwk/DAQSource.hpp"
 
 #include <memory>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
-#include <random>
 
 namespace dunedaq {
 
@@ -50,10 +50,14 @@ public:
    */
   explicit RandomTriggerCandidateMaker(const std::string& name);
 
-  RandomTriggerCandidateMaker(const RandomTriggerCandidateMaker&) = delete;            ///< RandomTriggerCandidateMaker is not copy-constructible
-  RandomTriggerCandidateMaker& operator=(const RandomTriggerCandidateMaker&) = delete; ///< RandomTriggerCandidateMaker is not copy-assignable
-  RandomTriggerCandidateMaker(RandomTriggerCandidateMaker&&) = delete;                 ///< RandomTriggerCandidateMaker is not move-constructible
-  RandomTriggerCandidateMaker& operator=(RandomTriggerCandidateMaker&&) = delete;      ///< RandomTriggerCandidateMaker is not move-assignable
+  RandomTriggerCandidateMaker(const RandomTriggerCandidateMaker&) =
+    delete; ///< RandomTriggerCandidateMaker is not copy-constructible
+  RandomTriggerCandidateMaker& operator=(const RandomTriggerCandidateMaker&) =
+    delete; ///< RandomTriggerCandidateMaker is not copy-assignable
+  RandomTriggerCandidateMaker(RandomTriggerCandidateMaker&&) =
+    delete; ///< RandomTriggerCandidateMaker is not move-constructible
+  RandomTriggerCandidateMaker& operator=(RandomTriggerCandidateMaker&&) =
+    delete; ///< RandomTriggerCandidateMaker is not move-assignable
 
   void init(const nlohmann::json& iniobj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -64,7 +68,7 @@ private:
   void do_start(const nlohmann::json& obj);
   void do_stop(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
-  
+
   void send_trigger_candidates();
   std::thread m_send_trigger_candidates_thread;
 
@@ -78,8 +82,8 @@ private:
   std::unique_ptr<appfwk::DAQSink<triggeralgs::TriggerCandidate>> m_trigger_candidate_sink;
 
   randomtriggercandidatemaker::ConfParams m_conf;
-  
-  int get_interval(std::mt19937 &gen);
+
+  int get_interval(std::mt19937& gen);
 
   dfmessages::run_number_t m_run_number;
 
@@ -91,7 +95,6 @@ private:
   // OpMon variables
   using metric_counter_type = decltype(randomtriggercandidatemakerinfo::Info::tc_sent_count);
   std::atomic<metric_counter_type> m_tc_sent_count{ 0 };
-
 };
 } // namespace trigger
 } // namespace dunedaq
