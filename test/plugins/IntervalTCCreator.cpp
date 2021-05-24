@@ -18,12 +18,12 @@
 #include "logging/Logging.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 
-#include "trigger/Issues.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
 #include "timinglibs/TimestampEstimatorSystem.hpp"
+#include "trigger/Issues.hpp"
 
-#include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 #include "triggeralgs/TriggerCandidateType.hpp"
 
 #include <algorithm>
@@ -52,8 +52,9 @@ IntervalTCCreator::IntervalTCCreator(const std::string& name)
 void
 IntervalTCCreator::init(const nlohmann::json& iniobj)
 {
-  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj,"time_sync_source")));
-  m_trigger_candidate_sink.reset(new appfwk::DAQSink<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_sink")));
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(iniobj, "time_sync_source")));
+  m_trigger_candidate_sink.reset(
+    new appfwk::DAQSink<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_sink")));
 }
 
 void
@@ -129,7 +130,8 @@ IntervalTCCreator::send_trigger_candidates()
   m_last_trigger_number = 0;
 
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) ==
+      timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 

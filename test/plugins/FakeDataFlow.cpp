@@ -17,12 +17,13 @@
 
 #include "trigger/fakedataflow/Nljs.hpp"
 
-#include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 
-#include <vector>
-#include <random>
 #include <chrono>
+#include <random>
+#include <string>
+#include <vector>
 
 namespace dunedaq {
 namespace trigger {
@@ -37,18 +38,19 @@ FakeDataFlow::FakeDataFlow(const std::string& name)
   register_command("stop", &FakeDataFlow::do_stop);
   register_command("scrap", &FakeDataFlow::do_scrap);
 }
-  
+
 void
 FakeDataFlow::init(const nlohmann::json& obj)
 {
-  m_trigger_decision_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecision>(appfwk::queue_inst(obj, "trigger_decision_source")));
-  m_trigger_complete_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(obj,"trigger_complete_sink")));
+  m_trigger_decision_source.reset(
+    new appfwk::DAQSource<dfmessages::TriggerDecision>(appfwk::queue_inst(obj, "trigger_decision_source")));
+  m_trigger_complete_sink.reset(
+    new appfwk::DAQSink<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(obj, "trigger_complete_sink")));
 }
 
 void
 FakeDataFlow::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{
-}
+{}
 
 void
 FakeDataFlow::do_configure(const nlohmann::json& obj)
@@ -85,28 +87,25 @@ FakeDataFlow::do_scrap(const nlohmann::json& /*obj*/)
 }
 
 void
-FakeDataFlow::respond_with_token(const dfmessages::TriggerDecision &td)
+FakeDataFlow::respond_with_token(const dfmessages::TriggerDecision& td)
 {
   TLOG_DEBUG(1) << "Responding to decision with"
-                << " triggernumber " << td.trigger_number 
-                << " timestamp " << td.trigger_timestamp 
-                << " type " << td.trigger_type 
-                << " number of links " << td.components.size();
-                
+                << " triggernumber " << td.trigger_number << " timestamp " << td.trigger_timestamp << " type "
+                << td.trigger_type << " number of links " << td.components.size();
+
   dfmessages::TriggerDecisionToken td_token;
   td_token.run_number = td.run_number;
   td_token.trigger_number = td.trigger_number;
   try {
     m_trigger_complete_sink->push(td_token, std::chrono::milliseconds(10));
-  }
-  catch (appfwk::QueueTimeoutExpired& e) {
+  } catch (appfwk::QueueTimeoutExpired& e) {
     ers::error(e);
   }
 }
 
-/*
+/**
 
-Logic goes like this: 
+Logic goes like this:
 1) TriggerDecision is received
 2) A flat probability to forget the decision and go to 1
 3) A flat probability to hold the decision in a queue and go to 1
@@ -123,7 +122,7 @@ void
 FakeDataFlow::respond_to_trigger_decisions()
 {
   std::default_random_engine generator;
-  std::uniform_real_distribution<double> uniform(0.0,1.0);
+  std::uniform_real_distribution<double> uniform(0.0, 1.0);
   std::vector<dfmessages::TriggerDecision> held_decisions;
   bool hold_full = false;
   std::chrono::steady_clock::time_point hold_full_time;
@@ -137,12 +136,12 @@ FakeDataFlow::respond_to_trigger_decisions()
           while (held_decisions.size() > m_hold_min_size) {
             int i;
             if (uniform(generator) < m_release_randomly_prob) {
-              i = (int)(uniform(generator)*held_decisions.size());
+              i = static_cast<int>(uniform(generator) * held_decisions.size());
             } else {
               i = 0;
             }
             respond_with_token(held_decisions[i]);
-            held_decisions.erase(held_decisions.begin()+i);
+            held_decisions.erase(held_decisions.begin() + i);
           }
           hold_full = false;
         }
@@ -152,36 +151,30 @@ FakeDataFlow::respond_to_trigger_decisions()
         hold_full = true;
       }
     }
-  
+
     dfmessages::TriggerDecision td;
     try {
       m_trigger_decision_source->pop(td, std::chrono::milliseconds(100));
-    }
-    catch (appfwk::QueueTimeoutExpired&) {
+    } catch (appfwk::QueueTimeoutExpired&) {
       continue;
     }
-    
+
     if (uniform(generator) < m_forget_decision_prob) {
       TLOG_DEBUG(1) << "Forgetting decision with"
-                    << " triggernumber " << td.trigger_number 
-                    << " timestamp " << td.trigger_timestamp 
-                    << " type " << td.trigger_type 
-                    << " number of links " << td.components.size();  
+                    << " triggernumber " << td.trigger_number << " timestamp " << td.trigger_timestamp << " type "
+                    << td.trigger_type << " number of links " << td.components.size();
       continue;
     }
-    
+
     if (uniform(generator) < m_hold_decision_prob) {
       TLOG_DEBUG(1) << "Holding decision with"
-                    << " triggernumber " << td.trigger_number 
-                    << " timestamp " << td.trigger_timestamp 
-                    << " type " << td.trigger_type 
-                    << " number of links " << td.components.size();  
+                    << " triggernumber " << td.trigger_number << " timestamp " << td.trigger_timestamp << " type "
+                    << td.trigger_type << " number of links " << td.components.size();
       held_decisions.push_back(td);
       continue;
     }
-    
+
     respond_with_token(td);
-    
   }
 }
 

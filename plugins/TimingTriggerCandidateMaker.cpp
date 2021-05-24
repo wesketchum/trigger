@@ -1,4 +1,14 @@
+/**
+ * @file TimingTriggerCandidateMaker.cpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
 #include "TimingTriggerCandidateMaker.hpp"
+
+#include <string>
 
 namespace dunedaq {
 namespace trigger {
@@ -31,8 +41,9 @@ TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEve
   }
   candidate.time_candidate = data.timestamp;
   // throw away bits 31-16 of header, that's OK for now
-  candidate.detid = { static_cast<uint16_t>(data.header) };
-  candidate.type = triggeralgs::TriggerCandidateType::kTiming;;
+  candidate.detid = { static_cast<uint16_t>(data.header) }; // NOLINT(build/unsigned)
+  candidate.type = triggeralgs::TriggerCandidateType::kTiming;
+  ;
   candidate.algorithm = 0;
   candidate.version = 0;
   candidate.ta_list = {};
@@ -79,10 +90,10 @@ void
 TimingTriggerCandidateMaker::do_work(std::atomic<bool>& running_flag)
 {
   // OpMon.
-  m_tsd_received_count   .store(0);
-  m_tc_sent_count        .store(0);
+  m_tsd_received_count.store(0);
+  m_tc_sent_count.store(0);
   m_tc_sig_type_err_count.store(0);
-  m_tc_total_count       .store(0);
+  m_tc_total_count.store(0);
 
   while (true) {
 
@@ -142,10 +153,10 @@ TimingTriggerCandidateMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/
 {
   timingtriggercandidatemakerinfo::Info i;
 
-  i.tsd_received_count    = m_tsd_received_count   .load();
-  i.tc_sent_count         = m_tc_sent_count        .load();
+  i.tsd_received_count = m_tsd_received_count.load();
+  i.tc_sent_count = m_tc_sent_count.load();
   i.tc_sig_type_err_count = m_tc_sig_type_err_count.load();
-  i.tc_total_count        = m_tc_total_count       .load();
+  i.tc_total_count = m_tc_total_count.load();
 
   ci.add(i);
 }
