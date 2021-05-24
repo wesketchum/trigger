@@ -15,16 +15,16 @@
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
-#include "triggeralgs/TriggerCandidate.hpp"
 #include "logging/Logging.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 #include "trigger/Issues.hpp"
 
 #include "timinglibs/TimestampEstimator.hpp"
 #include "timinglibs/TimestampEstimatorSystem.hpp"
 
-#include "appfwk/app/Nljs.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 #include "triggeralgs/TriggerCandidateType.hpp"
 
 #include <algorithm>
@@ -52,8 +52,9 @@ RandomTriggerCandidateMaker::RandomTriggerCandidateMaker(const std::string& name
 void
 RandomTriggerCandidateMaker::init(const nlohmann::json& obj)
 {
-  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(obj,"time_sync_source")));
-  m_trigger_candidate_sink.reset(new appfwk::DAQSink<triggeralgs::TriggerCandidate>(appfwk::queue_inst(obj, "trigger_candidate_sink")));
+  m_time_sync_source.reset(new appfwk::DAQSource<dfmessages::TimeSync>(appfwk::queue_inst(obj, "time_sync_source")));
+  m_trigger_candidate_sink.reset(
+    new appfwk::DAQSink<triggeralgs::TriggerCandidate>(appfwk::queue_inst(obj, "trigger_candidate_sink")));
 }
 
 void
@@ -126,17 +127,17 @@ RandomTriggerCandidateMaker::create_candidate(dfmessages::timestamp_t timestamp)
 }
 
 int
-RandomTriggerCandidateMaker::get_interval(std::mt19937 &gen)
+RandomTriggerCandidateMaker::get_interval(std::mt19937& gen)
 {
   switch (m_conf.time_distribution) {
     default: // Treat an unknown distribution as kUniform, but warn
       TLOG_DEBUG(1) << get_name() << " unknown distribution! Using kUniform.";
-      /* fall through */
+      // fall through
     case randomtriggercandidatemaker::distribution_type::kUniform:
       return m_conf.trigger_interval_ticks;
     case randomtriggercandidatemaker::distribution_type::kPoisson:
-      std::exponential_distribution<double> d(1.0/m_conf.trigger_interval_ticks);
-      return (int)(0.5+d(gen));
+      std::exponential_distribution<double> d(1.0 / m_conf.trigger_interval_ticks);
+      return static_cast<int>(0.5 + d(gen));
   }
 }
 
@@ -148,7 +149,8 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
 
   std::mt19937 gen(m_run_number);
   // Wait for there to be a valid timestamp estimate before we start
-  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) == timinglibs::TimestampEstimatorBase::kInterrupted) {
+  if (m_timestamp_estimator->wait_for_valid_timestamp(m_running_flag) ==
+      timinglibs::TimestampEstimatorBase::kInterrupted) {
     return;
   }
 
@@ -156,7 +158,7 @@ RandomTriggerCandidateMaker::send_trigger_candidates()
   dfmessages::timestamp_t first_interval = get_interval(gen);
   // Round up to the next multiple of trigger_interval_ticks
   dfmessages::timestamp_t next_trigger_timestamp = (initial_timestamp / first_interval + 1) * first_interval;
-  TLOG_DEBUG(1) << get_name() << " initial timestamp estimate is " << initial_timestamp 
+  TLOG_DEBUG(1) << get_name() << " initial timestamp estimate is " << initial_timestamp
                 << ", next_trigger_timestamp is " << next_trigger_timestamp;
 
   while (m_running_flag.load()) {

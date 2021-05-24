@@ -9,8 +9,8 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_PLUGINS_FAKEDATAFLOW_HPP_
-#define TRIGGER_PLUGINS_FAKEDATAFLOW_HPP_
+#ifndef TRIGGER_TEST_PLUGINS_FAKEDATAFLOW_HPP_
+#define TRIGGER_TEST_PLUGINS_FAKEDATAFLOW_HPP_
 
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerDecisionToken.hpp"
@@ -64,24 +64,21 @@ private:
   double m_release_randomly_prob;
   double m_forget_decision_prob;
   double m_hold_decision_prob;
-  
-  void respond_with_token(const dfmessages::TriggerDecision &td);
+
+  void respond_with_token(const dfmessages::TriggerDecision& td);
   void respond_to_trigger_decisions();
   std::thread m_fake_data_flow_thread;
 
   // Queue sources and sinks
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecision>> m_trigger_decision_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecisionToken>> m_trigger_complete_sink;
-  
+
   // Are we in the RUNNING state?
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
-
 };
 } // namespace trigger
 } // namespace dunedaq
 
-
-#endif // TRIGGER_PLUGINS_FAKEDATAFLOW_HPP_
-
+#endif // TRIGGER_TEST_PLUGINS_FAKEDATAFLOW_HPP_
