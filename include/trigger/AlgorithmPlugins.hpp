@@ -1,5 +1,5 @@
-#ifndef TRIGGER_INCLUDE_TRIGGER_PLUGINS_HPP_
-#define TRIGGER_INCLUDE_TRIGGER_PLUGINS_HPP_
+#ifndef TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_
+#define TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_
 
 #include "triggeralgs/TriggerActivityMaker.hpp"
 #include "triggeralgs/TriggerCandidateMaker.hpp"
@@ -103,4 +103,4 @@ make_td_maker(std::string const& plugin_name)
 
 }
 
-#endif
+#endif // TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_

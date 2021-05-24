@@ -2,7 +2,7 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 
-#include "trigger/Plugins.hpp"
+#include "trigger/AlgorithmPlugins.hpp"
 #include "trigger/triggeractivitymaker/Nljs.hpp"
 
 namespace dunedaq::trigger {
