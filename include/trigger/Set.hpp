@@ -1,10 +1,18 @@
+/**
+ * @file Set.hpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
 #ifndef TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
 #include "dataformats/Types.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
-#include "triggeralgs/TriggerCandidate.hpp"
+#include "trigger/serialize.hpp"
 #include "serialization/Serialization.hpp"
 
 #include <cstdint>
@@ -12,6 +20,9 @@
 
 namespace dunedaq::trigger {
 
+/**
+ * @brief A set of TPs or TAs in a given time window, defined by its start and end times
+ */
 template<class T>
 class Set {
 public:
@@ -45,46 +56,10 @@ using TASet = Set<triggeralgs::TriggerActivity>;
 
 } // namespace dunedaq::trigger
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerPrimitive,
-                                 time_start,
-                                 time_peak,
-                                 time_over_threshold,
-                                 channel,
-                                 adc_integral,
-                                 adc_peak,
-                                 detid,
-                                 type,
-                                 algorithm,
-                                 version,
-                                 flag)
+MSGPACK_ADD_ENUM(dunedaq::trigger::TPSet::Type)
+MSGPACK_ADD_ENUM(dunedaq::trigger::TASet::Type)
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerActivity,
-                                 time_start,
-                                 time_end,
-                                 time_peak,
-                                 time_activity,
-                                 channel_start,
-                                 channel_end,
-                                 channel_peak,
-                                 adc_integral,
-                                 adc_peak,
-                                 detid,
-                                 type,
-                                 algorithm,
-                                 version,
-                                 tp_list)
-
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerCandidate,
-                                 time_start,
-                                 time_end,
-                                 time_candidate,
-                                 detid,
-                                 type,
-                                 algorithm,
-                                 version,
-                                 ta_list)
-
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TPSet, seqno, from_detids, start_time, end_time, objects)
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TASet, seqno, from_detids, start_time, end_time, objects)
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TPSet, seqno, type, from_detids, start_time, end_time, objects)
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TASet, seqno, type, from_detids, start_time, end_time, objects)
 
 #endif // TRIGGER_INCLUDE_TRIGGER_SET_HPP_

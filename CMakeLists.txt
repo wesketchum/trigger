@@ -39,6 +39,7 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 ##############################################################################
 # Integration tests
 
+daq_add_application( set_serialization_speed set_serialization_speed.cxx TEST LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Unit Tests
