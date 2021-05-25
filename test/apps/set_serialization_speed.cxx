@@ -1,4 +1,5 @@
-#include "trigger/Set.hpp"
+#include "trigger/TPSet.hpp"
+#include "trigger/TASet.hpp"
 #include "serialization/Serialization.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
 #include "logging/Logging.hpp"
@@ -74,4 +75,9 @@ int main()
     std::cout << n << " TPs per set: " << std::flush;
     time_serialization(n);
   }
+
+  dunedaq::trigger::TASet taset;
+  std::vector<uint8_t> bytes = dunedaq::serialization::serialize(taset, dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
+  dunedaq::trigger::TASet set_recv = dunedaq::serialization::deserialize<dunedaq::trigger::TASet>(bytes);
+  
 }

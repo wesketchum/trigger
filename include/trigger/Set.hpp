@@ -10,10 +10,6 @@
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
 #include "dataformats/Types.hpp"
-#include "triggeralgs/TriggerActivity.hpp"
-#include "triggeralgs/TriggerPrimitive.hpp"
-#include "trigger/serialize.hpp"
-#include "serialization/Serialization.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -51,15 +47,6 @@ public:
   std::vector<T> objects;
 };
 
-using TPSet = Set<triggeralgs::TriggerPrimitive>;
-using TASet = Set<triggeralgs::TriggerActivity>;
-
 } // namespace dunedaq::trigger
-
-MSGPACK_ADD_ENUM(dunedaq::trigger::TPSet::Type)
-MSGPACK_ADD_ENUM(dunedaq::trigger::TASet::Type)
-
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TPSet, seqno, type, from_detids, start_time, end_time, objects)
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TASet, seqno, type, from_detids, start_time, end_time, objects)
 
 #endif // TRIGGER_INCLUDE_TRIGGER_SET_HPP_
