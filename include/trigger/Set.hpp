@@ -15,16 +15,26 @@ namespace dunedaq::trigger {
 template<class T>
 class Set {
 public:
+
+  enum Type {
+    kUnknown = 0,
+    kPayload = 1,
+    kHeartbeat = 2
+  };
+
   // An incremental count of how many Sets have been produced by this source
-  uint32_t seqno;
+  uint32_t seqno{0};
+
+  // Whether this Set is a regular bag-of-objects or a heartbeat
+  Type type{kUnknown};
 
   // The detids that were inspected to form this Set
   std::vector<uint16_t> from_detids;
 
   // The earliest timestamp inspected to form this Set
-  dataformats::timestamp_t start_time;
+  dataformats::timestamp_t start_time{0};
   // The latest timestamp inspected to form this Set
-  dataformats::timestamp_t end_time;
+  dataformats::timestamp_t end_time{0};
 
   // The TPs/TAs themselves. Needs a better name!
   std::vector<T> objects;
@@ -33,7 +43,7 @@ public:
 using TPSet = Set<triggeralgs::TriggerPrimitive>;
 using TASet = Set<triggeralgs::TriggerActivity>;
 
-}
+} // namespace dunedaq::trigger
 
 DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerPrimitive,
                                  time_start,
