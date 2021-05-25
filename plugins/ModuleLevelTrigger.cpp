@@ -73,8 +73,8 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
 
   m_links.clear();
   for (auto const& link : params.links) {
-    // For the future: Set APA properly
-    m_links.push_back(dfmessages::GeoID{ 0, static_cast<uint32_t>(link) }); // NOLINT
+    m_links.push_back(
+        dfmessages::GeoID{ dataformats::GeoID::string_to_system_type(link.system), link.region, link.element });
   }
 
   m_configured_flag.store(true);
