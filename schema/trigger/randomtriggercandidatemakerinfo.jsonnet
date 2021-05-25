@@ -6,13 +6,10 @@ local moo = import "moo.jsonnet";
 local s = moo.oschema.schema("dunedaq.trigger.randomtriggercandidatemakerinfo");
 
 local info = {
-   cl : s.string("class_s", moo.re.ident,
-                  doc="A string field"), 
     uint8  : s.number("uint8", "u8",
                      doc="An unsigned of 8 bytes"),
 
    info: s.record("Info", [
-       s.field("class_name", self.cl, "randomtriggercandidatemakerinfo", doc="Info class name"),
        s.field("tc_sent_count", self.uint8, 0, doc="Number of trigger candidates added to queue."), 
    ], doc="Random trigger candidate maker information.")
 };

@@ -18,7 +18,7 @@
 #include "trigger/Issues.hpp"
 
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
-#include "trigger/timingtriggercandidatemakerinfo/Nljs.hpp"
+#include "trigger/timingtriggercandidatemakerinfo/InfoNljs.hpp"
 
 #include "dfmessages/HSIEvent.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
