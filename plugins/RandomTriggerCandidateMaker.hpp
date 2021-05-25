@@ -10,7 +10,7 @@
 #include "trigger/TokenManager.hpp"
 
 #include "trigger/randomtriggercandidatemaker/Nljs.hpp"
-#include "trigger/randomtriggercandidatemakerinfo/Nljs.hpp"
+#include "trigger/randomtriggercandidatemakerinfo/InfoNljs.hpp"
 
 #include "timinglibs/TimestampEstimator.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
