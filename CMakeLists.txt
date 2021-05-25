@@ -22,8 +22,8 @@ daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging 
 ##############################################################################
 # Codegen
 
-daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
-
+daq_codegen( fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
 
