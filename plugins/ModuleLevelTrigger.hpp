@@ -15,7 +15,7 @@
 #define TRIGGER_PLUGINS_MODULELEVELTRIGGER_HPP_
 
 #include "trigger/TokenManager.hpp"
-#include "trigger/moduleleveltriggerinfo/Nljs.hpp"
+#include "trigger/moduleleveltriggerinfo/InfoNljs.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
 
