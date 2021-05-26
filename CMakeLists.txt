@@ -40,6 +40,8 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 
 # Algorithm plugins
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerCandidateMakerSupernovaPlugin duneTCMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerDecisionMakerSupernovaPlugin duneTDMaker LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
