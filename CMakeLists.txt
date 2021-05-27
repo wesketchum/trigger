@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 1.0.2)
+project(trigger VERSION 1.0.3)
 
 find_package(daq-cmake REQUIRED)
 
