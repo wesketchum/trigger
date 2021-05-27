@@ -29,6 +29,8 @@ daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.
 
 daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerActivityMaker duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerDecisionMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(RandomTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
@@ -38,6 +40,8 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 
 # Algorithm plugins
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerCandidateMakerSupernovaPlugin duneTCMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerDecisionMakerSupernovaPlugin duneTDMaker LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
