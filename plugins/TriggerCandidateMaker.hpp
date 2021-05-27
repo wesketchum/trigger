@@ -1,3 +1,14 @@
+/**
+ * @file TriggerCandidateMaker.hpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+ 
+#ifndef TRIGGER_INCLUDE_TRIGGER_TRIGGERCANDIDATEMAKER_HPP_
+#define TRIGGER_INCLUDE_TRIGGER_TRIGGERCANDIDATEMAKER_HPP_
+
 #include "trigger/TriggerGenericMaker.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
@@ -10,7 +21,7 @@ namespace dunedaq::trigger {
 
 class TriggerCandidateMaker 
   : public TriggerGenericMaker < 
-    triggeralgs::TriggerActivity, 
+    Set<triggeralgs::TriggerActivity>, 
     triggeralgs::TriggerCandidate, 
     triggeralgs::TriggerCandidateMaker 
   >
@@ -29,3 +40,5 @@ private:
 };
 
 } // namespace dunedaq::trigger
+
+#endif // TRIGGER_INCLUDE_TRIGGER_TRIGGERCANDIDATEMAKER_HPP_
