@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 1.0.2)
+project(trigger VERSION 1.0.4)
 
 find_package(daq-cmake REQUIRED)
 
@@ -22,7 +22,7 @@ daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging 
 ##############################################################################
 # Codegen
 
-daq_codegen( fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet trigger*maker.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+daq_codegen( fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet triggeractivitymaker.jsonnet triggercandidatemaker.jsonnet triggerdecisionmaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
