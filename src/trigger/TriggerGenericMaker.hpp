@@ -26,7 +26,8 @@ public:
     register_command("stop", &TriggerGenericMaker::do_stop);
     register_command("conf", &TriggerGenericMaker::do_configure);
   }
-
+  
+  virtual ~TriggerGenericMaker() { }
 
   TriggerGenericMaker(const TriggerGenericMaker&) = delete;
   TriggerGenericMaker& operator=(const TriggerGenericMaker&) = delete;
