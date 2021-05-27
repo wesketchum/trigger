@@ -7,7 +7,7 @@
 #ifndef TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_FAKETIMESTAMPEDDATAGENERATOR_HPP_
 
-#include "dune-trigger-algs/TimeStampedData.hh"
+#include "dfmessages/HSIEvent.hpp"
 
 #include "trigger/faketimestampeddatagenerator/Structs.hpp"
 
@@ -17,11 +17,11 @@
 
 #include <ers/Issue.hpp>
 
+#include <chrono>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
-#include <chrono>
-#include <random>
 
 namespace dunedaq {
 namespace trigger {
@@ -63,19 +63,18 @@ private:
   void do_work(std::atomic<bool>&);
 
   // Configuration
-  using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TimeStampedData>;
+  using sink_t = dunedaq::appfwk::DAQSink<dfmessages::HSIEvent>;
   std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
 
   // Random Generatior
-  triggeralgs::TimeStampedData get_time_stamped_data();
+  dfmessages::HSIEvent get_hsievent();
   std::default_random_engine m_generator;
-  std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>    (0, 2);
-  uint32_t m_counts;
+  std::uniform_int_distribution<int> m_rdm_signaltype = std::uniform_int_distribution<int>(0, 2);
+  uint32_t m_counts; // NOLINT(build/unsigned)
 
-  uint64_t m_sleep_time;
-  uint64_t m_frequency;
-
+  uint64_t m_sleep_time; // NOLINT(build/unsigned)
+  uint64_t m_frequency;  // NOLINT(build/unsigned)
 };
 } // namespace trigger
 } // namespace dunedaq

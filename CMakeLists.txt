@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 1.0.3)
+project(trigger VERSION 1.0.4)
 
 find_package(daq-cmake REQUIRED)
 
@@ -12,29 +12,29 @@ find_package(logging REQUIRED)
 find_package(appfwk REQUIRED)
 find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
+find_package(timinglibs REQUIRED)
 
 ##############################################################################
 # Main library
 
-# TODO PAR 2021-04-07: triggeralgs doesn't export a
-# triggeralgs::triggeralgs target, but instead exports one called
-# "SupernovaTrigger". Need to fix that, but go with the flow for now
-daq_add_library(TokenManager.cpp TimestampEstimator.cpp TimestampEstimatorBase.cpp TimestampEstimatorSystem.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages SupernovaTrigger)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
 
-daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
-
+daq_codegen( fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
 
-daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger SupernovaTrigger)
-daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger)
-daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger TEST)
-daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
+daq_add_plugin(RandomTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
+daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
+
+daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
+daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
-daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages trigger)
+daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 
 ##############################################################################
 # Integration tests
@@ -43,8 +43,6 @@ daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES dfmessages::dfmessages 
 ##############################################################################
 # Unit Tests
 
-daq_add_unit_test(TimestampEstimatorSystem_test  LINK_LIBRARIES trigger)
-daq_add_unit_test(TimestampEstimator_test        LINK_LIBRARIES trigger)
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 
 ##############################################################################

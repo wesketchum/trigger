@@ -4,13 +4,15 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
+#ifndef TRIGGER_PLUGINS_RANDOMTRIGGERCANDIDATEMAKER_HPP_
+#define TRIGGER_PLUGINS_RANDOMTRIGGERCANDIDATEMAKER_HPP_
 
 #include "trigger/TokenManager.hpp"
 
-#include "trigger/intervaltccreator/Nljs.hpp"
+#include "trigger/randomtriggercandidatemaker/Nljs.hpp"
+#include "trigger/randomtriggercandidatemakerinfo/InfoNljs.hpp"
 
+#include "timinglibs/TimestampEstimator.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 
 #include "dataformats/GeoID.hpp"
@@ -20,13 +22,12 @@
 #include "dfmessages/TriggerInhibit.hpp"
 #include "dfmessages/Types.hpp"
 
-#include "timinglibs/TimestampEstimator.hpp"
-
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
 
 #include <memory>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
@@ -36,24 +37,27 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief IntervalTCCreator creates TriggerCandidates at regular
- * intervals, based on input from a TimeSync queue or the system
- * clock. The TCs can be fed directly into the MLT, to allow testing
- * the MLT separately from the Timing Message -> TC conversion logic
+ * @brief RandomTriggerCandidateMaker creates TriggerCandidates at regular or
+ * Poisson random intervals, based on input from a TimeSync queue or the system
+ * clock. The TCs can be fed directly into the MLT.
  */
-class IntervalTCCreator : public dunedaq::appfwk::DAQModule
+class RandomTriggerCandidateMaker : public dunedaq::appfwk::DAQModule
 {
 public:
   /**
-   * @brief IntervalTCCreator Constructor
-   * @param name Instance name for this IntervalTCCreator instance
+   * @brief RandomTriggerCandidateMaker Constructor
+   * @param name Instance name for this RandomTriggerCandidateMaker instance
    */
-  explicit IntervalTCCreator(const std::string& name);
+  explicit RandomTriggerCandidateMaker(const std::string& name);
 
-  IntervalTCCreator(const IntervalTCCreator&) = delete;            ///< IntervalTCCreator is not copy-constructible
-  IntervalTCCreator& operator=(const IntervalTCCreator&) = delete; ///< IntervalTCCreator is not copy-assignable
-  IntervalTCCreator(IntervalTCCreator&&) = delete;                 ///< IntervalTCCreator is not move-constructible
-  IntervalTCCreator& operator=(IntervalTCCreator&&) = delete;      ///< IntervalTCCreator is not move-assignable
+  RandomTriggerCandidateMaker(const RandomTriggerCandidateMaker&) =
+    delete; ///< RandomTriggerCandidateMaker is not copy-constructible
+  RandomTriggerCandidateMaker& operator=(const RandomTriggerCandidateMaker&) =
+    delete; ///< RandomTriggerCandidateMaker is not copy-assignable
+  RandomTriggerCandidateMaker(RandomTriggerCandidateMaker&&) =
+    delete; ///< RandomTriggerCandidateMaker is not move-constructible
+  RandomTriggerCandidateMaker& operator=(RandomTriggerCandidateMaker&&) =
+    delete; ///< RandomTriggerCandidateMaker is not move-assignable
 
   void init(const nlohmann::json& iniobj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -77,21 +81,22 @@ private:
   std::unique_ptr<appfwk::DAQSource<dfmessages::TimeSync>> m_time_sync_source;
   std::unique_ptr<appfwk::DAQSink<triggeralgs::TriggerCandidate>> m_trigger_candidate_sink;
 
-  intervaltccreator::ConfParams m_conf;
+  randomtriggercandidatemaker::ConfParams m_conf;
 
-  dfmessages::trigger_number_t m_last_trigger_number;
+  int get_interval(std::mt19937& gen);
+
   dfmessages::run_number_t m_run_number;
 
   // Are we in the RUNNING state?
   std::atomic<bool> m_running_flag{ false };
   // Are we in a configured state, ie after conf and before scrap?
   std::atomic<bool> m_configured_flag{ false };
+
+  // OpMon variables
+  using metric_counter_type = decltype(randomtriggercandidatemakerinfo::Info::tc_sent_count);
+  std::atomic<metric_counter_type> m_tc_sent_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_TEST_PLUGINS_INTERVALTCCREATOR_HPP_
-
-// Local Variables:
-// c-basic-offset: 2
-// End:
+#endif // TRIGGER_PLUGINS_RANDOMTRIGGERCANDIDATEMAKER_HPP_

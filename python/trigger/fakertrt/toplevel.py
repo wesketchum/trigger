@@ -18,8 +18,6 @@ def generate_boot( tremu_spec: dict) -> dict:
 
     :param      tremu_spec:  The tremu specifications
     :type       tremu_spec:  dict
-    :param      rudf_spec:   The rudf specifications
-    :type       rudf_spec:   dict
 
     :returns:   { description_of_the_return_value }
     :rtype:     dict
@@ -105,7 +103,7 @@ def cli(trigger_rate_hz, token_count, forget_decision_prob, hold_decision_prob,
       JSON_DIR: Json file output folder
     """
     console.log("Loading trg config generator")
-    from . import faketc_and_mlt_gen
+    from . import poisson_and_uniform_mlt_gen
     console.log(f"Generating configs")
 
     if token_count > 0:
@@ -115,7 +113,7 @@ def cli(trigger_rate_hz, token_count, forget_decision_prob, hold_decision_prob,
         df_token_count = -1 * token_count
         trigemu_token_count = 0
 
-    cmd_data_trg = faketc_and_mlt_gen.generate(
+    cmd_data_trg = poisson_and_uniform_mlt_gen.generate(
         TRIGGER_RATE_HZ = trigger_rate_hz,
         OUTPUT_PATH = json_dir,
         TOKEN_COUNT = trigemu_token_count,
@@ -143,10 +141,8 @@ def cli(trigger_rate_hz, token_count, forget_decision_prob, hold_decision_prob,
     cmd_set = ["init", "conf", "start", "stop", "pause", "resume", "scrap"]
     for app,data in ((app_trgemu, cmd_data_trg),):
         console.log(f"Generating {app} command data json files")
-        # for app,data in ((app_trgemu, None), (app_dfru, None)):
         for c in cmd_set:
             with open(f'{join(data_dir, app)}_{c}.json', 'w') as f:
-                # f.write(f'{app} {c}')
                 json.dump(data[c].pod(), f, indent=4, sort_keys=True)
 
 

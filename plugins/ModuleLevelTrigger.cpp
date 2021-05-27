@@ -18,12 +18,12 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/TimestampEstimator.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
-// #include "trigger/moduleleveltriggerinfo/Nljs.hpp"
 
-#include "appfwk/app/Nljs.hpp"
+#include "timinglibs/TimestampEstimator.hpp"
+
 #include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/app/Nljs.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -55,14 +55,28 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
-  m_trigger_decision_sink.reset(new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
-  m_token_source.reset(new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj,"token_source")));
-  m_candidate_source.reset(new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj,"trigger_candidate_source")));
+  m_trigger_decision_sink.reset(
+    new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
+  m_token_source.reset(
+    new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj, "token_source")));
+  m_candidate_source.reset(
+    new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_source")));
 }
 
 void
-ModuleLevelTrigger::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
-{}
+ModuleLevelTrigger::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+{
+  moduleleveltriggerinfo::Info i;
+
+  i.tc_received_count = m_tc_received_count.load();
+  i.td_sent_count = m_td_sent_count.load();
+  i.td_queue_timeout_expired_err_count = m_td_queue_timeout_expired_err_count.load();
+  i.td_inhibited_count = m_td_inhibited_count.load();
+  i.td_paused_count = m_td_paused_count.load();
+  i.td_total_count = m_td_total_count.load();
+
+  ci.add(i);
+}
 
 void
 ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
@@ -131,6 +145,7 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_timestamp = tc.time_candidate;
   // TODO: work out what to set this to
   decision.trigger_type = 1; // m_trigger_type;
+  decision.readout_type = dfmessages::ReadoutType::kLocalized;
 
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
@@ -151,44 +166,69 @@ ModuleLevelTrigger::send_trigger_decisions()
 
   // We get here at start of run, so reset the trigger number
   m_last_trigger_number = 0;
-  m_trigger_count.store(0);
-  m_trigger_count_tot.store(0);
-  m_inhibited_trigger_count.store(0);
-  m_inhibited_trigger_count_tot.store(0);
 
-  while (m_running_flag.load()) {
+  // OpMon.
+  m_tc_received_count.store(0);
+  m_td_sent_count.store(0);
+  m_td_queue_timeout_expired_err_count.store(0);
+  m_td_inhibited_count.store(0);
+  m_td_paused_count.store(0);
+  m_td_total_count.store(0);
+
+  while (true) {
     triggeralgs::TriggerCandidate tc;
     try {
       m_candidate_source->pop(tc, std::chrono::milliseconds(100));
+      ++m_tc_received_count;
     } catch (appfwk::QueueTimeoutExpired&) {
-      continue;
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!m_running_flag.load()) {
+        break;
+      } else {
+        continue;
+      }
     }
 
     bool tokens_allow_triggers = m_token_manager->triggers_allowed();
+
     if (!m_paused.load() && tokens_allow_triggers) {
 
       dfmessages::TriggerDecision decision = create_decision(tc);
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
                     << decision.trigger_timestamp << " number of links " << decision.components.size();
+
+      // Have to notify the token manager of the trigger _before_
+      // actually pushing it, otherwise the DF could reply with
+      // TriggerComplete before we get to the notification. If that
+      // happens, then the token manager sees a TriggerComplete for a
+      // token it doesn't know about, and ignores it
+      m_token_manager->trigger_sent(decision.trigger_number);
       try {
         m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+        m_td_sent_count++;
       } catch (appfwk::QueueTimeoutExpired& e) {
+        m_td_queue_timeout_expired_err_count++;
         ers::error(e);
       }
-      m_token_manager->trigger_sent(decision.trigger_number);
+
       decision.trigger_number++;
       m_last_trigger_number++;
-      m_trigger_count++;
-      m_trigger_count_tot++;
     } else if (!tokens_allow_triggers) {
-      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for timestamp ";
-      m_inhibited_trigger_count++;
-      m_inhibited_trigger_count_tot++;
+      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
+                    << tc.time_candidate;
+      m_td_inhibited_count++;
     } else {
+      ++m_td_paused_count;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
+    m_td_total_count++;
   }
+
+  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
+         << m_td_paused_count << " TDs were created during pause, and " << m_td_inhibited_count.load()
+         << " TDs were inhibited.";
 }
 
 } // namespace trigger

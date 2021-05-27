@@ -1,3 +1,14 @@
+/**
+ * @file TimingTriggerCandidateMaker.cpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
+#ifndef TRIGGER_PLUGINS_TIMINGTRIGGERCANDIDATEMAKER_HPP_
+#define TRIGGER_PLUGINS_TIMINGTRIGGERCANDIDATEMAKER_HPP_
+
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -6,16 +17,20 @@
 
 #include "trigger/Issues.hpp"
 
-#include "trigger/TriggerCandidateType.hpp"
 #include "trigger/timingtriggercandidatemaker/Nljs.hpp"
+#include "trigger/timingtriggercandidatemakerinfo/InfoNljs.hpp"
 
-#include "dune-trigger-algs/TimeStampedData.hh"
-#include "dune-trigger-algs/TriggerActivity.hh"
-#include "dune-trigger-algs/TriggerCandidate.hh"
-#include "dune-trigger-algs/TriggerPrimitive.hh"
-
+#include "dfmessages/HSIEvent.hpp"
+#include "triggeralgs/TriggerActivity.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
+#include "triggeralgs/TriggerCandidateType.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
 
 #include <chrono>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace dunedaq {
 namespace trigger {
@@ -30,6 +45,7 @@ public:
   TimingTriggerCandidateMaker& operator=(TimingTriggerCandidateMaker&&) = delete;
 
   void init(const nlohmann::json& iniobj) override;
+  void get_info(opmonlib::InfoCollector& ci, int level) override;
 
 private:
   void do_conf(const nlohmann::json& config);
@@ -39,10 +55,10 @@ private:
 
   dunedaq::appfwk::ThreadHelper m_thread;
 
-  triggeralgs::TriggerCandidate TimeStampedDataToTriggerCandidate(const triggeralgs::TimeStampedData& data);
+  triggeralgs::TriggerCandidate HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data);
   void do_work(std::atomic<bool>&);
 
-  using source_t = dunedaq::appfwk::DAQSource<triggeralgs::TimeStampedData>;
+  using source_t = dunedaq::appfwk::DAQSource<dfmessages::HSIEvent>;
   std::unique_ptr<source_t> m_input_queue;
 
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TriggerCandidate>;
@@ -50,7 +66,16 @@ private:
 
   std::chrono::milliseconds m_queue_timeout;
 
-  std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map;
+  std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map; // NOLINT(build/unsigned)
+
+  // Opmon variables
+  using metric_counter_type = decltype(timingtriggercandidatemakerinfo::Info::tsd_received_count);
+  std::atomic<metric_counter_type> m_tsd_received_count{ 0 };
+  std::atomic<metric_counter_type> m_tc_sent_count{ 0 };
+  std::atomic<metric_counter_type> m_tc_sig_type_err_count{ 0 };
+  std::atomic<metric_counter_type> m_tc_total_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq
+
+#endif // TRIGGER_PLUGINS_TIMINGTRIGGERCANDIDATEMAKER_HPP_

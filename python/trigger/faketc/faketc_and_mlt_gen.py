@@ -58,6 +58,12 @@ def generate(
         OUTPUT_PATH: str = ".",
         TOKEN_COUNT: int = 10,
         CLOCK_SPEED_HZ: int = 50000000,
+        FORGET_DECISION_PROB: float = 0.0,
+        HOLD_DECISION_PROB: float = 0.0,
+        HOLD_MAX_SIZE: int = 0,
+        HOLD_MIN_SIZE: int = 0,
+        HOLD_MIN_MS: int = 0,
+        RELEASE_RANDOMLY_PROB: float = 0.0
 ):
     """
     { item_description }
@@ -72,7 +78,7 @@ def generate(
         app.QueueSpec(inst="time_sync_q", kind='FollySPSCQueue', capacity=100),
         app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=20),
         app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=20),
-        app.QueueSpec(inst="trigger_candidate_q", kind='FollySPSCQueue', capacity=20),
+        app.QueueSpec(inst="trigger_candidate_q", kind='FollyMPMCQueue', capacity=20), #No MPSC Queue?
     ]
 
     # Only needed to reproduce the same order as when using jsonnet
@@ -101,6 +107,12 @@ def generate(
 
     cmd_data['conf'] = acmd([
         ("fdf", fdf.ConfParams(
+          hold_max_size = HOLD_MAX_SIZE,
+          hold_min_size = HOLD_MIN_SIZE,
+          hold_min_ms = HOLD_MIN_MS,
+          release_randomly_prob = RELEASE_RANDOMLY_PROB,
+          forget_decision_prob = FORGET_DECISION_PROB,
+          hold_decision_prob = HOLD_DECISION_PROB
         )),
         ("mlt", mlt.ConfParams(
             links=[idx for idx in range(3)],
