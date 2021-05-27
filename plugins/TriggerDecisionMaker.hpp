@@ -6,8 +6,8 @@
  * received with this code.
  */
  
-#ifndef TRIGGER_INCLUDE_TRIGGER_TRIGGERDECISIONMAKER_HPP_
-#define TRIGGER_INCLUDE_TRIGGER_TRIGGERDECISIONMAKER_HPP_
+#ifndef TRIGGER_PLUGINS_TRIGGERDECISIONMAKER_HPP_
+#define TRIGGER_PLUGINS_TRIGGERDECISIONMAKER_HPP_
 
 #include "trigger/TriggerGenericMaker.hpp"
 
@@ -16,6 +16,7 @@
 #include "triggeralgs/TriggerCandidate.hpp"
 
 #include <string>
+#include <memory>
 
 namespace dunedaq::trigger {
 
@@ -41,4 +42,4 @@ private:
 
 } // namespace dunedaq::trigger
 
-#endif // TRIGGER_INCLUDE_TRIGGER_TRIGGERDECISIONMAKER_HPP_
+#endif // TRIGGER_PLUGINS_TRIGGERDECISIONMAKER_HPP_

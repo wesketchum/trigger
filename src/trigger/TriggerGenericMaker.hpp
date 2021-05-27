@@ -6,8 +6,8 @@
  * received with this code.
  */
  
-#ifndef TRIGGER_INCLUDE_TRIGGER_TRIGGERGENERICMAKER_HPP_
-#define TRIGGER_INCLUDE_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#ifndef TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#define TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
 
 #include "trigger/Set.hpp"
 #include "trigger/Issues.hpp"
@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace dunedaq::trigger {
 
@@ -111,7 +112,7 @@ template<class IN, class OUT, class MAKER>
 class Worker
 {
 public:
-  Worker(TriggerGenericMaker<IN, OUT, MAKER> &_parent) : parent(_parent) { }
+  explicit Worker(TriggerGenericMaker<IN, OUT, MAKER> &_parent) : parent(_parent) { }
   
   TriggerGenericMaker<IN, OUT, MAKER> &parent;
   
@@ -161,7 +162,7 @@ template<class A, class B, class MAKER>
 class Worker<Set<A>, Set<B>, MAKER> 
 {
 public:
-  Worker(TriggerGenericMaker<Set<A>, Set<B>, MAKER> &_parent) : parent(_parent) { }
+  explicit Worker(TriggerGenericMaker<Set<A>, Set<B>, MAKER> &_parent) : parent(_parent) { }
   
   TriggerGenericMaker<Set<A>, Set<B>, MAKER> &parent;
   
@@ -197,7 +198,7 @@ public:
           out.type = Set<B>::Type::kPayload;
           break;
         case Set<A>::Type::kHeartbeat:
-          // FIXME BJL 5-27-21 do we flush the m_maker here?
+          // TODO BJL May-27-2021 do we flush the m_maker here?
           out.type = Set<B>::Type::kHeartbeat;
           break;
         case Set<A>::Type::kUnknown:
@@ -207,14 +208,14 @@ public:
           
       out.seqno = sent_count;
       if (out.objects.size() > 0) {
-        // FIXME BJL 5-27-21 Set<T> should implement some helper methods to 
+        // TODO BJL May-27-2021 Set<T> should implement some helper methods to 
         // populate these fields in lieu of that, this is an approximation
         out.from_detids.resize(out.objects.size());
         for (size_t i = 0; i < out.objects.size(); i++) {
           out.from_detids[i] = out.objects[i].detid;
         }
         out.start_time = out.objects[0].time_start;
-        // TODO BJL 5-27-21 TP and TA both have time_start, but only TA has time_end
+        // TODO BJL May-27-2021 TP and TA both have time_start, but only TA has time_end
         // really, Set<T> should decide what is desired here, not the maker
         out.end_time = out.objects[out.objects.size()-1].time_start;
       }
@@ -238,7 +239,7 @@ template<class A, class OUT, class MAKER>
 class Worker<Set<A>, OUT, MAKER> 
 {
 public:
-  Worker(TriggerGenericMaker<Set<A>, OUT, MAKER> &_parent) : parent(_parent) { }
+  explicit Worker(TriggerGenericMaker<Set<A>, OUT, MAKER> &_parent) : parent(_parent) { }
   
   TriggerGenericMaker<Set<A>, OUT, MAKER> &parent;
   
@@ -280,7 +281,7 @@ public:
           }
           break;
         case Set<A>::Type::kHeartbeat:
-          // FIXME BJL 5-27-21 do we flush the m_maker here? Forward payload?
+          // TODO BJL May-27-2021 do we flush the m_maker here? Forward payload?
           break;
         case Set<A>::Type::kUnknown:
           ers::error(UnknownSetError(ERS_HERE, parent.get_name(), "algorithm_name_placeholder"));
@@ -297,4 +298,4 @@ public:
 
 } // namespace dunedaq::trigger
 
-#endif // TRIGGER_INCLUDE_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#endif // TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
