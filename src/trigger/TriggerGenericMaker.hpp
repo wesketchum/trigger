@@ -171,8 +171,8 @@ public:
       try {
         m_parent.m_maker->operator()(in, out_vec);
       } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-        ers::error(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-        continue;
+        ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        return;
       }
 
       while (out_vec.size() && running_flag.load()) {
@@ -214,8 +214,8 @@ public:
             try {
               m_parent.m_maker->operator()(in.objects[i], out_vec);
             } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-              ers::error(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-              continue;
+              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+              return;
             }
             out.objects.insert(out.objects.end(), out_vec.begin(), out_vec.end());
           }
@@ -239,8 +239,8 @@ public:
           try {
             m_parent.m_maker->flush(in.end_time, out.objects);
           } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-            ers::error(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-            continue;
+            ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+            return;
           }
           out.type = Set<B>::Type::kPayload;
           break;
@@ -303,7 +303,8 @@ public:
             try {
               m_parent.m_maker->operator()(in.objects[i], out_vec);
             } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-              ers::error(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+              return;
             }
           }
           break;
@@ -312,8 +313,8 @@ public:
           try {
             m_parent.m_maker->flush(in.end_time, out_vec);
           } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-            ers::error(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-            continue;
+            ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+            return;
           }
           break;
         case Set<A>::Type::kUnknown:
