@@ -19,6 +19,7 @@ namespace dunedaq::trigger {
   TriggerCandidateMaker::make_maker(const nlohmann::json& obj)
   {
     auto params = obj.get<triggercandidatemaker::Conf>();
+    set_algorithm_name(params.candidate_maker);
     return make_tc_maker(params.candidate_maker);
   }
 

@@ -19,6 +19,7 @@ namespace dunedaq::trigger {
   TriggerActivityMaker::make_maker(const nlohmann::json& obj)
   {
     auto params = obj.get<triggeractivitymaker::Conf>();
+    set_algorithm_name(params.activity_maker);
     return make_ta_maker(params.activity_maker);
   }
 

@@ -19,6 +19,7 @@ namespace dunedaq::trigger {
   TriggerDecisionMaker::make_maker(const nlohmann::json& obj)
   {
     auto params = obj.get<triggerdecisionmaker::Conf>();
+    set_algorithm_name(params.decision_maker);
     return make_td_maker(params.decision_maker);
   }
 
