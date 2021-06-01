@@ -26,6 +26,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
 #include "triggeralgs/TriggerCandidateType.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -120,7 +121,7 @@ RandomTriggerCandidateMaker::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.time_candidate = timestamp;
   candidate.detid = { 0 };
   candidate.type = triggeralgs::TriggerCandidateType::kRandom;
-  candidate.algorithm = 0;
+  candidate.algorithm = triggeralgs::candidate_alg_t::kHSIEventToTriggerCandidate;
   candidate.version = 0;
 
   return candidate;

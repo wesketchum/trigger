@@ -7,6 +7,7 @@
  */
 
 #include "TimingTriggerCandidateMaker.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <string>
 
@@ -44,7 +45,7 @@ TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEve
   candidate.detid = { static_cast<uint16_t>(data.header) }; // NOLINT(build/unsigned)
   candidate.type = triggeralgs::TriggerCandidateType::kTiming;
   ;
-  candidate.algorithm = 0;
+  candidate.algorithm = triggeralgs::candidate_alg_t::kHSIEventToTriggerCandidate;
   candidate.version = 0;
   candidate.ta_list = {};
 
