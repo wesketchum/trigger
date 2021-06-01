@@ -28,6 +28,7 @@ daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.
 # Plugins
 
 daq_add_plugin(TimingTriggerCandidateMaker duneDAQModule SCHEMA LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerPrimitiveMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerActivityMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerDecisionMaker duneDAQModule LINK_LIBRARIES trigger)
