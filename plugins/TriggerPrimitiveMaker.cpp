@@ -3,11 +3,6 @@
 #include "appfwk/DAQSink.hpp"
 
 #include "TriggerPrimitiveMaker.hpp"
-#include "triggermodules/triggerprimitivefromfile/Nljs.hpp"
-#include "dune-trigger-algs/TriggerPrimitive.hh"
-#include "ers/ers.h"
-
-#include "CommonIssues.hpp"
 
 #include "appfwk/cmd/Nljs.hpp"
 
@@ -17,14 +12,12 @@
 #include <fstream>
 
 #include "trigger/AlgorithmPlugins.hpp"
-#include "trigger/triggerprimitivemaker/Nljs.hpp"
+//#include "trigger/triggerprimitivemaker/Nljs.hpp"
 
 using pd_clock = std::chrono::duration<double, std::ratio<1, 50000000>>;
 using namespace triggeralgs;
 
 namespace dunedaq::trigger {
-
-    class TriggerPrimitiveMaker: public dunedaq::appfwk::DAQModule {
 
     TriggerPrimitiveMaker::TriggerPrimitiveMaker(const std::string& name) :
       dunedaq::appfwk::DAQModule(name),
@@ -64,7 +57,7 @@ namespace dunedaq::trigger {
 	return tps_vector;
      }
 
-    void TriggerPrimitiveMaker::init(const nlohmann::json& init_data) {
+    /*void TriggerPrimitiveMaker::init(const nlohmann::json& init_data) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
       auto ini = init_data.get<appfwk::cmd::ModInit>();
       for (const auto& qi : ini.qinfos) {
@@ -84,7 +77,7 @@ namespace dunedaq::trigger {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
     }
 
-    void TriggerPrimitiveMaker::do_configure(const nlohmann::json& config /*args*/) {
+    void TriggerPrimitiveMaker::do_configure(const nlohmann::json& config ) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
       auto params = config.get<dunedaq::triggermodules::triggerprimitivefromfile::Conf>();
       filename = params.filename;
@@ -94,19 +87,19 @@ namespace dunedaq::trigger {
       // if(!src.is_open()) throw InvalidConfiguration(ERS_HERE);
 	      // src.close();
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
-    }
+    }*/
 
     void TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
       thread_.start_working_thread();
-      ERS_LOG(get_name() << " successfully started");
+      //ERS_LOG(get_name() << " successfully started");
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
     }
 
     void TriggerPrimitiveMaker::do_stop(const nlohmann::json& /*args*/) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
       thread_.stop_working_thread();
-      ERS_LOG(get_name() << " successfully stopped");
+      //ERS_LOG(get_name() << " successfully stopped");
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
     }
 
@@ -115,7 +108,7 @@ namespace dunedaq::trigger {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_unconfigure() method";
     }
 
-    std::vector<TriggerPrimitive> TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
+    std::vector<TPSet> TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
         std::cout << "\033[28m ENTERING TP GENERATOR WITH SOURCE FILE " << filename << "\033[0m  ";
         std::cout << "\033[28m TPs vector size: " << tps_vector.size() << "\033[0m  ";
       std::vector<TriggerPrimitive> tps;
@@ -138,7 +131,10 @@ namespace dunedaq::trigger {
           std::cout << "\033[31mTimestamp : "     << tp.algorithm<< "\033[0m  ";
         tps.push_back(tp);
       }
-      return tps;
+      TPSet tpset_empty;
+      std::vector<TPSet> tpset_empty_vector;
+      tpset_empty_vector.push_back(tpset_empty);
+      return tpset_empty_vector;
     }
     
     void TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag) {
@@ -152,17 +148,17 @@ namespace dunedaq::trigger {
 
 	
         std::vector<std::vector<int64_t>> output_vector = ReadCSV(filename);
-        std::vector<TriggerPrimitive> tps = GetEvts(output_vector);
+        std::vector<TPSet> tps = GetEvts(output_vector);
 
         if (tps.size() == 0) {
           std::ostringstream oss_prog;
           oss_prog << "Last TPs packet has size 0, continuing!";
-          ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+          //ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
           continue; 
         } else {
           std::ostringstream oss_prog;
           oss_prog << "Generated TPs #" << generatedCount << " last TPs packet has size " << tps.size();
-          ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
+          //ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
         }
 
         generatedCount+=tps.size();
@@ -182,26 +178,25 @@ namespace dunedaq::trigger {
             } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
               std::ostringstream oss_warn;
               oss_warn << "push to output queue \"" << thisQueueName << "\"";
-              ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-                                                                std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
+              //ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
+             //                                                   std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
             }
           }
         }
         
         std::ostringstream oss_prog2;
         oss_prog2 << "Sent hits from file # " << generatedCount;
-        ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog2.str()));
+        //ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog2.str()));
         
-        ERS_LOG(get_name() << " end of while loop");
+        //ERS_LOG(get_name() << " end of while loop");
       }
 
       std::ostringstream oss_summ;
       oss_summ << ": Exiting the do_work() method, generated " << generatedCount
                << " TP set and successfully sent " << sentCount << " copies. ";
-      ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+      //ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
-    }
-
+}
 } // namespace dunedaq
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TriggerPrimitiveMaker)

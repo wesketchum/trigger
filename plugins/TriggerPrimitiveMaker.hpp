@@ -24,9 +24,10 @@
 #include "appfwk/ThreadHelper.hpp"
 
 #include "trigger/Issues.hpp"
+#include "trigger/TPSet.hpp"
 
-#include "trigger/timingtriggerprimitivemaker/Nljs.hpp"
-#include "trigger/timingtriggerprimitivemakerinfo/InfoNljs.hpp"
+//#include "trigger/triggerprimitivemaker/Nljs.hpp"
+//#include "trigger/triggerprimitivemakerinfo/InfoNljs.hpp"
 
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
@@ -77,11 +78,11 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
 
       // Generation
       //ReadCS();
-      std::vector<TriggerPrimitive> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
+      std::vector<TPSet> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
 
       // Configuration
       //std::unique_ptr<dunedaq::appfwk::DAQSink<TriggerPrimitive>> outputQueue_;
-      using sink_t = dunedaq::appfwk::DAQSink<TriggerPrimitive>;
+      using sink_t = dunedaq::appfwk::DAQSink<TPSet>;
       std::unique_ptr<sink_t> outputQueue_;
 
       std::chrono::milliseconds queueTimeout_;
