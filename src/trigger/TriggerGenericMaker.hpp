@@ -23,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace dunedaq::trigger {
 
@@ -167,7 +168,7 @@ public:
         continue; //nothing to do
       }
   
-      std::vector<OUT> out_vec; // 1 input -> many outputs
+      std::vector<OUT> out_vec; // one input -> many outputs
       try {
         m_parent.m_maker->operator()(in, out_vec);
       } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
@@ -187,15 +188,76 @@ public:
   }
 };
 
+// When Set<T> are used, we want to buffer all Set<T> with the same time_start,
+// and time_end, and then get a vector of all contained objects in time order
+// when a Set<T> with a different time_start arrives. 
+// This class encapsulates that logic.
+template<class T>
+class TimeSliceBuffer
+{
+public:
+  // Parameters purely for ers warning metadata
+  TimeSliceBuffer(const std::string &name, const std::string &algorithm) 
+    : m_name(name)
+    , m_algorithm(algorithm)
+  { }
+  // Add a new Set<T> to the buffer. If it's inconsistent with buffered events,
+  // fill time_slice, start_time, end_time with the previous (complete) slice.
+  // Returns whether the previous slice was complete (and time_slice etc was filled)
+  bool buffer(Set<T> in, std::vector<T> &time_slice,
+              dataformats::timestamp_t &start_time,
+              dataformats::timestamp_t &end_time) {
+    if (m_buffer.size() == 0 || m_buffer.back().start_time == in.start_time) { 
+      // if `in` is the current time slice
+      m_buffer.emplace_back(in);
+      return false; // buffer the time slice
+    }
+    // obtain the current (complete) time slice
+    flush(time_slice,start_time,end_time);
+    // add `in`, which is the next time slice
+    m_buffer.emplace_back(in);
+    return true;
+  }
+  // Fill time_slice with the sorted buffer, and clear the buffer
+  void flush(std::vector<T> &time_slice, 
+             dataformats::timestamp_t &start_time, 
+             dataformats::timestamp_t &end_time) {
+    // build a vector of the A objects from all the sets in the slice
+    start_time = m_buffer[0].start_time;
+    end_time = m_buffer[0].end_time;
+    for (Set<T> &x : m_buffer) {
+      if (x.start_time != start_time || x.end_time != end_time) {
+        ers::warning(InconsistentSetTimeError(ERS_HERE, m_name, m_algorithm));
+      }
+      time_slice.insert(time_slice.end(), x.objects.begin(), x.objects.end());
+    }
+    // clear the buffer
+    m_buffer.clear();
+    // sort the vector by time_start property of T
+    std::sort(time_slice.begin(), time_slice.end(), 
+              [](const T &a, const T &b) { return a.time_start < b.time_start; } );
+    // TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc) 
+    // included a natural ordering with operator<()
+  }
+private:
+  std::vector<Set<T>> m_buffer;
+  const std::string &m_name, &m_algorithm;
+};
+
 // Partial specilization for IN = Set<A>, OUT = Set<B> and assumes the MAKER has:
 // operator()(A, std::vector<B>)
 template<class A, class B, class MAKER> 
 class TriggerGenericWorker<Set<A>, Set<B>, MAKER> 
 {
 public:
-  explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, Set<B>, MAKER> &parent) : m_parent(parent) { }
+  explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, Set<B>, MAKER> &parent) 
+    : m_parent(parent)
+    , m_buffer(parent.get_name(), parent.m_algorithm_name)
+  { }
   
   TriggerGenericMaker<Set<A>, Set<B>, MAKER> &m_parent;
+  
+  TimeSliceBuffer<A> m_buffer;
   
   void do_work(std::atomic<bool> &running_flag)
   {
@@ -205,25 +267,35 @@ public:
         continue; //nothing to do
       }
 
-      Set<B> out; // 1 input set -> 1 output set
+      Set<B> out; // either a whole time slice, flushed from a heartbeat, or empty
       switch (in.type) {
         case Set<A>::Type::kPayload:
-          // call operator for each of the objects in the set
-          for (size_t i = 0; i < in.objects.size(); i++) {
-            std::vector<B> out_vec;
-            try {
-              m_parent.m_maker->operator()(in.objects[i], out_vec);
-            } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-              return;
+          {
+            std::vector<A> time_slice;
+            dataformats::timestamp_t start_time, end_time;
+            if (!m_buffer.buffer(in, time_slice, start_time, end_time)) {
+              continue; //no complete time slice yet (`in` was part of buffered slice)
             }
-            out.objects.insert(out.objects.end(), out_vec.begin(), out_vec.end());
+            // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
+            // call operator for each of the objects in the vector
+            for (A &x : time_slice) {
+              std::vector<B> out_vec;
+              try {
+                m_parent.m_maker->operator()(x, out_vec);
+              } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+                ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+                return;
+              }
+              out.objects.insert(out.objects.end(), out_vec.begin(), out_vec.end());
+            }
+            out.type = Set<B>::Type::kPayload;
+            out.start_time = start_time;
+            out.end_time = end_time;
           }
-          out.type = Set<B>::Type::kPayload;
           break;
         case Set<A>::Type::kHeartbeat:
-          // forward the heartbeat
           { 
+            // forward the heartbeat
             Set<B> heartbeat;
             heartbeat.seqno = m_parent.m_sent_count;
             heartbeat.type = Set<B>::Type::kHeartbeat;
@@ -234,15 +306,18 @@ public:
                 break;
               }
             }
+            // flush the maker
+            try {
+              m_parent.m_maker->flush(in.end_time, out.objects);
+            } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+              return;
+            }
+            out.type = Set<B>::Type::kPayload;
+            // TODO BJL June 01-2021 using the heartbeat times here may not be correct
+            out.start_time = in.start_time;
+            out.end_time = in.end_time;
           }
-          // flush the maker
-          try {
-            m_parent.m_maker->flush(in.end_time, out.objects);
-          } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-            ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-            return;
-          }
-          out.type = Set<B>::Type::kPayload;
           break;
         case Set<A>::Type::kUnknown:
           ers::error(UnknownSetError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
@@ -252,17 +327,10 @@ public:
       if (out.objects.size() > 0) {
         out.seqno = m_parent.m_sent_count;
         
-        // TODO BJL May-27-2021 Set<T> should implement some helper methods to 
-        // populate these fields. in lieu of that, this is an approximation
         out.from_detids.resize(out.objects.size());
         for (size_t i = 0; i < out.objects.size(); i++) {
           out.from_detids[i] = out.objects[i].detid;
         }
-        out.start_time = out.objects[0].time_start;
-        // TODO BJL May-27-2021 TP and TA both have time_start, but only TA has time_end
-        // really, Set<T> should decide what is desired here, not the maker
-        // for now, let end_time be the largest time_start (start_time the smallest)
-        out.end_time = out.objects[out.objects.size()-1].time_start;
         
         while (running_flag.load()) {
           if (m_parent.send(out)) {
@@ -284,9 +352,14 @@ template<class A, class OUT, class MAKER>
 class TriggerGenericWorker<Set<A>, OUT, MAKER> 
 {
 public:
-  explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, OUT, MAKER> &parent) : m_parent(parent) { }
+  explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, OUT, MAKER> &parent) 
+    : m_parent(parent)
+    , m_buffer(parent.get_name(), parent.m_algorithm_name)
+  { }
   
   TriggerGenericMaker<Set<A>, OUT, MAKER> &m_parent;
+  
+  TimeSliceBuffer<A> m_buffer;
   
   void do_work(std::atomic<bool> &running_flag)
   {
@@ -296,15 +369,24 @@ public:
         continue; //nothing to do
       }
 
-      std::vector<OUT> out_vec; // 1 input set -> many outputs
+      std::vector<OUT> out_vec; // either a whole time slice, heartbeat flushed, or empty
       switch (in.type) {
-        case Set<A>::Type::kPayload:
-          for (size_t i = 0; i < in.objects.size(); i++) {
-            try {
-              m_parent.m_maker->operator()(in.objects[i], out_vec);
-            } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-              return;
+        case Set<A>::Type::kPayload:   
+          {
+            std::vector<A> time_slice;
+            dataformats::timestamp_t start_time, end_time;
+            if (!m_buffer.buffer(in, time_slice, start_time, end_time)) {
+              continue; //no complete time slice yet (`in` was part of buffered slice)
+            }
+            // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
+            // call operator for each of the objects in the vector
+            for (A &x : time_slice) {
+              try {
+                m_parent.m_maker->operator()(x, out_vec);
+              } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+                ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+                return;
+              }
             }
           }
           break;

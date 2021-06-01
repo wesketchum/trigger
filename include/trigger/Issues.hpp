@@ -63,7 +63,14 @@ ERS_DECLARE_ISSUE_BASE(trigger,
 ERS_DECLARE_ISSUE_BASE(trigger,
                        UnknownSetError,
                        appfwk::GeneralDAQModuleIssue,
-                       "The " << algorithm << " encountered an unknown Set.",
+                       "The " << algorithm << " encountered an unknown Set type.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       InconsistentSetTimeError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker encountered Sets with inconsistent start/end times.",
                        ((std::string)name),
                        ((std::string)algorithm))
 
