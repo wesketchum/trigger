@@ -1,3 +1,14 @@
+/**
+ * @file TriggerPrimitiveMaker.cpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
+#ifndef TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_
+#define TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_
+
 #include "trigger/TriggerGenericMaker.hpp"
 
 #include "triggeralgs/TriggerPrimitive.hpp"
@@ -6,26 +17,77 @@
 
 #include <string>
 
-namespace dunedaq::trigger {
+#include "appfwk/DAQModule.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/DAQSink.hpp"
+#include "appfwk/DAQSource.hpp"
+#include "appfwk/ThreadHelper.hpp"
 
-class TriggerPrimitiveMaker 
-  : public TriggerGenericMaker < 
-    triggeralgs::TriggerPrimitive, 
-    triggeralgs::TriggerPrimitive
-    triggeralgs::TriggerPrimitiveMaker 
-  >
+#include "trigger/Issues.hpp"
+
+#include "trigger/timingtriggerprimitivemaker/Nljs.hpp"
+#include "trigger/timingtriggerprimitivemakerinfo/InfoNljs.hpp"
+
+#include "triggeralgs/TriggerActivity.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
+
+#include <chrono>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+
+namespace dunedaq {
+namespace trigger {
+class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
 {
-public:
-  explicit TriggerPrimitiveMaker(const std::string& name) : TriggerGenericMaker(name) { }
-  
-  TriggerPrimitiveMaker(const TriggerPrimitiveMaker&) = delete;
-  TriggerPrimitiveMaker& operator=(const TriggerPrimitiveMaker&) = delete;
-  TriggerPrimitiveMaker(TriggerPrimitiveMaker&&) = delete;
-  TriggerPrimitiveMaker& operator=(TriggerPrimitiveMaker&&) = delete;
+    public:
+      /**
+       * @brief RandomDataListGenerator Constructor
+       * @param name Instance name for this RandomDataListGenerator instance
+       */
+      explicit TriggerPrimitiveMaker(const std::string& name);
 
-private:
-  virtual std::shared_ptr<triggeralgs::TriggerPrimitiveMaker> make_maker(const nlohmann::json& obj);
-  
-};
+      TriggerPrimitiveMaker(const TriggerPrimitiveMaker&) =
+        delete; ///< TriggerPrimitiveMaker is not copy-constructible
+      TriggerPrimitiveMaker& operator=(const TriggerPrimitiveMaker&) =
+        delete; ///< TriggerPrimitiveMaker is not copy-assignable
+      TriggerPrimitiveMaker(TriggerPrimitiveMaker&&) =
+        delete; ///< TriggerPrimitiveMaker is not move-constructible
+      TriggerPrimitiveMaker& operator=(TriggerPrimitiveMaker&&) =
+        delete; ///< TriggerPrimitiveMaker is not move-assignable
 
-} // namespace dunedaq::trigger
+      void init(const nlohmann::json& obj) override;
+
+    private:
+      // Commands
+      void do_configure  (const nlohmann::json& obj);
+      void do_start      (const nlohmann::json& obj);
+      void do_stop       (const nlohmann::json& obj);
+      void do_unconfigure(const nlohmann::json& obj);
+
+      // Threading
+      dunedaq::appfwk::ThreadHelper thread_;
+      void do_work(std::atomic<bool>&);
+
+      // Read csv file
+      std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
+      std::string filename;
+      std::vector<std::vector<int64_t>> output_vector;
+
+      // Generation
+      //ReadCS();
+      std::vector<TriggerPrimitive> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
+
+      // Configuration
+      //std::unique_ptr<dunedaq::appfwk::DAQSink<TriggerPrimitive>> outputQueue_;
+      using sink_t = dunedaq::appfwk::DAQSink<TriggerPrimitive>;
+      std::unique_ptr<sink_t> outputQueue_;
+
+      std::chrono::milliseconds queueTimeout_;
+
+    };
+} // namespace trigger
+} // namespace dunedaq
+
+#endif // TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_

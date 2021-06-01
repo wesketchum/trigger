@@ -25,52 +25,6 @@ using namespace triggeralgs;
 namespace dunedaq::trigger {
 
     class TriggerPrimitiveMaker: public dunedaq::appfwk::DAQModule {
-    public:
-      /**
-       * @brief RandomDataListGenerator Constructor
-       * @param name Instance name for this RandomDataListGenerator instance
-       */
-      explicit TriggerPrimitiveMaker(const std::string& name);
-
-      TriggerPrimitiveMaker(const TriggerPrimitiveMaker&) =
-        delete; ///< TriggerPrimitiveMaker is not copy-constructible
-      TriggerPrimitiveMaker& operator=(const TriggerPrimitiveMaker&) =
-        delete; ///< TriggerPrimitiveMaker is not copy-assignable
-      TriggerPrimitiveMaker(TriggerPrimitiveMaker&&) =
-        delete; ///< TriggerPrimitiveMaker is not move-constructible
-      TriggerPrimitiveMaker& operator=(TriggerPrimitiveMaker&&) =
-        delete; ///< TriggerPrimitiveMaker is not move-assignable
-
-      void init(const nlohmann::json& obj) override;
-
-    private:
-      // Commands
-      void do_configure  (const nlohmann::json& obj);
-      void do_start      (const nlohmann::json& obj);
-      void do_stop       (const nlohmann::json& obj);
-      void do_unconfigure(const nlohmann::json& obj);
-
-      // Threading
-      dunedaq::appfwk::ThreadHelper thread_;
-      void do_work(std::atomic<bool>&);
-
-      // Read csv file
-      std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
-      std::string filename;
-      std::vector<std::vector<int64_t>> output_vector;
-
-      // Generation
-      //ReadCS();
-      std::vector<TriggerPrimitive> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
-
-      // Configuration
-      //std::unique_ptr<dunedaq::appfwk::DAQSink<TriggerPrimitive>> outputQueue_;
-      using sink_t = dunedaq::appfwk::DAQSink<TriggerPrimitive>;
-      std::unique_ptr<sink_t> outputQueue_;
-
-      std::chrono::milliseconds queueTimeout_;
-
-    };
 
     TriggerPrimitiveMaker::TriggerPrimitiveMaker(const std::string& name) :
       dunedaq::appfwk::DAQModule(name),
