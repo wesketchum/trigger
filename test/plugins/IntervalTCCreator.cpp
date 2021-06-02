@@ -116,8 +116,8 @@ IntervalTCCreator::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.time_end = timestamp;
   candidate.time_candidate = timestamp;
   candidate.detid = { 1 };
-  candidate.type = triggeralgs::TriggerCandidateType::kTiming;
-  candidate.algorithm = triggeralgs::candidate_alg_t::kHSIEventToTriggerCandidate;
+  candidate.type = triggeralgs::TriggerCandidate::Type::kTiming;
+  candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
   candidate.version = 1;
 
   return candidate;

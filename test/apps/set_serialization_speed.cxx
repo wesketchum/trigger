@@ -43,8 +43,8 @@ time_serialization(int tps_per_set)
       tp.adc_integral = uniform(generator);
       tp.adc_peak = uniform(generator);
       tp.detid = 1;
-      tp.type = triggeralgs::TriggerPrimitiveType::kUnknown;
-      tp.algorithm = triggeralgs::primitive_alg_t::kDefaultTPCPrimitiveAlgorithm;
+      tp.type = triggeralgs::TriggerPrimitive::Type::kUnknown;
+      tp.algorithm = triggeralgs::TriggerPrimitive::Algorithm::kTPCDefault;
       tp.version = 1;
       tp.flag = 1;
 

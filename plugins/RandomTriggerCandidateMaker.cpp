@@ -120,8 +120,8 @@ RandomTriggerCandidateMaker::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.time_end = timestamp;
   candidate.time_candidate = timestamp;
   candidate.detid = { 0 };
-  candidate.type = triggeralgs::TriggerCandidateType::kRandom;
-  candidate.algorithm = triggeralgs::candidate_alg_t::kHSIEventToTriggerCandidate;
+  candidate.type = triggeralgs::TriggerCandidate::Type::kRandom;
+  candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
   candidate.version = 0;
 
   return candidate;
