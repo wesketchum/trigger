@@ -57,7 +57,7 @@ namespace dunedaq::trigger {
 	return tps_vector;
      }
 
-    /*void TriggerPrimitiveMaker::init(const nlohmann::json& init_data) {
+    void TriggerPrimitiveMaker::init(const nlohmann::json& init_data) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
       auto ini = init_data.get<appfwk::cmd::ModInit>();
       for (const auto& qi : ini.qinfos) {
@@ -79,7 +79,7 @@ namespace dunedaq::trigger {
 
     void TriggerPrimitiveMaker::do_configure(const nlohmann::json& config ) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
-      auto params = config.get<dunedaq::triggermodules::triggerprimitivefromfile::Conf>();
+      auto params = config.get<dunedaq::trigger::TriggerPrimitiveMaker::Conf>();
       filename = params.filename;
 
       // Check if file is loaded
@@ -87,7 +87,7 @@ namespace dunedaq::trigger {
       // if(!src.is_open()) throw InvalidConfiguration(ERS_HERE);
 	      // src.close();
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
-    }*/
+    }
 
     void TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
