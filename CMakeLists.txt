@@ -17,7 +17,7 @@ find_package(timinglibs REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp BufferManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
