@@ -31,7 +31,7 @@ namespace dunedaq::trigger {
       register_command("scrap"      , &TriggerPrimitiveMaker::do_unconfigure);
     }
 
-    std::vector<std::vector<int64_t>> TriggerPrimitiveMaker::ReadCSV(const std::string filename) {
+    /*std::vector<std::vector<int64_t>> TriggerPrimitiveMaker::ReadCSV(const std::string filename) {
 	std::vector<std::vector<int64_t>> tps_vector;
         std::ifstream src(filename);
         if(!src.is_open()) throw std::runtime_error("Could not open file");
@@ -55,19 +55,27 @@ namespace dunedaq::trigger {
         }
         src.close();
 	return tps_vector;
-     }
+     }*/
 
     void TriggerPrimitiveMaker::init(const nlohmann::json& obj) {
         m_tpset_sink.reset(
             new appfwk::DAQSink<TPSet>(appfwk::queue_inst(obj, "tpset_sink")));
     }
 
-
     void
     TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
     {
        m_conf = obj.get<triggerprimitivemaker::ConfParams>();
-       m_filename = m_conf.filename;
+       m_number_of_loops = m_conf.number_of_loops;
+       std::ifstream file(m_conf.filename);
+       m_number_of_rows = 0;
+       while(file){
+         TriggerPrimitive tp;
+         file >> tp.time_start >> tp.time_over_threshold >> tp.time_peak >> tp.channel >> tp.adc_integral >> tp.adc_peak >> tp.detid >> tp.type;
+         m_tpset.objects.push_back(tp);
+         m_number_of_rows++;
+       }
+       file.close();
     }
 
     void TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/) {
@@ -89,7 +97,7 @@ namespace dunedaq::trigger {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_unconfigure() method";
     }
 
-    std::vector<TPSet> TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
+    /*TPSet TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
         std::cout << "\033[28m ENTERING TP GENERATOR WITH SOURCE FILE " << m_filename << "\033[0m  ";
         std::cout << "\033[28m TPs vector size: " << tps_vector.size() << "\033[0m  ";
       std::vector<TriggerPrimitive> tps;
@@ -116,33 +124,33 @@ namespace dunedaq::trigger {
       std::vector<TPSet> tpset_empty_vector;
       tpset_empty_vector.push_back(tpset_empty);
       return tpset_empty_vector;
-    }
+    }*/
     
     void TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
       size_t generatedCount = 0;
       size_t sentCount = 0;
-
-      while (running_flag.load()) {
+      uint64_t currentIteration = 0;
+      while (running_flag.load() && currentIteration < m_number_of_loops) {
         TLOG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
         std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
 
 	
-        std::vector<std::vector<int64_t>> output_vector = ReadCSV(m_filename);
-        std::vector<TPSet> tps = GetEvts(output_vector);
+        //std::vector<std::vector<int64_t>> output_vector = ReadCSV(m_filename);
+        //std::vector<TPSet> tps = GetEvts(output_vector);
 
-        if (tps.size() == 0) {
+        if (m_number_of_rows == 0) {
           std::ostringstream oss_prog;
-          oss_prog << "Last TPs packet has size 0, continuing!";
+          oss_prog << "TPs packet has size 0, continuing!";
           //ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
           continue; 
         } else {
           std::ostringstream oss_prog;
-          oss_prog << "Generated TPs #" << generatedCount << " last TPs packet has size " << tps.size();
+          oss_prog << "Generated TPs #" << generatedCount << " last TPs packet has size " << m_number_of_rows;
           //ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_prog.str()));
         }
 
-        generatedCount+=tps.size();
+        generatedCount+=m_number_of_rows;
         
         std::string thisQueueName = m_tpset_sink->get_name();
         TLOG(TLVL_GENERATION) << get_name() << ": Pushing list onto the outputQueue: " << thisQueueName;
@@ -151,19 +159,18 @@ namespace dunedaq::trigger {
         while (!successfullyWasSent && running_flag.load()) {
           TLOG(TLVL_GENERATION) << get_name() << ": Pushing the generated list onto queue " << thisQueueName;
 
-          for (auto const& tp: tps) {
-            try {
-              m_tpset_sink->push(tp, queueTimeout_);
-              successfullyWasSent = true;
-              ++sentCount;
-            } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-              std::ostringstream oss_warn;
-              oss_warn << "push to output queue \"" << thisQueueName << "\"";
-              //ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
-             //                                                   std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
-            }
+          try {
+            m_tpset_sink->push(m_tpset, queueTimeout_);
+            successfullyWasSent = true;
+            ++sentCount;
+          } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+            std::ostringstream oss_warn;
+            oss_warn << "push to output queue \"" << thisQueueName << "\"";
+            //ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(),
+            //                                                   std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
           }
-        }
+          currentIteration++;
+         }
         
         std::ostringstream oss_prog2;
         oss_prog2 << "Sent hits from file # " << generatedCount;

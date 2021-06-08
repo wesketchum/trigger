@@ -71,17 +71,20 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
       void do_work(std::atomic<bool>&);
 
       // Read csv file
-      std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
-      std::string m_filename;
-      std::vector<std::vector<int64_t>> output_vector;
+      //std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
+      //std::vector<std::vector<int64_t>> output_vector;
 
       // Generation
-      //ReadCS();
-      std::vector<TPSet> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
+      //TPSet GetEvts(std::vector<std::vector<int64_t>> tps_vector);
 
       // Configuration
       triggerprimitivemaker::ConfParams m_conf;
       std::unique_ptr<appfwk::DAQSink<TPSet>> m_tpset_sink;
+      uint64_t m_number_of_loops;
+      uint64_t m_number_of_rows;
+      TPSet m_tpset;
+
+
 
       std::chrono::milliseconds queueTimeout_;
 
