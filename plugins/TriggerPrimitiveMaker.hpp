@@ -26,8 +26,7 @@
 #include "trigger/Issues.hpp"
 #include "trigger/TPSet.hpp"
 
-//#include "trigger/triggerprimitivemaker/Nljs.hpp"
-//#include "trigger/triggerprimitivemakerinfo/InfoNljs.hpp"
+#include "trigger/triggerprimitivemaker/Nljs.hpp"
 
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
@@ -73,7 +72,7 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
 
       // Read csv file
       std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
-      std::string filename;
+      std::string m_filename;
       std::vector<std::vector<int64_t>> output_vector;
 
       // Generation

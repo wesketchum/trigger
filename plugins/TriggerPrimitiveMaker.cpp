@@ -64,10 +64,10 @@ namespace dunedaq::trigger {
 
 
     void
-    TriggerPrimitiveMaker::do_configure(const nlohmann::json& config)
+    TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
     {
-       m_conf = obj.get<randomtriggercandidatemaker::ConfParams>();
-       filename = params.filename;
+       m_conf = obj.get<triggerprimitivemaker::ConfParams>();
+       m_filename = m_conf.filename;
     }
 
     void TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/) {
@@ -90,7 +90,7 @@ namespace dunedaq::trigger {
     }
 
     std::vector<TPSet> TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
-        std::cout << "\033[28m ENTERING TP GENERATOR WITH SOURCE FILE " << filename << "\033[0m  ";
+        std::cout << "\033[28m ENTERING TP GENERATOR WITH SOURCE FILE " << m_filename << "\033[0m  ";
         std::cout << "\033[28m TPs vector size: " << tps_vector.size() << "\033[0m  ";
       std::vector<TriggerPrimitive> tps;
       int EvtNo = tps_vector.size();
@@ -128,7 +128,7 @@ namespace dunedaq::trigger {
         std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
 
 	
-        std::vector<std::vector<int64_t>> output_vector = ReadCSV(filename);
+        std::vector<std::vector<int64_t>> output_vector = ReadCSV(m_filename);
         std::vector<TPSet> tps = GetEvts(output_vector);
 
         if (tps.size() == 0) {
