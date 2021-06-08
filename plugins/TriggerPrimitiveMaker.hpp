@@ -70,12 +70,6 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
       dunedaq::appfwk::ThreadHelper thread_;
       void do_work(std::atomic<bool>&);
 
-      // Read csv file
-      //std::vector<std::vector<int64_t>> ReadCSV(const std::string filename);
-      //std::vector<std::vector<int64_t>> output_vector;
-
-      // Generation
-      //TPSet GetEvts(std::vector<std::vector<int64_t>> tps_vector);
 
       // Configuration
       triggerprimitivemaker::ConfParams m_conf;

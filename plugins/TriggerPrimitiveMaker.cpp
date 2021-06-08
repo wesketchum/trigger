@@ -31,32 +31,6 @@ namespace dunedaq::trigger {
       register_command("scrap"      , &TriggerPrimitiveMaker::do_unconfigure);
     }
 
-    /*std::vector<std::vector<int64_t>> TriggerPrimitiveMaker::ReadCSV(const std::string filename) {
-	std::vector<std::vector<int64_t>> tps_vector;
-        std::ifstream src(filename);
-        if(!src.is_open()) throw std::runtime_error("Could not open file");
-        int64_t val;
-
-        std::string buffer;
-        char sep = ',';
-	int rowIdx = 0;
-        while (std::getline(src, buffer))
-            {
-            tps_vector.push_back({0,0,0,0,0,0,0,0});
-            std::stringstream ss(buffer);
-            int colIdx = 0;
-            while(ss >> val)
-            {
-                tps_vector.at(rowIdx)[colIdx] = val;
-                if(ss.peek() == sep) ss.ignore();
-                colIdx++;
-            }
-            rowIdx++;
-        }
-        src.close();
-	return tps_vector;
-     }*/
-
     void TriggerPrimitiveMaker::init(const nlohmann::json& obj) {
         m_tpset_sink.reset(
             new appfwk::DAQSink<TPSet>(appfwk::queue_inst(obj, "tpset_sink")));
@@ -97,35 +71,6 @@ namespace dunedaq::trigger {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_unconfigure() method";
     }
 
-    /*TPSet TriggerPrimitiveMaker::GetEvts(std::vector<std::vector<int64_t>> tps_vector) {
-        std::cout << "\033[28m ENTERING TP GENERATOR WITH SOURCE FILE " << m_filename << "\033[0m  ";
-        std::cout << "\033[28m TPs vector size: " << tps_vector.size() << "\033[0m  ";
-      std::vector<TriggerPrimitive> tps;
-      int EvtNo = tps_vector.size();
-      for (int i=0; i<EvtNo; ++i) {
-        TriggerPrimitive tp{};
-
-        tp.time_start          = (int64_t)tps_vector[i][0];
-        std::cout << "\033[31mtp.time_start : " << tp.time_start << "\033[0m  ";
-        tp.time_over_threshold = (int64_t)tps_vector[i][1];
-        tp.time_peak           = (int64_t)tps_vector[i][2];
-        tp.channel             = (uint16_t)tps_vector[i][3];
-        std::cout << "\033[32mtp.channel : " << tp.channel << "\033[0m\n";
-        tp.adc_integral        = (uint32_t)tps_vector[i][4];
-        tp.adc_peak            = (uint16_t)tps_vector[i][5];
-        tp.detid               = (uint16_t)tps_vector[i][6];
-        tp.type		       = (uint16_t)tps_vector[i][7];
-        auto now = std::chrono::steady_clock::now();
-        tp.flag = (uint32_t)pd_clock(now.time_since_epoch()).count();
-          std::cout << "\033[31mTimestamp : "     << tp.algorithm<< "\033[0m  ";
-        tps.push_back(tp);
-      }
-      TPSet tpset_empty;
-      std::vector<TPSet> tpset_empty_vector;
-      tpset_empty_vector.push_back(tpset_empty);
-      return tpset_empty_vector;
-    }*/
-    
     void TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag) {
       TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
       size_t generatedCount = 0;
@@ -134,10 +79,6 @@ namespace dunedaq::trigger {
       while (running_flag.load() && currentIteration < m_number_of_loops) {
         TLOG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
         std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
-
-	
-        //std::vector<std::vector<int64_t>> output_vector = ReadCSV(m_filename);
-        //std::vector<TPSet> tps = GetEvts(output_vector);
 
         if (m_number_of_rows == 0) {
           std::ostringstream oss_prog;
