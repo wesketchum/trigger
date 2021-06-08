@@ -3,17 +3,12 @@ local ns = "dunedaq.trigger.triggerprimitivemaker";
 local s = moo.oschema.schema(ns);
 
 local types = {
-  name: s.string("Name", ".*",
-    doc="Name of a plugin etc"),
+    pathname : s.string("Path", "path", doc="File path, file name"),
 
-  any: s.any("Data", doc="Any"),
-
-  conf: s.record("Conf", [
-    s.field("primitive_maker", self.name,
-      doc="Name of the primitive maker implementation to be used via plugin"),
-    s.field("primitive_maker_config", self.any,
-      doc="Configuration for the primitive maker implementation"),
-    ], doc="TriggerPrimitiveMaker configuration"),
+    conf: s.record("ConfParams", [
+        s.field("filename", self.pathname, "/tmp/example.csv",
+                doc="File name of input csv file for trigger primitives"),
+    ], doc="TriggerPrimitiveFromFile configuration"),
 
 };
 
