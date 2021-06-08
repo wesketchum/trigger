@@ -22,7 +22,7 @@ namespace dunedaq::trigger {
     TriggerPrimitiveMaker::TriggerPrimitiveMaker(const std::string& name) :
       dunedaq::appfwk::DAQModule(name),
       thread_(std::bind(&TriggerPrimitiveMaker::do_work, this, std::placeholders::_1)),
-      outputQueue_(),
+      m_tpset_sink(),
       queueTimeout_(100)
       {
       register_command("conf"       , &TriggerPrimitiveMaker::do_configure  );
@@ -57,36 +57,17 @@ namespace dunedaq::trigger {
 	return tps_vector;
      }
 
-    void TriggerPrimitiveMaker::init(const nlohmann::json& init_data) {
-      TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
-      auto ini = init_data.get<appfwk::cmd::ModInit>();
-      for (const auto& qi : ini.qinfos) {
-        if (qi.dir != "output") {
-          continue;                 // skip all but "output" direction
-        }
-        try
-	{
-	  //outputQueue_.emplace_back(new sink_t(qi.inst));
-	  outputQueue_.reset(new sink_t(qi.inst));
-	}
-        catch (const ers::Issue& excpt)
-	{
-	  throw dunedaq::dunetrigger::InvalidQueueFatalError(ERS_HERE, get_name(), qi.name, excpt);
-	}
-      }
-      TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
+    void TriggerPrimitiveMaker::init(const nlohmann::json& obj) {
+        m_tpset_sink.reset(
+            new appfwk::DAQSink<TPSet>(appfwk::queue_inst(obj, "tpset_sink")));
     }
 
-    void TriggerPrimitiveMaker::do_configure(const nlohmann::json& config ) {
-      TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
-      auto params = config.get<dunedaq::trigger::TriggerPrimitiveMaker::Conf>();
-      filename = params.filename;
 
-      // Check if file is loaded
-      // std::ifstream src(filename);
-      // if(!src.is_open()) throw InvalidConfiguration(ERS_HERE);
-	      // src.close();
-      TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
+    void
+    TriggerPrimitiveMaker::do_configure(const nlohmann::json& config)
+    {
+       m_conf = obj.get<randomtriggercandidatemaker::ConfParams>();
+       filename = params.filename;
     }
 
     void TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/) {
@@ -163,7 +144,7 @@ namespace dunedaq::trigger {
 
         generatedCount+=tps.size();
         
-        std::string thisQueueName = outputQueue_->get_name();
+        std::string thisQueueName = m_tpset_sink->get_name();
         TLOG(TLVL_GENERATION) << get_name() << ": Pushing list onto the outputQueue: " << thisQueueName;
 
         bool successfullyWasSent = false;
@@ -172,7 +153,7 @@ namespace dunedaq::trigger {
 
           for (auto const& tp: tps) {
             try {
-              outputQueue_->push(tp, queueTimeout_);
+              m_tpset_sink->push(tp, queueTimeout_);
               successfullyWasSent = true;
               ++sentCount;
             } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {

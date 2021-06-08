@@ -81,9 +81,8 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
       std::vector<TPSet> GetEvts(std::vector<std::vector<int64_t>> tps_vector);
 
       // Configuration
-      //std::unique_ptr<dunedaq::appfwk::DAQSink<TriggerPrimitive>> outputQueue_;
-      using sink_t = dunedaq::appfwk::DAQSink<TPSet>;
-      std::unique_ptr<sink_t> outputQueue_;
+      triggerprimitivemaker::ConfParams m_conf;
+      std::unique_ptr<appfwk::DAQSink<TPSet>> m_tpset_sink;
 
       std::chrono::milliseconds queueTimeout_;
 
