@@ -41,14 +41,11 @@ public:
   /**
    * return a vector of all the TPSets in the buffer that overlap with [start_time, end_time]
    */
-  bool get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
+  std::vector<trigger::TPSet> get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
 
 private:
   //Where the TPSet will be buffered
   std::set<trigger::TPSet> m_tpset_buffer;
-
-  //Vector with TPSset for the get function
-  std::vector<trigger::TPSet> m_requested_tpset;
 
 };
 

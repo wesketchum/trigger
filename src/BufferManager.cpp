@@ -31,15 +31,13 @@ BufferManager::add(trigger::TPSet& tps)
   return dummy;
 }
 
-bool
+std::vector<trigger::TPSet>
 BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
 {
   // dummy function to avoid compilation warning.
-  bool dummy = false;
+  std::vector<trigger::TPSet> dummy;
   if(end_time > start_time)
-    dummy = true;
-
-  return dummy;
+    return dummy;
 }
 
 
