@@ -36,8 +36,11 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 {
   // dummy function to avoid compilation warning.
   std::vector<trigger::TPSet> dummy;
-  if(end_time > start_time)
-    return dummy;
+  if(end_time > start_time){}
+
+  return dummy;
+
+    
 }
 
 
