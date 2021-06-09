@@ -44,8 +44,18 @@ public:
   std::vector<trigger::TPSet> get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
 
 private:
+
+  //Compare end_time of a TPSet when adding to the buffer.
+  struct TPSetCmp {
+    bool operator()(const TPSet& ltps, const TPSet& rtps) const {
+      dataformats::timestamp_t const LTPS = ltps.end_time;
+      dataformats::timestamp_t const RTPS = rtps.end_time;
+      return LTPS < RTPS;
+    }
+  };
+
   //Where the TPSet will be buffered
-  std::set<trigger::TPSet> m_tpset_buffer;
+  std::set<trigger::TPSet,TPSetCmp> m_tpset_buffer;
 
 };
 

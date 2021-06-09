@@ -24,11 +24,7 @@ BufferManager::~BufferManager()
 bool
 BufferManager::add(trigger::TPSet& tps)
 {
-  // dummy function to avoid compilation warning.
-  trigger::TPSet temp = tps;
-  bool dummy = false;
-
-  return dummy;
+  return m_tpset_buffer.insert(tps).second; //false if tps with same end_time already exists
 }
 
 std::vector<trigger::TPSet>
