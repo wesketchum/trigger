@@ -1,33 +1,33 @@
 /**
- * @file FakeTpCreatorHeartbeatMaker.cpp
+ * @file FakeTPCreatorHeartbeatMaker.cpp
  *
  * This is part of the DUNE DAQ Application Framework, copyright 2021.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
 
-#include "FakeTpCreatorHeartbeatMaker.hpp"
+#include "FakeTPCreatorHeartbeatMaker.hpp"
 
 #include <string>
 
 namespace dunedaq {
 namespace trigger {
-FakeTpCreatorHeartbeatMaker::FakeTpCreatorHeartbeatMaker(const std::string& name)
+FakeTPCreatorHeartbeatMaker::FakeTPCreatorHeartbeatMaker(const std::string& name)
   : DAQModule(name)
-  , m_thread(std::bind(&FakeTpCreatorHeartbeatMaker::do_work, this, std::placeholders::_1))
+  , m_thread(std::bind(&FakeTPCreatorHeartbeatMaker::do_work, this, std::placeholders::_1))
   , m_input_queue(nullptr)
   , m_output_queue(nullptr)
   , m_queue_timeout(100)
 {
 
-  register_command("conf", &FakeTpCreatorHeartbeatMaker::do_conf);
-  register_command("start", &FakeTpCreatorHeartbeatMaker::do_start);
-  register_command("stop", &FakeTpCreatorHeartbeatMaker::do_stop);
-  register_command("scrap", &FakeTpCreatorHeartbeatMaker::do_scrap);
+  register_command("conf", &FakeTPCreatorHeartbeatMaker::do_conf);
+  register_command("start", &FakeTPCreatorHeartbeatMaker::do_start);
+  register_command("stop", &FakeTPCreatorHeartbeatMaker::do_stop);
+  register_command("scrap", &FakeTPCreatorHeartbeatMaker::do_scrap);
 }
 
 void
-FakeTpCreatorHeartbeatMaker::init(const nlohmann::json& iniobj)
+FakeTPCreatorHeartbeatMaker::init(const nlohmann::json& iniobj)
 {
   try {
     m_input_queue.reset(new source_t(appfwk::queue_inst(iniobj, "input")));
@@ -38,7 +38,7 @@ FakeTpCreatorHeartbeatMaker::init(const nlohmann::json& iniobj)
 }
 
 void
-FakeTpCreatorHeartbeatMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+FakeTPCreatorHeartbeatMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/)
 {
   faketpcreatorheartbeatmakerinfo::Info i;
 
@@ -50,32 +50,32 @@ FakeTpCreatorHeartbeatMaker::get_info(opmonlib::InfoCollector& ci, int /*level*/
 }
 
 void
-FakeTpCreatorHeartbeatMaker::do_conf(const nlohmann::json& conf)
+FakeTPCreatorHeartbeatMaker::do_conf(const nlohmann::json& conf)
 {
   m_heartbeat_interval = conf.get<dunedaq::trigger::faketpcreatorheartbeatmaker::Conf>().heartbeat_interval;
   TLOG_DEBUG(2) << get_name() + " configured.";
 }
 
 void
-FakeTpCreatorHeartbeatMaker::do_start(const nlohmann::json&)
+FakeTPCreatorHeartbeatMaker::do_start(const nlohmann::json&)
 {
   m_thread.start_working_thread("fake-tp-heartbeat-maker");
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
 void
-FakeTpCreatorHeartbeatMaker::do_stop(const nlohmann::json&)
+FakeTPCreatorHeartbeatMaker::do_stop(const nlohmann::json&)
 {
   m_thread.stop_working_thread();
   TLOG_DEBUG(2) << get_name() + " successfully stopped.";
 }
 
 void
-FakeTpCreatorHeartbeatMaker::do_scrap(const nlohmann::json&)
+FakeTPCreatorHeartbeatMaker::do_scrap(const nlohmann::json&)
 {}
 
 void
-FakeTpCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
+FakeTPCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
 {
   // OpMon.
   m_tpset_received_count.store(0);
@@ -149,7 +149,7 @@ FakeTpCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
 }
 
 bool
-FakeTpCreatorHeartbeatMaker::should_send_heartbeat(dataformats::timestamp_t const& last_sent_heartbeat_time,
+FakeTPCreatorHeartbeatMaker::should_send_heartbeat(dataformats::timestamp_t const& last_sent_heartbeat_time,
                                                    dataformats::timestamp_t const& current_tpset_start_time,
                                                    bool const& is_first_tpset_received)
 {
@@ -160,11 +160,11 @@ FakeTpCreatorHeartbeatMaker::should_send_heartbeat(dataformats::timestamp_t cons
   if (is_first_tpset_received)
     return true;
   else
-    return last_sent_heartbeat_time + m_heartbeat_interval > current_tpset_start_time;
+    return last_sent_heartbeat_time + m_heartbeat_interval < current_tpset_start_time;
 }
 
 void
-FakeTpCreatorHeartbeatMaker::get_heartbeat(TPSet& tpset_heartbeat,
+FakeTPCreatorHeartbeatMaker::get_heartbeat(TPSet& tpset_heartbeat,
                                            dataformats::timestamp_t const& current_tpset_start_time)
 {
   tpset_heartbeat.type = TPSet::Type::kHeartbeat;
@@ -175,4 +175,4 @@ FakeTpCreatorHeartbeatMaker::get_heartbeat(TPSet& tpset_heartbeat,
 } // namespace trigger
 } // namespace dunedaq
 
-DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::FakeTpCreatorHeartbeatMaker)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::FakeTPCreatorHeartbeatMaker)

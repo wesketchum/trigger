@@ -9,7 +9,7 @@ local types = {
     s.field("heartbeat_interval", self.ticks, 5000,
       doc="Interval between subsequent heartbeats being issued."),
     
-  ], doc="FakeTpCreatorHeartbeatMaker configuration parameters."),
+  ], doc="FakeTPCreatorHeartbeatMaker configuration parameters."),
 
 };
 

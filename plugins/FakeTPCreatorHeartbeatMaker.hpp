@@ -1,5 +1,5 @@
 /**
- * @file FakeTpCreatorHeartbeatMaker.cpp
+ * @file FakeTPCreatorHeartbeatMaker.cpp
  *
  * This is part of the DUNE DAQ Application Framework, copyright 2021.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -29,15 +29,15 @@
 
 namespace dunedaq {
 namespace trigger {
-class FakeTpCreatorHeartbeatMaker : public dunedaq::appfwk::DAQModule
+class FakeTPCreatorHeartbeatMaker : public dunedaq::appfwk::DAQModule
 {
 public:
-  explicit FakeTpCreatorHeartbeatMaker(const std::string& name);
+  explicit FakeTPCreatorHeartbeatMaker(const std::string& name);
 
-  FakeTpCreatorHeartbeatMaker(const FakeTpCreatorHeartbeatMaker&) = delete;
-  FakeTpCreatorHeartbeatMaker& operator=(const FakeTpCreatorHeartbeatMaker&) = delete;
-  FakeTpCreatorHeartbeatMaker(FakeTpCreatorHeartbeatMaker&&) = delete;
-  FakeTpCreatorHeartbeatMaker& operator=(FakeTpCreatorHeartbeatMaker&&) = delete;
+  FakeTPCreatorHeartbeatMaker(const FakeTPCreatorHeartbeatMaker&) = delete;
+  FakeTPCreatorHeartbeatMaker& operator=(const FakeTPCreatorHeartbeatMaker&) = delete;
+  FakeTPCreatorHeartbeatMaker(FakeTPCreatorHeartbeatMaker&&) = delete;
+  FakeTPCreatorHeartbeatMaker& operator=(FakeTPCreatorHeartbeatMaker&&) = delete;
 
   void init(const nlohmann::json& iniobj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
