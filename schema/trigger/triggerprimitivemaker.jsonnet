@@ -16,7 +16,7 @@ local types = {
                 doc="Offset for the TPSet boundaries [ n*width+offset, (n+1)*width+offset ]"),
         s.field("chunk_width", self.rows, 1,
                 doc="Width for the TPSet boundaries [ n*width+offset, (n+1)*width+offset ]"),
-    ], doc="TriggerPrimitiveFromFile configuration"),
+    ], doc="TriggerPrimitiveMaker configuration"),
 
 };
 
