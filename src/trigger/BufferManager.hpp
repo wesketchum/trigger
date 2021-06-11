@@ -45,11 +45,11 @@ public:
 
 private:
 
-  //Compare end_time of a TPSet when adding to the buffer
+  //Compare start_time of a TPSet when adding to the buffer
   struct TPSetCmp {
     bool operator()(const TPSet& ltps, const TPSet& rtps) const {
-      dataformats::timestamp_t const LTPS = ltps.end_time;
-      dataformats::timestamp_t const RTPS = rtps.end_time;
+      dataformats::timestamp_t const LTPS = ltps.start_time;
+      dataformats::timestamp_t const RTPS = rtps.start_time;
       return LTPS < RTPS;
     }
   };
