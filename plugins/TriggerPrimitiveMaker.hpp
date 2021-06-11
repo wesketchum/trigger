@@ -76,7 +76,10 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
       std::unique_ptr<appfwk::DAQSink<TPSet>> m_tpset_sink;
       uint64_t m_number_of_loops;
       uint64_t m_number_of_rows;
-      TPSet m_tpset;
+      uint64_t m_chunk_offset;
+      uint64_t m_chunk_width;
+      uint64_t m_number_of_chunks;
+      std::vector<TPSet> m_tpsets;
 
 
 
