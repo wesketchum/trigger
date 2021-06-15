@@ -1,34 +1,33 @@
-#include "appfwk/DAQModule.hpp"
-#include "appfwk/DAQSink.hpp"
-#include "appfwk/ThreadHelper.hpp"
-
 #include "TriggerPrimitiveMaker.hpp"
 
+#include "trigger/Issues.hpp" // For TLVL_*
+
+#include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/cmd/Nljs.hpp"
 
+#include "logging/Logging.hpp"
+
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
-#include "trigger/AlgorithmPlugins.hpp"
-//#include "trigger/triggerprimitivemaker/Nljs.hpp"
-
-using pd_clock = std::chrono::duration<double, std::ratio<1, 50000000>>;
 using namespace triggeralgs;
 
 namespace dunedaq::trigger {
 
 TriggerPrimitiveMaker::TriggerPrimitiveMaker(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
-  , thread_(std::bind(&TriggerPrimitiveMaker::do_work, this, std::placeholders::_1))
+  , m_thread(std::bind(&TriggerPrimitiveMaker::do_work, this, std::placeholders::_1))
   , m_tpset_sink()
-  , queueTimeout_(100)
+  , m_queue_timeout(100)
 {
   register_command("conf", &TriggerPrimitiveMaker::do_configure);
   register_command("start", &TriggerPrimitiveMaker::do_start);
   register_command("stop", &TriggerPrimitiveMaker::do_stop);
-  register_command("scrap", &TriggerPrimitiveMaker::do_unconfigure);
+  register_command("scrap", &TriggerPrimitiveMaker::do_scrap);
 }
 
 void
@@ -41,41 +40,45 @@ void
 TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
 {
   m_conf = obj.get<triggerprimitivemaker::ConfParams>();
-  m_number_of_loops = m_conf.number_of_loops;
-  m_chunk_offset = m_conf.chunk_offset;
-  m_chunk_width = m_conf.chunk_width;
-  std::ifstream file(m_conf.filename);
-  m_number_of_rows = 0;
-  std::vector<TriggerPrimitive> all_tps;
-  while (file) {
-    TriggerPrimitive tp;
-    file >> tp.time_start >> tp.time_over_threshold >> tp.time_peak >> tp.channel >> tp.adc_integral >> tp.adc_peak >>
-      tp.detid >> tp.type;
-    all_tps.push_back(tp);
-    m_tpsets[m_number_of_rows].objects.push_back(tp);
-    m_number_of_rows++;
-  }
-  file.close();
 
-  m_number_of_chunks = (m_number_of_rows - m_chunk_offset) / m_chunk_width;
-  uint64_t currentChunk = 0;
-  while (currentChunk < m_number_of_chunks) {
-    TPSet currentTPSet;
-    uint64_t start_index = m_chunk_offset + currentChunk * m_chunk_width;
-    currentTPSet.start_time = all_tps[start_index].time_start;
-    currentTPSet.end_time = all_tps[start_index].time_peak;
-    for (uint64_t index = start_index; index < m_chunk_offset + (currentChunk + 1) * m_chunk_width; index++) {
-      currentTPSet.objects.push_back(all_tps[index]);
-      if ((uint64_t)all_tps[index].time_start < currentTPSet.start_time) {
-        currentTPSet.start_time = (uint64_t)all_tps[index].time_start;
+  std::ifstream file(m_conf.filename);
+  if (!file || file.bad()) {
+    throw BadTPInputFile(ERS_HERE, get_name(), m_conf.filename);
+  }
+
+  TriggerPrimitive tp;
+  TPSet tpset;
+
+  uint64_t prev_tpset_number = 0;
+  uint32_t seqno = 0;
+
+  // Read in the file and place the TPs in TPSets. TPSets have time
+  // boundaries ( n*tpset_time_width + tpset_time_offset ), and TPs are placed
+  // in TPSets based on the TP start time
+  //
+  // This loop assumes the input file is sorted by TP start time
+  while (file >> tp.time_start >> tp.time_over_threshold >> tp.time_peak >> tp.channel >> tp.adc_integral >>
+         tp.adc_peak >> tp.detid >> tp.type) {
+
+    uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
+
+    // If we crossed a time boundary, push the current TPSet and reset it
+    if (current_tpset_number > prev_tpset_number) {
+      if (!tpset.objects.empty()) {
+        // We don't send empty TPSets, so there's no point creating them
+        m_tpsets.push_back(tpset);
       }
-      if ((uint64_t)all_tps[index].time_peak > currentTPSet.end_time) {
-        currentTPSet.end_time = (uint64_t)all_tps[index].time_peak;
-      }
-      currentTPSet.objects.push_back(all_tps[index]);
+      prev_tpset_number = current_tpset_number;
+
+      tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
+      tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
+      tpset.seqno = seqno++;
+      tpset.type = TPSet::Type::kPayload;
+      tpset.from_detids = { tp.detid };
+      tpset.objects.clear();
     }
-    m_tpsets.push_back(currentTPSet);
-    currentChunk++;
+
+    tpset.objects.push_back(tp);
   }
 }
 
@@ -83,8 +86,7 @@ void
 TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/)
 {
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
-  thread_.start_working_thread();
-  // ERS_LOG(get_name() << " successfully started");
+  m_thread.start_working_thread("tpmaker");
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_start() method";
 }
 
@@ -92,90 +94,86 @@ void
 TriggerPrimitiveMaker::do_stop(const nlohmann::json& /*args*/)
 {
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
-  thread_.stop_working_thread();
-  // ERS_LOG(get_name() << " successfully stopped");
+  m_thread.stop_working_thread();
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_stop() method";
 }
 
 void
-TriggerPrimitiveMaker::do_unconfigure(const nlohmann::json& /*args*/)
+TriggerPrimitiveMaker::do_scrap(const nlohmann::json& /*args*/)
 {
-  TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_unconfigure() method";
-  TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_unconfigure() method";
+  TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_scrap() method";
+  m_tpsets.clear();
+  TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
 void
 TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
 {
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
-  size_t generatedCount = 0;
-  size_t sentCount = 0;
-  uint64_t currentIteration = 0;
-  uint64_t currentChunk = 0;
-  while (running_flag.load() && currentIteration < m_number_of_loops) {
-    uint64_t start_time_old = 0;
-    uint64_t time_difference = 0;
-    while (currentChunk < m_number_of_chunks) {
-      if (currentChunk > 0) {
-        time_difference = m_tpsets[currentChunk].start_time - start_time_old;
-        // wait_until() // wait until time_difference
-      }
-      start_time_old = m_tpsets[currentChunk].start_time;
+  uint64_t current_iteration = 0;
+  size_t generated_count = 0;
+  size_t push_failed_count = 0;
 
-      TLOG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
-      std::this_thread::sleep_for(std::chrono::nanoseconds(1000000000));
+  uint64_t prev_tpset_start_time = 0;
+  auto prev_tpset_send_time = std::chrono::steady_clock::now();
 
-      if (m_number_of_rows == 0) {
-        std::ostringstream oss_prog;
-        oss_prog << "TPs packet has size 0, continuing!";
-        // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE,
-        // get_name(), oss_prog.str()));
-        continue;
-      } else {
-        std::ostringstream oss_prog;
-        oss_prog << "Generated TPs #" << generatedCount << " last TPs packet has size " << m_number_of_rows;
-        // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE,
-        // get_name(), oss_prog.str()));
-      }
+  auto input_file_duration = m_tpsets.back().start_time - m_tpsets.front().start_time + m_conf.tpset_time_width;
 
-      generatedCount += m_number_of_rows;
-
-      std::string thisQueueName = m_tpset_sink->get_name();
-      TLOG(TLVL_GENERATION) << get_name() << ": Pushing list onto the outputQueue: " << thisQueueName;
-
-      bool successfullyWasSent = false;
-      while (!successfullyWasSent && running_flag.load()) {
-        TLOG(TLVL_GENERATION) << get_name() << ": Pushing the generated list onto queue " << thisQueueName;
-
-        try {
-          m_tpset_sink->push(m_tpsets[currentChunk], queueTimeout_);
-          successfullyWasSent = true;
-          ++sentCount;
-        } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-          std::ostringstream oss_warn;
-          oss_warn << "push to output queue \"" << thisQueueName << "\"";
-          // ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE,
-          // get_name(), oss_warn.str(),
-          //                                                   std::chrono::duration_cast<std::chrono::milliseconds>(queueTimeout_).count()));
-        }
-      }
-      std::ostringstream oss_prog2;
-      oss_prog2 << "Sent hits from file # " << generatedCount;
-      // ers::debug(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(),
-      // oss_prog2.str()));
-
-      // ERS_LOG(get_name() << " end of while loop");
-      currentChunk++;
+  while (running_flag.load()) {
+    if (m_conf.number_of_loops > 0 && current_iteration >= m_conf.number_of_loops) {
+      break;
     }
-    currentIteration++;
-  }
-  std::ostringstream oss_summ;
-  oss_summ << ": Exiting the do_work() method, generated " << generatedCount << " TP set and successfully sent "
-           << sentCount << " copies. ";
-  // ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(),
-  // oss_summ.str()));
+
+    for (auto& tpset : m_tpsets) {
+
+      if (!running_flag.load()) {
+        break;
+      }
+
+      // Increase the timestamps in the TPSet and TPs so they don't
+      // repeat when we do multiple loops over the file
+      tpset.start_time += input_file_duration;
+      tpset.end_time += input_file_duration;
+      for (auto& tp : tpset.objects) {
+        tp.time_start += input_file_duration;
+        tp.time_peak += input_file_duration;
+      }
+
+      // We send out the first TPSet right away. After that we space each TPSet in time by their start time
+      auto wait_time_us = 0;
+      if (prev_tpset_start_time == 0) {
+        wait_time_us = 0;
+      } else {
+        auto clocks_per_us = m_conf.clock_frequency_hz / 1'000'000;
+        wait_time_us = (tpset.start_time - prev_tpset_start_time) / clocks_per_us;
+      }
+
+      auto next_tpset_send_time = prev_tpset_send_time + std::chrono::microseconds(wait_time_us);
+      // TODO P. Rodrigues 2021-06-14 This might be a long wait. We
+      // should check running_flag periodically so we don't wait too
+      // long after stop()
+      std::this_thread::sleep_until(next_tpset_send_time);
+      prev_tpset_send_time = next_tpset_send_time;
+      prev_tpset_start_time = tpset.start_time;
+
+      ++generated_count;
+      try {
+        m_tpset_sink->push(tpset, m_queue_timeout);
+      } catch (const dunedaq::appfwk::QueueTimeoutExpired& e) {
+        ers::warning(e);
+        ++push_failed_count;
+      }
+
+    } // end loop over tpsets
+    ++current_iteration;
+
+  } // end while(running_flag.load())
+
+  TLOG() << "Generated " << generated_count << " TP sets. " << push_failed_count << " failed to push";
+
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
+
 } // namespace dunedaq
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TriggerPrimitiveMaker)
