@@ -74,6 +74,12 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        ((std::string)name),
                        ((std::string)algorithm))
 
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       BadTPInputFile,
+                       appfwk::GeneralDAQModuleIssue,
+                       "Problem opening file " << filename,
+                       ((std::string)name),
+                       ((std::string)filename))
 
 } // namespace dunedaq
 
