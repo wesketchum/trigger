@@ -36,6 +36,7 @@ daq_add_plugin(RandomTriggerCandidateMaker duneDAQModule LINK_LIBRARIES trigger 
 daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs)
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
+daq_add_plugin(TPSetSink duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTPCreatorHeartbeatMaker duneDAQModule LINK_LIBRARIES trigger)
