@@ -9,7 +9,7 @@
 #ifndef TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
-#include "dataformats/Types.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -39,9 +39,9 @@ public:
   std::vector<uint16_t> from_detids;
 
   // The earliest timestamp inspected to form this Set
-  dataformats::timestamp_t start_time{0};
+  triggeralgs::timestamp_t start_time{0};
   // The latest timestamp inspected to form this Set
-  dataformats::timestamp_t end_time{0};
+  triggeralgs::timestamp_t end_time{0};
 
   // The TPs/TAs themselves. Needs a better name!
   std::vector<T> objects;
