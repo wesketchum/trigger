@@ -52,6 +52,34 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << queueType << " queue was not successfully created.",
                        ((std::string)name),
                        ((std::string)queueType))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       AlgorithmFatalError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " failed to run.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       UnknownSetError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " encountered an unknown Set type.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       InconsistentSetTimeError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker encountered Sets with inconsistent start/end times.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       BadTPInputFile,
+                       appfwk::GeneralDAQModuleIssue,
+                       "Problem opening file " << filename,
+                       ((std::string)name),
+                       ((std::string)filename))
 
 } // namespace dunedaq
 
