@@ -35,7 +35,9 @@ public:
   };
 
   // An incremental count of how many Sets have been produced by this source
-  uint32_t seqno{0};
+  // At TPSet rates seen in one protodune felix link, 32bits overflows in a week.
+  using seqno_t = uint64_t;
+  seqno_t seqno{0};
 
   // Identify the instance creator/stream/source of this set.
   origin_t origin{};
@@ -43,11 +45,9 @@ public:
   // Whether this Set is a regular bag-of-objects or a heartbeat
   Type type{kUnknown};
 
-  // The detids that were inspected to form this Set
-  std::vector<uint16_t> from_detids;
-
   // The earliest timestamp inspected to form this Set
   timestamp_t start_time{0};
+
   // The latest timestamp inspected to form this Set
   timestamp_t end_time{0};
 

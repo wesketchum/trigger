@@ -74,7 +74,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
       tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
       tpset.seqno = seqno++;
       tpset.type = TPSet::Type::kPayload;
-      tpset.from_detids = { tp.detid };
+      // fixme: set tpset.origin
       tpset.objects.clear();
     }
 

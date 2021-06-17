@@ -21,6 +21,6 @@ using TPSet = Set<triggeralgs::TriggerPrimitive>;
 } // namespace dunedaq::trigger
 
 MSGPACK_ADD_ENUM(dunedaq::trigger::TPSet::Type)
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TPSet, seqno, type, from_detids, start_time, end_time, objects)
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(dunedaq::trigger, TPSet, seqno, type, start_time, end_time, objects)
 
 #endif // TRIGGER_INCLUDE_TRIGGER_TPSET_HPP_
