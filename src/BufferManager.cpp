@@ -11,7 +11,8 @@
 
 namespace dunedaq::trigger {
 
-BufferManager::BufferManager()
+BufferManager::BufferManager(long unsigned int buffer_size)
+  : m_buffer_max_size(buffer_size)
 {
 
 }
@@ -24,7 +25,13 @@ BufferManager::~BufferManager()
 bool
 BufferManager::add(trigger::TPSet& tps)
 {
-  return m_tpset_buffer.insert(tps).second; //false if tps with same end_time already exists
+  if(m_tpset_buffer.size() >= m_buffer_max_size) //delete oldest TPSet if buffer full
+  {
+    auto firstIt = m_tpset_buffer.begin();
+    m_tpset_buffer.erase(firstIt);
+    // add some warning message here?
+  }
+  return m_tpset_buffer.insert(tps).second; //false if tps with same start_time already exists
 }
 
 std::vector<trigger::TPSet>
@@ -39,7 +46,6 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 	( (tps.start_time > start_time) && (tps.start_time < end_time) )    ) //condition (3)
     {
       tpsets_output.push_back(tps);
-      m_tpset_buffer.erase(tps);
     }
   }
 

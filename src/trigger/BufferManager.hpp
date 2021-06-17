@@ -13,6 +13,7 @@
 #include "trigger/TPSet.hpp"
 
 #include <set>
+#include <atomic>
 
 namespace dunedaq {
 namespace trigger {
@@ -24,7 +25,7 @@ namespace trigger {
 class BufferManager
 {
 public:
-  BufferManager();
+  BufferManager(long unsigned int buffer_size);
 
   virtual ~BufferManager();
 
@@ -45,7 +46,7 @@ public:
 
 private:
 
-  //Compare start_time of a TPSet when adding to the buffer
+  //Buffer contains TPSet ordered by start_time
   struct TPSetCmp {
     bool operator()(const TPSet& ltps, const TPSet& rtps) const {
       dataformats::timestamp_t const LTPS = ltps.start_time;
@@ -56,6 +57,9 @@ private:
 
   //Where the TPSet will be buffered
   std::set<trigger::TPSet,TPSetCmp> m_tpset_buffer;
+
+  //Buffer maximum size.
+  std::atomic<long unsigned int> m_buffer_max_size;
 
 };
 
