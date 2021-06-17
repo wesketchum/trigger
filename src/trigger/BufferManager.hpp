@@ -61,6 +61,12 @@ private:
   //Buffer maximum size.
   std::atomic<long unsigned int> m_buffer_max_size;
 
+  //Earliest start time stored in the buffer
+  dataformats::timestamp_t m_buffer_earliest_start_time;
+  
+  //Latest end time stored in the buffer
+  dataformats::timestamp_t m_buffer_latest_end_time;
+
 };
 
 } // namespace trigger

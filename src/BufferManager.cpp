@@ -13,6 +13,8 @@ namespace dunedaq::trigger {
 
 BufferManager::BufferManager(long unsigned int buffer_size)
   : m_buffer_max_size(buffer_size)
+  , m_buffer_earliest_start_time(0)
+  , m_buffer_latest_end_time(0)
 {
 
 }
@@ -31,6 +33,12 @@ BufferManager::add(trigger::TPSet& tps)
     m_tpset_buffer.erase(firstIt);
     // add some warning message here?
   }
+  if( (m_buffer_earliest_start_time == 0) || (tps.start_time < m_buffer_earliest_start_time) )
+    m_buffer_earliest_start_time = tps.start_time;
+  
+  if( (m_buffer_latest_end_time == 0) || (tps.end_time > m_buffer_latest_end_time) )
+    m_buffer_latest_end_time = tps.end_time;
+
   return m_tpset_buffer.insert(tps).second; //false if tps with same start_time already exists
 }
 
