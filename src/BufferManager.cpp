@@ -47,6 +47,19 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 {
   std::vector<trigger::TPSet> tpsets_output;
 
+  if(end_time < m_buffer_earliest_start_time)
+  {
+    // add warning here saying data requested doesn't exist in the buffer anymore
+    return tpsets_output;
+  }
+
+  if(start_time > m_buffer_latest_end_time) //condition (4)
+  {
+    // add warning here saying data requested hasn't arrived in the buffer yet
+    // need to creat a queue of "pending" data request. How?
+    return tpsets_output;
+  }
+
   for(auto& tps: m_tpset_buffer)
   {
     if( ( (tps.start_time > start_time) && (tps.end_time   < end_time) ) ||   //condition (1)
