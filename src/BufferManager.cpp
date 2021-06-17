@@ -34,7 +34,9 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 
   for(auto& tps: m_tpset_buffer)
   {
-    if( (tps.start_time > start_time) && (tps.end_time < end_time) )
+    if( ( (tps.start_time > start_time) && (tps.end_time   < end_time) ) ||   //condition (1)
+	( (tps.end_time   > start_time) && (tps.end_time   < end_time) ) ||   //condition (2)
+	( (tps.start_time > start_time) && (tps.start_time < end_time) )    ) //condition (3)
     {
       tpsets_output.push_back(tps);
       m_tpset_buffer.erase(tps);
@@ -45,21 +47,27 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 
 
   /*
-    Issues that need to be handled:
+   Conditions:
 
-    1) TPSet starts after start_time but finishes after end_time:
+   (1) TPSet starts and ends withing the requested window:
+
+            start_time                    end_time
+                      |--TPSet-------|
+
+
+   (2) TPSet starts after start_time but finishes after end_time:
 
             start_time                    end_time
                       |--TPSet-----------------------------|
 
 
-    2) TPSet starts before start_time but finishes before end_time:
+   (3) TPSet starts before start_time but finishes before end_time:
 
             start_time                    end_time
    |--TPSet-------------------------|
 
 
-    3) TPSet transfer to buffer is delayed
+   (4) TPSet transfer to buffer is delayed
 
   */
 
