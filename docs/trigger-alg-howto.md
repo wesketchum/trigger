@@ -30,3 +30,28 @@ The reason this function exists is to handle the case where there is a large gap
 ## Aggregation
 
 Inputs from a number of sources may be aggregated to send to a physics algorithm. The standard aggregation is that a `TriggerActivityMaker` receives trigger primitives aggregated over one APA, including both collection and induction channels, and a `TriggerCandidateMaker` receives trigger activities aggregated over the whole detector. We can consider alterations and additions to this scheme in future.
+
+## Using your algorithm in the dunedaq framework
+
+To run your algorithm from within the dunedaq framework (ie, inside a `daq_application`), you have to create a plugin for your algorithm in the `trigger` package (note, _not_ the `triggeralgs` package where your algorithm code lives). To create the plugin, make a file in the `plugins/` directory of the `trigger` package named `MyAlgNamePlugin.cpp` (replace `MyAlgName` with the actual name of your algorithm), with the following contents:
+
+```cpp
+#include "trigger/AlgorithmPlugins.hpp"
+#include "triggeralgs/path/to/MyAlgName.hpp" // Your algorithm's header file
+
+DEFINE_DUNE_TA_MAKER(triggeralgs::MyAlgName)
+```
+
+For a `TriggerCandidateMaker`, replace the last line with `DEFINE_DUNE_TC_MAKER(triggeralgs::MyAlgName)`.
+
+The plugin must be compiled in order to be used. To do this, add a line to the `CMakeLists.txt` file in `trigger`. For a `TriggerActivityMaker`:
+
+```cmake
+daq_add_plugin(MyAlgNamePlugin duneTAMaker LINK_LIBRARIES trigger)
+```
+
+For a `TriggerCandidateMaker`:
+
+```cmake
+daq_add_plugin(MyAlgNamePlugin duneTCMaker LINK_LIBRARIES trigger)
+```
