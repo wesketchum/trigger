@@ -12,6 +12,7 @@
 #include "trigger/Set.hpp"
 #include "trigger/TriggerPrimitive_serialization.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
+#include "dfmessages/GeoID_serialization.hpp"
 #include "serialization/Serialization.hpp"
 
 namespace dunedaq::trigger {
