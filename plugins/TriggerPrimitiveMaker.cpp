@@ -156,17 +156,17 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       }
 
       auto next_tpset_send_time = prev_tpset_send_time + std::chrono::microseconds(wait_time_us);
-      //auto prev_chunk_send_time = next_tpset_send_time;
+      //auto prev_slice_send_time = next_tpset_send_time;
       // check running_flag periodically using lambda
-      auto chunk_period = std::chrono::microseconds(1000);
-      auto next_chunk_send_time = prev_tpset_send_time + chunk_period;
-      while (next_tpset_send_time > next_chunk_send_time + chunk_period) {
+      auto slice_period = std::chrono::microseconds(m_conf.wait_time_slice);
+      auto next_slice_send_time = prev_tpset_send_time + slice_period;
+      while (next_tpset_send_time > next_slice_send_time + slice_period) {
         [&] {
 	  if (!running_flag.load()) {
             return;
           }
-          std::this_thread::sleep_until(next_chunk_send_time);
-          next_chunk_send_time = next_chunk_send_time + chunk_period;
+          std::this_thread::sleep_until(next_slice_send_time);
+          next_slice_send_time = next_slice_send_time + slice_period;
         }();
       }
       std::this_thread::sleep_until(next_tpset_send_time);

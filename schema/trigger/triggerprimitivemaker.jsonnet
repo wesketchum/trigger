@@ -7,6 +7,7 @@ local types = {
     loops: s.number("loops", dtype="u8", doc="Number of loops"),
     rows: s.number("rows", dtype="u8", doc="Number of rows"),
     freq: s.number("freq", dtype="u8", doc="A frequency"),
+    waittimeus: s.number("waittimeus", dtype="u8", doc="Wait time in microseconds"),
 
     conf: s.record("ConfParams", [
         s.field("filename", self.pathname, "/tmp/example.csv",
@@ -19,6 +20,8 @@ local types = {
                 doc="Width int time of the generated TPSets"),
         s.field("clock_frequency_hz", self.freq, 50000000,
                 doc="Simulated clock frequency in Hz"),
+        s.field("wait_time_slice", self.waittimeus, 1000,
+                doc="Maximum waiting time until the running flag is checked"),
     ], doc="TriggerPrimitiveMaker configuration"),
 
 };
