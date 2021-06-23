@@ -51,7 +51,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
 
   uint64_t prev_tpset_number = 0;
   uint32_t seqno = 0;
-  uint64_t old_time_start = 0;
+  int64_t old_time_start = 0;
 
   // Read in the file and place the TPs in TPSets. TPSets have time
   // boundaries ( n*tpset_time_width + tpset_time_offset ), and TPs are placed
@@ -82,6 +82,10 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
     } else {
       throw UnsortedTP(ERS_HERE, get_name(), tp.time_start);
     }
+  }
+  if (!tpset.objects.empty()) {
+    // We don't send empty TPSets, so there's no point creating them
+    m_tpsets.push_back(tpset);
   }
 }
 
