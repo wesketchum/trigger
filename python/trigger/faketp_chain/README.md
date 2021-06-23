@@ -8,9 +8,9 @@ the response of dataflow. In the middle, the following trigger modules are used:
   from `TriggerPrimativeMaker` into `TASet` consisting of the `TriggerActivity`
   produced by the algorithm being called on `TriggerPrimative` in the `TPSet`.
   
-* `TriggerCandidateMaker` which `triggeralgs` plugin to convert `TASet` 
+* `TriggerCandidateMaker` which loads a `triggeralgs` plugin to convert `TASet` 
   from `TriggerActivityMaker` into `TriggerCandidates` produced by the algorithm
-  being called on `TriggerActivity` in tge `TASet`.
+  being called on `TriggerActivity` in the `TASet`.
   
 * `ModuleLevelTrigger` which produces `TriggerDecision` from the input
   `TriggerCandidate` from `TriggerCandidateMaker`, and exchanges these with 
