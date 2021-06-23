@@ -156,9 +156,19 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       }
 
       auto next_tpset_send_time = prev_tpset_send_time + std::chrono::microseconds(wait_time_us);
-      // TODO P. Rodrigues 2021-06-14 This might be a long wait. We
-      // should check running_flag periodically so we don't wait too
-      // long after stop()
+      //auto prev_chunk_send_time = next_tpset_send_time;
+      // check running_flag periodically using lambda
+      auto chunk_period = std::chrono::microseconds(1000);
+      auto next_chunk_send_time = prev_tpset_send_time + chunk_period;
+      while (next_tpset_send_time > next_chunk_send_time + chunk_period) {
+        [&] {
+	  if (!running_flag.load()) {
+            return;
+          }
+          std::this_thread::sleep_until(next_chunk_send_time);
+          next_chunk_send_time = next_chunk_send_time + chunk_period;
+        }();
+      }
       std::this_thread::sleep_until(next_tpset_send_time);
       prev_tpset_send_time = next_tpset_send_time;
       prev_tpset_start_time = tpset.start_time;
