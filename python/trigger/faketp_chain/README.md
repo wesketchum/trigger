@@ -8,9 +8,9 @@ the response of dataflow. In the middle, the following trigger modules are used:
   from `TriggerPrimativeMaker` into `TASet` consisting of the `TriggerActivity`
   produced by the algorithm being called on `TriggerPrimative` in the `TPSet`.
   
-* `TriggerCandidateMaker` which `triggeralgs` plugin to convert `TASet` 
+* `TriggerCandidateMaker` which loads a `triggeralgs` plugin to convert `TASet` 
   from `TriggerActivityMaker` into `TriggerCandidates` produced by the algorithm
-  being called on `TriggerActivity` in tge `TASet`.
+  being called on `TriggerActivity` in the `TASet`.
   
 * `ModuleLevelTrigger` which produces `TriggerDecision` from the input
   `TriggerCandidate` from `TriggerCandidateMaker`, and exchanges these with 
@@ -67,3 +67,12 @@ the `ModuleLevelTrigger`, waits 10 seconds, and stops.
 
 This will produce a log file `log_faketp_chain_3333.txt` with output from the 
 run, and a similarly named info file.
+
+## Data files
+
+As of 23-Jun, there are a couple of TP files available from [cernbox](https://cernbox.cern.ch/index.php/s/75PDf54a9DWXWOJ).
+
+To download them, you can use the following commands:
+
+* `curl -o tps_link_05.txt -O https://cernbox.cern.ch/index.php/s/75PDf54a9DWXWOJ/download?files=tps_link_05.txt`
+* `curl -o tps_link_11.txt -O https://cernbox.cern.ch/index.php/s/75PDf54a9DWXWOJ/download?files=tps_link_11.txt`
