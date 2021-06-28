@@ -20,7 +20,7 @@ local types = {
                 doc="Width int time of the generated TPSets"),
         s.field("clock_frequency_hz", self.freq, 50000000,
                 doc="Simulated clock frequency in Hz"),
-        s.field("maximum_wait_time", self.microseconds, 1000,
+        s.field("maximum_wait_time_us", self.microseconds, 1000,
                 doc="Maximum wait time until the running flag is checked in microseconds"),
     ], doc="TriggerPrimitiveMaker configuration"),
 
