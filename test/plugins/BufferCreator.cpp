@@ -152,7 +152,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
       do {
 	TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
 	try {
-	  //m_output_queue_frag->push(frag_out, m_queueTimeout);  // -> fails to compile...
+	  m_output_queue_frag->push(std::move(frag_out), m_queueTimeout);
 	  successfullyWasSent = true;
 	  ++sentCount;
 	} catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {

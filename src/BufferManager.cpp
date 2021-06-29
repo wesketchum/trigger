@@ -31,7 +31,7 @@ BufferManager::add(trigger::TPSet& tps)
   {
     auto firstIt = m_tpset_buffer.begin();
     m_tpset_buffer.erase(firstIt);
-    // add some warning message here?
+    // add some warning message here, saying that buffer max capacity was reached?
   }
   if( (m_buffer_earliest_start_time == 0) || (tps.start_time < m_buffer_earliest_start_time) )
     m_buffer_earliest_start_time = tps.start_time;
