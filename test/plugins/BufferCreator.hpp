@@ -10,9 +10,12 @@
 #include "dfmessages/HSIEvent.hpp"
 
 #include "trigger/buffercreator/Structs.hpp"
+#include "trigger/TPSet.hpp"
+#include "trigger/BufferManager.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
+#include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
 #include <ers/Issue.hpp>
@@ -64,6 +67,11 @@ private:
   using sink_t = dunedaq::appfwk::DAQSink<dfmessages::HSIEvent>;
   std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
+
+  using source_t = dunedaq::appfwk::DAQSource<trigger::TPSet>;
+  std::unique_ptr<source_t> m_inputQueue;
+
+  trigger::BufferManager* m_buffer;
 
   uint64_t m_buffer_size;
   uint64_t m_sleep_time;

@@ -25,9 +25,12 @@ namespace trigger {
 class BufferManager
 {
 public:
+  BufferManager();
   BufferManager(long unsigned int buffer_size);
 
   virtual ~BufferManager();
+
+  void SetBufferSize(long unsigned int size) {m_buffer_max_size = size;}
 
   BufferManager(BufferManager const&) = delete;
   BufferManager(BufferManager&&) = default;

@@ -31,6 +31,8 @@ BufferCreator::BufferCreator(const std::string& name)
   , m_thread(std::bind(&BufferCreator::do_work, this, std::placeholders::_1))
   , m_outputQueue()
   , m_queueTimeout(100)
+  , m_inputQueue()
+  , m_buffer()
 {
   register_command("conf", &BufferCreator::do_configure);
   register_command("start", &BufferCreator::do_start);
@@ -43,6 +45,7 @@ BufferCreator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
 
+  m_inputQueue.reset(new appfwk::DAQSource<trigger::TPSet>(appfwk::queue_inst(init_data, "tpset_source")));
   m_outputQueue.reset(new appfwk::DAQSink<dfmessages::HSIEvent>(appfwk::queue_inst(init_data, "hsievent_sink")));
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
@@ -61,6 +64,8 @@ BufferCreator::do_configure(const nlohmann::json& obj)
 
   m_sleep_time = params.sleep_time;
   m_buffer_size = params.buffer_size;
+
+  m_buffer->SetBufferSize(m_buffer_size);
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 }
@@ -94,23 +99,34 @@ void
 BufferCreator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
-  size_t generatedCount = 0;
+  size_t addedCount = 0;
   size_t sentCount = 0;
 
   auto start_time = std::chrono::steady_clock::now();
   auto period = std::chrono::nanoseconds(m_sleep_time);
   auto next_time_step = start_time + period;
 
-  while (running_flag.load()) {
-    TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between sends";
+  while (true) {
 
+    TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between input/output";
     std::this_thread::sleep_until(next_time_step);
-
     next_time_step += period;
 
-    //dfmessages::HSIEvent tsd = get_hsievent();
+    trigger::TPSet input_tpset;
 
-    generatedCount++;
+    try {
+      m_inputQueue->pop(input_tpset, m_queueTimeout);
+      m_buffer->add(input_tpset);
+      ++addedCount;
+    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+      // The condition to exit the loop is that we've been stopped and
+      // there's nothing left on the input queue
+      if (!running_flag.load()) {
+	break;
+      } else {
+        continue;
+      }
+    }
 
     std::string thisQueueName = m_outputQueue->get_name();
     bool successfullyWasSent = false;
@@ -132,7 +148,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
     } while (!successfullyWasSent && running_flag.load());
   }
 
-  TLOG() << ": Exiting the do_work() method, generated " << generatedCount << " buffer calls.";
+  TLOG() << ": Exiting the do_work() method, generated " << addedCount << " buffer calls.";
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
