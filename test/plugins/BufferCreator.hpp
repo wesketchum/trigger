@@ -7,6 +7,9 @@
 #ifndef TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
 
+#include "dataformats/Types.hpp"
+#include "dataformats/Fragment.hpp"
+
 #include "dfmessages/HSIEvent.hpp"
 
 #include "trigger/buffercreator/Structs.hpp"
@@ -64,17 +67,24 @@ private:
   void do_work(std::atomic<bool>&);
 
   // Configuration
-  using sink_t = dunedaq::appfwk::DAQSink<dfmessages::HSIEvent>;
-  std::unique_ptr<sink_t> m_outputQueue;
   std::chrono::milliseconds m_queueTimeout;
 
-  using source_t = dunedaq::appfwk::DAQSource<trigger::TPSet>;
-  std::unique_ptr<source_t> m_inputQueue;
+  using tps_source_t = dunedaq::appfwk::DAQSource<trigger::TPSet>;
+  std::unique_ptr<tps_source_t> m_input_queue_tps;
+
+  using dr_source_t = dunedaq::appfwk::DAQSource<std::vector<dataformats::timestamp_t>>; ///< data request queue (first element is start time, second is end time).
+  std::unique_ptr<dr_source_t> m_input_queue_dr;
+
+  using fragment_sink_t = dunedaq::appfwk::DAQSink<dataformats::Fragment>;
+  std::unique_ptr<fragment_sink_t> m_output_queue_frag;
 
   trigger::BufferManager* m_buffer;
 
   uint64_t m_buffer_size;
   uint64_t m_sleep_time;
+
+  dataformats::Fragment convert_to_fragment(std::vector<trigger::TPSet>);
+
 };
 } // namespace trigger
 } // namespace dunedaq

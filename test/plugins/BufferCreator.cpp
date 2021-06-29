@@ -29,9 +29,10 @@ namespace trigger {
 BufferCreator::BufferCreator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
   , m_thread(std::bind(&BufferCreator::do_work, this, std::placeholders::_1))
-  , m_outputQueue()
   , m_queueTimeout(100)
-  , m_inputQueue()
+  , m_input_queue_tps()
+  , m_input_queue_dr()
+  , m_output_queue_frag()
   , m_buffer()
 {
   register_command("conf", &BufferCreator::do_configure);
@@ -45,8 +46,9 @@ BufferCreator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
 
-  m_inputQueue.reset(new appfwk::DAQSource<trigger::TPSet>(appfwk::queue_inst(init_data, "tpset_source")));
-  m_outputQueue.reset(new appfwk::DAQSink<dfmessages::HSIEvent>(appfwk::queue_inst(init_data, "hsievent_sink")));
+  m_input_queue_tps.reset(new appfwk::DAQSource<trigger::TPSet>(appfwk::queue_inst(init_data, "tpset_source")));
+  m_input_queue_dr.reset(new appfwk::DAQSource<std::vector<dataformats::timestamp_t>>(appfwk::queue_inst(init_data, "data_request_source")));
+  m_output_queue_frag.reset(new appfwk::DAQSink<dataformats::Fragment>(appfwk::queue_inst(init_data, "fragment_sink")));
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
 }
@@ -95,18 +97,27 @@ BufferCreator::do_scrap(const nlohmann::json& /*args*/)
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
+dataformats::Fragment 
+BufferCreator::convert_to_fragment(std::vector<trigger::TPSet> tps)
+{
+  dataformats::Fragment frag(nullptr, tps.size());
+
+  return frag;
+}
+ 
 void
 BufferCreator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
   size_t addedCount = 0;
+  size_t requestedCount = 0;
   size_t sentCount = 0;
 
   auto start_time = std::chrono::steady_clock::now();
   auto period = std::chrono::nanoseconds(m_sleep_time);
   auto next_time_step = start_time + period;
 
-  while (true) {
+  while (running_flag.load()) {
 
     TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between input/output";
     std::this_thread::sleep_until(next_time_step);
@@ -115,37 +126,48 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
     trigger::TPSet input_tpset;
 
     try {
-      m_inputQueue->pop(input_tpset, m_queueTimeout);
+      m_input_queue_tps->pop(input_tpset, m_queueTimeout);
       m_buffer->add(input_tpset);
       ++addedCount;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-      // The condition to exit the loop is that we've been stopped and
-      // there's nothing left on the input queue
-      if (!running_flag.load()) {
-	break;
-      } else {
-        continue;
-      }
+      // skip if no tps in the queue
+      continue;
     }
 
-    std::string thisQueueName = m_outputQueue->get_name();
-    bool successfullyWasSent = false;
-    // do...while instead of while... so that we always try at least
-    // once to send everything we generate, even if running_flag is
-    // changed to false between the top of the main loop and here
-    do {
-      TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the generated TSD onto queue " << thisQueueName;
-      try {
-        //m_outputQueue->push(tsd, m_queueTimeout);
-        successfullyWasSent = true;
-        ++sentCount;
-      } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-        std::ostringstream oss_warn;
-        oss_warn << "push to output queue \"" << thisQueueName << "\"";
-        ers::warning(
-          dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
-      }
-    } while (!successfullyWasSent && running_flag.load());
+    std::vector<dataformats::timestamp_t> input_data_request;
+    std::vector<trigger::TPSet> requested_tpset;
+
+    try {
+      m_input_queue_dr->pop(input_data_request, m_queueTimeout);
+      requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.at(0), input_data_request.at(1) );
+      ++requestedCount;
+
+      dataformats::Fragment frag_out = convert_to_fragment(requested_tpset);
+
+      std::string thisQueueName = m_output_queue_frag->get_name();
+      bool successfullyWasSent = false;
+      // do...while so that we always try at least once to send
+      // everything we generate, even if running_flag is changed
+      // to false between the top of the main loop and here
+      do {
+	TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
+	try {
+	  //m_output_queue_frag->push(frag_out, m_queueTimeout);  // -> fails to compile...
+	  successfullyWasSent = true;
+	  ++sentCount;
+	} catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+	  std::ostringstream oss_warn;
+	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
+	  ers::warning(
+		       dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
+	}
+      } while (!successfullyWasSent && running_flag.load());
+
+    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+      // skip if no data request in the queue
+      continue;
+    }
+
   }
 
   TLOG() << ": Exiting the do_work() method, generated " << addedCount << " buffer calls.";
