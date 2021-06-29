@@ -76,17 +76,19 @@ TPSetSink::do_work()
     }
 
     // Do some checks on the received TPSet
-
     if (last_seqno != 0 && tpset.seqno != last_seqno + 1) {
       TLOG() << "Missed TPSets: last_seqno=" << last_seqno << ", current seqno=" << tpset.seqno;
     }
     last_seqno=tpset.seqno;
     
-    if (tpset.start_time <= last_timestamp) {
+    if (tpset.start_time < last_timestamp) {
       TLOG() << "TPSets out of order: last start time " << last_timestamp << ", current start time "
              << tpset.start_time;
     }
-    if (tpset.objects.empty()) {
+    if(tpset.type==TPSet::Type::kHeartbeat){
+      TLOG() << "Heartbeat TPSet with start time " << tpset.start_time;
+    }
+    else if (tpset.objects.empty()) {
       TLOG() << "Empty TPSet with start time " << tpset.start_time;
     }
     for (auto const& tp : tpset.objects) {
