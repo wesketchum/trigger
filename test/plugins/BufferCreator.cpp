@@ -132,9 +132,8 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
     } while (!successfullyWasSent && running_flag.load());
   }
 
-  std::ostringstream oss_summ;
-  oss_summ << ": Exiting the do_work() method, generated " << generatedCount << " buffer calls.";
-  ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+  TLOG() << ": Exiting the do_work() method, generated " << generatedCount << " buffer calls.";
+
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 
