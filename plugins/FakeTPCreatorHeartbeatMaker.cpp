@@ -30,8 +30,8 @@ void
 FakeTPCreatorHeartbeatMaker::init(const nlohmann::json& iniobj)
 {
   try {
-    m_input_queue.reset(new source_t(appfwk::queue_inst(iniobj, "input")));
-    m_output_queue.reset(new sink_t(appfwk::queue_inst(iniobj, "output")));
+    m_input_queue.reset(new source_t(appfwk::queue_inst(iniobj, "tpset_source")));
+    m_output_queue.reset(new sink_t(appfwk::queue_inst(iniobj, "tpset_sink")));
   } catch (const ers::Issue& excpt) {
     throw dunedaq::trigger::InvalidQueueFatalError(ERS_HERE, get_name(), "input/output", excpt);
   }
