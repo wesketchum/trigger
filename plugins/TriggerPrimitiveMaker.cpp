@@ -113,12 +113,17 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
   uint64_t current_iteration = 0;
   size_t generated_count = 0;
   size_t push_failed_count = 0;
+  size_t generated_tp_count = 0;
 
   uint64_t prev_tpset_start_time = 0;
   auto prev_tpset_send_time = std::chrono::steady_clock::now();
 
   auto input_file_duration = m_tpsets.back().start_time - m_tpsets.front().start_time + m_conf.tpset_time_width;
 
+  auto run_start_time = std::chrono::steady_clock::now();
+
+  uint32_t seqno = 0;
+  
   while (running_flag.load()) {
     if (m_conf.number_of_loops > 0 && current_iteration >= m_conf.number_of_loops) {
       break;
@@ -130,7 +135,7 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
         break;
       }
 
-      // Increase the timestamps in the TPSet and TPs so they don't
+      // Increase seqno and the timestamps in the TPSet and TPs so they don't
       // repeat when we do multiple loops over the file
       tpset.start_time += input_file_duration;
       tpset.end_time += input_file_duration;
@@ -138,7 +143,8 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
         tp.time_start += input_file_duration;
         tp.time_peak += input_file_duration;
       }
-
+      tpset.seqno = seqno++;
+      
       // We send out the first TPSet right away. After that we space each TPSet in time by their start time
       auto wait_time_us = 0;
       if (prev_tpset_start_time == 0) {
@@ -157,6 +163,7 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       prev_tpset_start_time = tpset.start_time;
 
       ++generated_count;
+      generated_tp_count += tpset.objects.size();
       try {
         m_tpset_sink->push(tpset, m_queue_timeout);
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& e) {
@@ -169,7 +176,11 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
 
   } // end while(running_flag.load())
 
-  TLOG() << "Generated " << generated_count << " TP sets. " << push_failed_count << " failed to push";
+  auto run_end_time = std::chrono::steady_clock::now();
+  auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(run_end_time - run_start_time).count();
+  float rate_hz = 1e3 * static_cast<float>(generated_count) / time_ms;
+
+  TLOG() << "Generated " << generated_count << " TP sets (" << generated_tp_count << " TPs) in " << time_ms << " ms. (" << rate_hz << " TPSets/s). " << push_failed_count << " failed to push";
 
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
