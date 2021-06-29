@@ -65,14 +65,15 @@ def generate(
             filename=INPUT_FILE,
             number_of_loops=-1, # Infinite
             tpset_time_offset=0,
-            tpset_time_width=10000,
+            tpset_time_width=10000, # 0.2 ms
             clock_frequency_hz=CLOCK_FREQUENCY_HZ
         )),
         ("qton", qton.Conf(msg_type="dunedaq::trigger::TPSet",
                            msg_module_name="TPSetNQ",
                            sender_config=nos.Conf(ipm_plugin_type="ZmqPublisher",
                                                   address=NETWORK_ENDPOINTS["tpset"],
-                                                  topic="foo")
+                                                  topic="foo",
+                                                  stype="msgpack")
                            )
          )
     ])
