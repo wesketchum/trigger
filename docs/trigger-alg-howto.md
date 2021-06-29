@@ -27,6 +27,30 @@ virtual void flush(timestamp_t until, std::vector<TriggerActivity>& output_ta)
 
 The reason this function exists is to handle the case where there is a large gap between trigger primitives (or, more likely, between trigger activities). During this gap, `operator()` is not called, and so your algorithm cannot send its output, even if such a long time has passed that you know that any trigger activities currently in progress can be completed and sent out. In this case, the data selection framework calls your implementation of `flush(until, output_ta)` to inform you that no more trigger primitives have occurred between the last one for which `operator()` was called and timestamp `until`. If this causes your algorithm to complete any trigger activities, you can add them to the `output_ta` vector.
 
+## Configuration
+
+Your algorithm may take configuration parameters at run time (eg, a minimum number of hits or ADC to form a trigger activity, or a verbosity level). Your algorithm receives these configuration parameters via the `configure()` function, whose signature is:
+
+```cpp
+void configure(const nlohmann::json &config);
+```
+
+The `config` argument is in `nlohmann::json` format, documentation for which can be found at https://json.nlohmann.me/ . Here is a simple example implementation, from the `TriggerActivityMakerPrescale` algorithm:
+
+```cpp
+void
+TriggerActivityMakerPrescale::configure(const nlohmann::json &config)
+{
+  if (config.is_object() && config.contains("prescale"))
+  {
+    m_prescale = config["prescale"]; 
+  }
+  TLOG_DEBUG(TRACE_NAME) << "Using activity prescale " << m_prescale;
+}
+```
+
+For instructions about actually constructing a configuration to pass to your algorithm, see the "Using your algorithm in the dunedaq framework" section below.
+
 ## Aggregation
 
 Inputs from a number of sources may be aggregated to send to a physics algorithm. The standard aggregation is that a `TriggerActivityMaker` receives trigger primitives aggregated over one APA, including both collection and induction channels, and a `TriggerCandidateMaker` receives trigger activities aggregated over the whole detector. We can consider alterations and additions to this scheme in future.
@@ -55,3 +79,7 @@ For a `TriggerCandidateMaker`:
 ```cmake
 daq_add_plugin(MyAlgNamePlugin duneTCMaker LINK_LIBRARIES trigger)
 ```
+
+Once your code is hooked into the dunedaq framework as a plugin, you can run a DAQ job that reads data from a file and passes it to your algorithm. Instructions on how to do that (including choosing configuration parameters for your algorithm) can be found here:
+
+https://github.com/DUNE-DAQ/trigger/blob/develop/python/trigger/faketp_chain/README.md
