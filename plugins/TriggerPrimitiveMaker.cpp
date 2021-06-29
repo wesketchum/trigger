@@ -73,8 +73,13 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
       tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
       tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
       tpset.seqno = seqno++;
+      // fixme: Should set this and region/element IDs via
+      // configuration.  See trigger/#41 for some discusssion.  For
+      // now, we leave region as invalid and element is "last one
+      // wins".
+      tpset.origin.element_id = tp.detid;
+
       tpset.type = TPSet::Type::kPayload;
-      // fixme: set tpset.origin
       tpset.objects.clear();
     }
 

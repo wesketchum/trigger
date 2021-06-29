@@ -40,7 +40,9 @@ public:
   seqno_t seqno{0};
 
   // Identify the instance creator/stream/source of this set.
-  origin_t origin{};
+  origin_t origin{dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection,
+                                     dataformats::GeoID::s_invalid_region_id,
+                                     dataformats::GeoID::s_invalid_element_id)};
 
   // Whether this Set is a regular bag-of-objects or a heartbeat
   Type type{kUnknown};

@@ -186,6 +186,8 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
             payload_type lit = node.payload;
             auto& tset = *lit;  // list iterator
             try {
+                // Fixme: we should be re-setting tpset.origin to
+                // reflect us, the zipper.
                 outq->push(tset, std::chrono::milliseconds(10));
             }
             catch (const dunedaq::appfwk::QueueTimeoutExpired& err) {
