@@ -32,7 +32,6 @@ time_serialization(int tps_per_set)
     set.seqno=i+1;
     set.start_time = (i+1)*5000;
     set.end_time = (i+2)*5000-1;
-    set.from_detids={1,2,3};
     for(int j=0; j<tps_per_set; ++j){
       triggeralgs::TriggerPrimitive tp;
       tp.time_start = 1234963454;
