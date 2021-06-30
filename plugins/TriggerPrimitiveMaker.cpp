@@ -62,6 +62,8 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
          tp.adc_peak >> tp.detid >> tp.type) {
     if (tp.time_start >= old_time_start) {
       uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
+      old_time_start = tp.time_start;
+
 
       // If we crossed a time boundary, push the current TPSet and reset it
       if (current_tpset_number > prev_tpset_number) {
