@@ -47,6 +47,9 @@ daq_add_plugin(TriggerCandidateMakerPrescalePlugin duneTCMaker LINK_LIBRARIES tr
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerCandidateMakerSupernovaPlugin duneTCMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerDecisionMakerSupernovaPlugin duneTDMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerActivityMakerMichelPlugin duneTAMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerCandidateMakerMichelPlugin duneTCMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerDecisionMakerMichelPlugin duneTDMaker LINK_LIBRARIES trigger)
 
 ##############################################################################
 # Integration tests
