@@ -82,7 +82,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
       }
       tpset.objects.push_back(tp);
     } else {
-      throw UnsortedTP(ERS_HERE, get_name(), tp.time_start);
+      ers::warning(UnsortedTP(ERS_HERE, get_name(), tp.time_start));
     }
   }
   if (!tpset.objects.empty()) {
