@@ -25,7 +25,6 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
-#include "triggeralgs/TriggerCandidateType.hpp"
 #include "triggeralgs/Types.hpp"
 
 #include <algorithm>

@@ -23,8 +23,6 @@
 #include "dfmessages/HSIEvent.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
-#include "triggeralgs/TriggerCandidateType.hpp"
-#include "triggeralgs/TriggerPrimitive.hpp"
 
 #include <chrono>
 #include <map>
