@@ -9,6 +9,7 @@
 #ifndef TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
+#include "triggeralgs/Types.hpp"
 #include "dataformats/Types.hpp"
 #include "dataformats/GeoID.hpp"
 

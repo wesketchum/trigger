@@ -50,7 +50,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
   TPSet tpset;
 
   uint64_t prev_tpset_number = 0;
-  uint32_t seqno = 0;
+  TPSet::seqno_t seqno = 0;
 
   // Read in the file and place the TPs in TPSets. TPSets have time
   // boundaries ( n*tpset_time_width + tpset_time_offset ), and TPs are placed
