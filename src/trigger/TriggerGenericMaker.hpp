@@ -18,6 +18,8 @@
 #include "appfwk/ThreadHelper.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
 
+#include "dataformats/GeoID.hpp"
+
 #include "logging/Logging.hpp"
 
 #include <memory>
@@ -46,6 +48,8 @@ public:
     , m_output_queue(nullptr)
     , m_queue_timeout(100)
     , m_algorithm_name("[uninitialized]")
+    , m_geoid_region_id(dunedaq::dataformats::GeoID::s_invalid_region_id)
+    , m_geoid_element_id(dunedaq::dataformats::GeoID::s_invalid_element_id)
   {
     register_command("start", &TriggerGenericMaker::do_start);
     register_command("stop", &TriggerGenericMaker::do_stop);
@@ -72,6 +76,12 @@ protected:
     m_algorithm_name = name;
   }
 
+  void set_geoid(uint16_t region_id, uint32_t element_id)
+  {
+    m_geoid_region_id = region_id;
+    m_geoid_element_id = element_id;
+  }
+
 private:
 
   TriggerGenericWorker<IN,OUT,MAKER> worker;
@@ -90,11 +100,14 @@ private:
   std::chrono::milliseconds m_queue_timeout;
   
   std::string m_algorithm_name;
+  
+  uint16_t m_geoid_region_id;
+  uint32_t m_geoid_element_id;
 
   std::shared_ptr<MAKER> m_maker;
   
   // This should return a shared_ptr to the MAKER created from conf command
-  // arguments, and also call set_algorithm_name.
+  // arguments. Should also call set_algorithm_name and set_geoid (if desired)
   virtual std::shared_ptr<MAKER> make_maker(const nlohmann::json& obj) = 0;
   
   void do_start(const nlohmann::json& /*obj*/)
@@ -222,7 +235,7 @@ public:
   void flush(std::vector<T> &time_slice, 
              dataformats::timestamp_t &start_time, 
              dataformats::timestamp_t &end_time) {
-    // build a vector of the A objects from all the sets in the slice
+    // build a vector of the T objects from all the sets in the slice
     start_time = m_buffer[0].start_time;
     end_time = m_buffer[0].end_time;
     for (Set<T> &x : m_buffer) {
@@ -244,7 +257,7 @@ private:
   const std::string &m_name, &m_algorithm;
 };
 
-// Partial specilization for IN = Set<A>, OUT = Set<B> and assumes the MAKER has:
+// Partial specialization for IN = Set<A>, OUT = Set<B> and assumes the MAKER has:
 // operator()(A, std::vector<B>)
 template<class A, class B, class MAKER> 
 class TriggerGenericWorker<Set<A>, Set<B>, MAKER> 
@@ -301,6 +314,9 @@ public:
             heartbeat.type = Set<B>::Type::kHeartbeat;
             heartbeat.start_time = in.start_time;
             heartbeat.end_time = in.end_time;
+            heartbeat.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
+                                                  m_parent.m_geoid_region_id,
+                                                  m_parent.m_geoid_element_id);
             while (running_flag.load()) {
               if (m_parent.send(heartbeat)) {
                 break;
@@ -327,10 +343,9 @@ public:
       if (out.objects.size() > 0) {
         out.seqno = m_parent.m_sent_count;
         
-        out.from_detids.resize(out.objects.size());
-        for (size_t i = 0; i < out.objects.size(); i++) {
-          out.from_detids[i] = out.objects[i].detid;
-        }
+        out.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
+                                        m_parent.m_geoid_region_id,
+                                        m_parent.m_geoid_element_id);
         
         while (running_flag.load()) {
           if (m_parent.send(out)) {
