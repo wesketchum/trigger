@@ -63,7 +63,7 @@ private:
 
   std::chrono::milliseconds m_queue_timeout;
 
-  uint64_t m_heartbeat_interval;
+  triggeralgs::timestamp_t m_heartbeat_interval;
 
   // Opmon variables
   using metric_counter_type = decltype(faketpcreatorheartbeatmakerinfo::Info::tpset_received_count);
