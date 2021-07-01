@@ -13,6 +13,7 @@ find_package(appfwk REQUIRED)
 find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
+find_package(nwqueueadapters REQUIRED)
 
 ##############################################################################
 # Main library
@@ -52,6 +53,10 @@ daq_add_plugin(TriggerCandidateMakerPrescalePlugin duneTCMaker LINK_LIBRARIES tr
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerCandidateMakerSupernovaPlugin duneTCMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerDecisionMakerSupernovaPlugin duneTDMaker LINK_LIBRARIES trigger)
+
+# nwqueueadapters plugins
+daq_add_plugin(TPSetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
+daq_add_plugin(TASetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
 
 ##############################################################################
 # Integration tests
