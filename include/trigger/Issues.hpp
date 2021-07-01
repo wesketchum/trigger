@@ -25,20 +25,6 @@ namespace dunedaq {
 
 ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration object was received", ERS_EMPTY)
 
-ERS_DECLARE_ISSUE_BASE(dunetrigger,
-                       ProgressUpdate,
-                       appfwk::GeneralDAQModuleIssue,
-                       message,
-                       ((std::string)name),
-                       ((std::string)message))
-
-ERS_DECLARE_ISSUE_BASE(dunetrigger,
-                       InvalidQueueFatalError,
-                       appfwk::GeneralDAQModuleIssue,
-                       "The " << queueType << " queue was not successfully created.",
-                       ((std::string)name),
-                       ((std::string)queueType))
-
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
                        appfwk::GeneralDAQModuleIssue,

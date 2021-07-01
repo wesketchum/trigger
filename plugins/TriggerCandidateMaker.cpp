@@ -20,7 +20,9 @@ namespace dunedaq::trigger {
   {
     auto params = obj.get<triggercandidatemaker::Conf>();
     set_algorithm_name(params.candidate_maker);
-    return make_tc_maker(params.candidate_maker);
+    std::shared_ptr<triggeralgs::TriggerCandidateMaker> maker = make_tc_maker(params.candidate_maker);
+    maker->configure(params.candidate_maker_config);
+    return maker;
   }
 
 } // namespace dunedaq::trigger

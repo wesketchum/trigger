@@ -327,10 +327,7 @@ public:
       if (out.objects.size() > 0) {
         out.seqno = m_parent.m_sent_count;
         
-        out.from_detids.resize(out.objects.size());
-        for (size_t i = 0; i < out.objects.size(); i++) {
-          out.from_detids[i] = out.objects[i].detid;
-        }
+        // fixme: set out.origin from config
         
         while (running_flag.load()) {
           if (m_parent.send(out)) {
