@@ -68,7 +68,6 @@ daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRA
 # Unit Tests
 
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
-daq_add_unit_test(LivetimeCounter_test           LINK_LIBRARIES trigger)
 daq_add_unit_test(TxSet_test                     LINK_LIBRARIES trigger)
 
 ##############################################################################
