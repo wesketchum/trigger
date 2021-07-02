@@ -152,6 +152,8 @@ def generate(
         )),
         ('tam', tam.Conf(
             activity_maker=ACTIVITY_PLUGIN,
+            geoid_region=0, # Fake placeholder
+            geoid_element=0, # Fake placeholder
             activity_maker_config=temptypes.ActivityConf(**ACTIVITY_CONFIG)
         )),
         ('tcm', tcm.Conf(

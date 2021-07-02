@@ -16,6 +16,7 @@
 
 #include "trigger/TokenManager.hpp"
 #include "trigger/moduleleveltriggerinfo/InfoNljs.hpp"
+#include "trigger/LivetimeCounter.hpp"
 
 #include "triggeralgs/TriggerCandidate.hpp"
 
@@ -77,6 +78,8 @@ private:
 
   std::unique_ptr<TokenManager> m_token_manager;
 
+  std::shared_ptr<LivetimeCounter> m_livetime_counter;
+  
   // Create the next trigger decision
   dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 

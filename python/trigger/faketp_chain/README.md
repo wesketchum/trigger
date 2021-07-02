@@ -1,12 +1,12 @@
 # faketp_chain
 
 This is an example application that runs a full dataselection chain using 
-`TriggerPrimativeMaker` to read TPs from a file, and `FakeDataFlow` to emulate
+`TriggerPrimitiveMaker` to read TPs from a file, and `FakeDataFlow` to emulate
 the response of dataflow. In the middle, the following trigger modules are used:
 
 * `TriggerActivityMaker` which loads a `triggeralgs` plugin to convert `TPSet` 
   from `TriggerPrimativeMaker` into `TASet` consisting of the `TriggerActivity`
-  produced by the algorithm being called on `TriggerPrimative` in the `TPSet`.
+  produced by the algorithm being called on `TriggerPrimitive` in the `TPSet`.
   
 * `TriggerCandidateMaker` which loads a `triggeralgs` plugin to convert `TASet` 
   from `TriggerActivityMaker` into `TriggerCandidates` produced by the algorithm

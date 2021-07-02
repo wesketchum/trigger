@@ -11,6 +11,11 @@
 
 #include "triggeralgs/TriggerPrimitive.hpp"
 #include "serialization/Serialization.hpp"
+#include "triggeralgs/Types.hpp"
+
+MSGPACK_ADD_ENUM(triggeralgs::TriggerPrimitive::Type)
+
+MSGPACK_ADD_ENUM(triggeralgs::TriggerPrimitive::Algorithm)
 
 DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerPrimitive,
                                  time_start,

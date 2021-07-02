@@ -12,6 +12,7 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
+#include "triggeralgs/Types.hpp"
 #include <chrono>
 #include <sstream>
 
@@ -55,9 +56,11 @@ TPSetSink::do_work()
 
   auto start_time = steady_clock::now();
 
-  uint64_t first_timestamp = 0;
-  uint64_t last_timestamp = 0;
+  triggeralgs::timestamp_t first_timestamp = 0;
+  triggeralgs::timestamp_t last_timestamp = 0;
 
+  uint32_t last_seqno = 0;
+  
   while (true) {
     TPSet tpset;
     try {
@@ -74,18 +77,24 @@ TPSetSink::do_work()
     }
 
     // Do some checks on the received TPSet
-    if (tpset.start_time <= last_timestamp) {
+    if (last_seqno != 0 && tpset.seqno != last_seqno + 1) {
+      TLOG() << "Missed TPSets: last_seqno=" << last_seqno << ", current seqno=" << tpset.seqno;
+    }
+    last_seqno=tpset.seqno;
+    
+    if (tpset.start_time < last_timestamp) {
       TLOG() << "TPSets out of order: last start time " << last_timestamp << ", current start time "
              << tpset.start_time;
     }
-    if (tpset.objects.empty()) {
+    if(tpset.type==TPSet::Type::kHeartbeat){
+      TLOG() << "Heartbeat TPSet with start time " << tpset.start_time;
+    }
+    else if (tpset.objects.empty()) {
       TLOG() << "Empty TPSet with start time " << tpset.start_time;
     }
     for (auto const& tp : tpset.objects) {
-      // TODO P. Rodrigues 2021-06-15 TriggerPrimitive timestamps are
-      // int64_t. When that is fixed, these horrible casts can go away
-      if (static_cast<uint64_t>(tp.time_start) < tpset.start_time ||
-          static_cast<uint64_t>(tp.time_start) > tpset.end_time) {
+      if (tp.time_start < tpset.start_time ||
+          tp.time_start > tpset.end_time) {
         TLOG() << "TPSet with start time " << tpset.start_time << ", end time " << tpset.end_time
                << " contains out-of-bounds TP with start time " << tp.time_start;
       }

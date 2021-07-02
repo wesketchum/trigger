@@ -9,7 +9,9 @@
 #ifndef TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
+#include "triggeralgs/Types.hpp"
 #include "dataformats/Types.hpp"
+#include "dataformats/GeoID.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -23,6 +25,10 @@ template<class T>
 class Set {
 public:
 
+  using element_t = T;
+  using origin_t = dataformats::GeoID;
+  using timestamp_t = dataformats::timestamp_t;
+
   enum Type {
     kUnknown = 0,
     kPayload = 1,
@@ -30,18 +36,23 @@ public:
   };
 
   // An incremental count of how many Sets have been produced by this source
-  uint32_t seqno{0};
+  // At TPSet rates seen in one protodune felix link, 32bits overflows in a week.
+  using seqno_t = uint64_t;
+  seqno_t seqno{0};
+
+  // Identify the instance creator/stream/source of this set.
+  origin_t origin{dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection,
+                                     dataformats::GeoID::s_invalid_region_id,
+                                     dataformats::GeoID::s_invalid_element_id)};
 
   // Whether this Set is a regular bag-of-objects or a heartbeat
   Type type{kUnknown};
 
-  // The detids that were inspected to form this Set
-  std::vector<uint16_t> from_detids;
-
   // The earliest timestamp inspected to form this Set
-  dataformats::timestamp_t start_time{0};
+  timestamp_t start_time{0};
+
   // The latest timestamp inspected to form this Set
-  dataformats::timestamp_t end_time{0};
+  timestamp_t end_time{0};
 
   // The TPs/TAs themselves. Needs a better name!
   std::vector<T> objects;
@@ -50,3 +61,7 @@ public:
 } // namespace dunedaq::trigger
 
 #endif // TRIGGER_INCLUDE_TRIGGER_SET_HPP_
+
+// Local Variables:
+// c-basic-offset: 2
+// End:

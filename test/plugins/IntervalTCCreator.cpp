@@ -24,7 +24,7 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
-#include "triggeralgs/TriggerCandidateType.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -115,8 +115,8 @@ IntervalTCCreator::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.time_end = timestamp;
   candidate.time_candidate = timestamp;
   candidate.detid = { 1 };
-  candidate.type = triggeralgs::TriggerCandidateType::kTiming;
-  candidate.algorithm = 1;
+  candidate.type = triggeralgs::TriggerCandidate::Type::kTiming;
+  candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
   candidate.version = 1;
 
   return candidate;
