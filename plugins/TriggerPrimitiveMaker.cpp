@@ -161,16 +161,19 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       // check running_flag periodically using lambda
       auto slice_period = std::chrono::microseconds(m_conf.maximum_wait_time_us);
       auto next_slice_send_time = prev_tpset_send_time + slice_period;
+      bool break_flag = false;
       while (next_tpset_send_time > next_slice_send_time + slice_period) {
-        [&] {
-	  if (!running_flag.load()) {
-            return;
+          if (!running_flag.load()) {
+            TLOG() << "while waiting to send next TP, negative running flag detected.";
+            break_flag = true;
+            break;
           }
           std::this_thread::sleep_until(next_slice_send_time);
           next_slice_send_time = next_slice_send_time + slice_period;
-        }();
       }
-      std::this_thread::sleep_until(next_tpset_send_time);
+      if (break_flag == false) {
+          std::this_thread::sleep_until(next_tpset_send_time);
+      }
       prev_tpset_send_time = next_tpset_send_time;
       prev_tpset_start_time = tpset.start_time;
 
