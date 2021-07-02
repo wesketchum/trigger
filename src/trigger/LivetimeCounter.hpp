@@ -36,9 +36,6 @@ public:
 private:
 
   state_time_t now() const;
-
-  // Precondition:  m_mutex is locked by caller
-  void update_map();
   
   std::mutex m_mutex;
   State m_state;
