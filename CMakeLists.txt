@@ -18,7 +18,7 @@ find_package(nwqueueadapters REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LivetimeCounter.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
