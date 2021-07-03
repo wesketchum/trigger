@@ -120,10 +120,8 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
       m_input_queue_tps->pop(input_tpset, m_queueTimeout);
       m_buffer->add(input_tpset);
       ++addedCount;
-    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-      // skip if no tps in the queue
-      continue;
-    }
+    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) 
+      { }
 
     std::vector<dataformats::timestamp_t> input_data_request;
     std::vector<trigger::TPSet> requested_tpset;
