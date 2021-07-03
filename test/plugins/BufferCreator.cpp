@@ -64,7 +64,6 @@ BufferCreator::do_configure(const nlohmann::json& obj)
 
   auto params = obj.get<buffercreator::Conf>();
 
-  m_sleep_time = params.sleep_time;
   m_buffer_size = params.buffer_size;
 
   m_buffer->set_buffer_size(m_buffer_size);
@@ -113,15 +112,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
   size_t requestedCount = 0;
   size_t sentCount = 0;
 
-  auto start_time = std::chrono::steady_clock::now();
-  auto period = std::chrono::nanoseconds(m_sleep_time);
-  auto next_time_step = start_time + period;
-
   while (running_flag.load()) {
-
-    TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Start of sleep between input/output";
-    std::this_thread::sleep_until(next_time_step);
-    next_time_step += period;
 
     trigger::TPSet input_tpset;
 

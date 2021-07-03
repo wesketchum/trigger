@@ -7,11 +7,8 @@ local types = {
 
     conf: s.record("Conf", [
 
-      s.field("sleep_time", self.size, 1000000000,
-        doc="Sleep time between thread read"),
-
       s.field("buffer_size", self.size, 100,
-        doc="Maximum number of TPSet that buffer will store. If maximum reached, oldest is deleted to give room for new entry"),
+        doc="Maximum number of TPSet that buffer will store. If maximum reached, oldest is deleted to give room for new entry (circular buffer)"),
 
 
     ], doc="BufferManager configuration parameters"),
