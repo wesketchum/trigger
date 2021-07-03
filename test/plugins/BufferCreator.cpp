@@ -46,9 +46,9 @@ BufferCreator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
 
-  m_input_queue_tps.reset(new appfwk::DAQSource<trigger::TPSet>(appfwk::queue_inst(init_data, "tpset_source")));
-  m_input_queue_dr.reset(new appfwk::DAQSource<std::vector<dataformats::timestamp_t>>(appfwk::queue_inst(init_data, "data_request_source")));
-  m_output_queue_frag.reset(new appfwk::DAQSink<dataformats::Fragment>(appfwk::queue_inst(init_data, "fragment_sink")));
+  m_input_queue_tps.reset(new tps_source_t(appfwk::queue_inst(init_data, "tpset_source")));
+  m_input_queue_dr.reset(new dr_source_t(appfwk::queue_inst(init_data, "data_request_source")));
+  m_output_queue_frag.reset(new fragment_sink_t(appfwk::queue_inst(init_data, "fragment_sink")));
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting init() method";
 }
