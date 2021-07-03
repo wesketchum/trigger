@@ -52,43 +52,37 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
     return tpsets_output;
   }
 
-  if(start_time > m_buffer_latest_end_time) //condition (3): see end of function
+  if(start_time > m_buffer_latest_end_time)
   {
     // add warning here saying data requested hasn't arrived in the buffer yet
-    // need to creat a queue of "pending" data request. How?
+    // need to create a queue of "pending" data request. How?
     return tpsets_output;
   }
 
-  for(auto& tps: m_tpset_buffer)
-  {
-    if( ( (tps.end_time   > start_time) && (tps.end_time   < end_time) ) ||   //condition (1): see end of function
-	( (tps.start_time > start_time) && (tps.start_time < end_time) )    ) //condition (2): see end of function
-    {
-      tpsets_output.push_back(tps);
-    }
+  trigger::TPSet tpset_low, tpset_up;
+  tpset_low.start_time = start_time;
+  tpset_up.start_time  = end_time;
+
+  std::set<trigger::TPSet,TPSetCmp>::iterator it, it_low,it_up;
+
+  //checking first and last TPSet of buffer that have a start_time within data request limits
+  it_low = m_tpset_buffer.lower_bound(tpset_low);
+  it_up  = m_tpset_buffer.upper_bound(tpset_up);
+  it     = it_low;
+
+  //checking if previous TPset has a end_time that is after the data request's start time
+  it--;
+  if((*it).end_time > start_time) tpsets_output.push_back(*it);
+
+  //loading TPSets
+  it++;
+  while(it != it_up){
+    tpsets_output.push_back(*it);
+    it++;
   }
 
   return tpsets_output;
 
-  /*
-   Conditions:
-
-   (1) TPSet starts before start_time but finishes before end_time:
-
-            start_time                    end_time
-   |--TPSet-------------------------|
-
-
-   (2) TPSet starts after start_time but finishes after end_time:
-
-            start_time                    end_time
-                      |--TPSet-----------------------------|
-
-   (3) TPSet transfer to buffer is delayed
-
-  */
-
 }
-
 
 } // namespace dunedaq::trigger
