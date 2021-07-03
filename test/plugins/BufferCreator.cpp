@@ -67,7 +67,7 @@ BufferCreator::do_configure(const nlohmann::json& obj)
   m_sleep_time = params.sleep_time;
   m_buffer_size = params.buffer_size;
 
-  m_buffer->SetBufferSize(m_buffer_size);
+  m_buffer->set_buffer_size(m_buffer_size);
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 }

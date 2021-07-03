@@ -30,7 +30,7 @@ public:
 
   virtual ~BufferManager();
 
-  void SetBufferSize(long unsigned int size) {m_buffer_max_size = size;}
+  void set_buffer_size(long unsigned int size) {m_buffer_max_size = size;}
 
   BufferManager(BufferManager const&) = delete;
   BufferManager(BufferManager&&) = default;
