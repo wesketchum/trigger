@@ -52,7 +52,7 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
     return tpsets_output;
   }
 
-  if(start_time > m_buffer_latest_end_time) //condition (4)
+  if(start_time > m_buffer_latest_end_time) //condition (3): see end of function
   {
     // add warning here saying data requested hasn't arrived in the buffer yet
     // need to creat a queue of "pending" data request. How?
@@ -61,9 +61,8 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 
   for(auto& tps: m_tpset_buffer)
   {
-    if( ( (tps.start_time > start_time) && (tps.end_time   < end_time) ) ||   //condition (1)
-	( (tps.end_time   > start_time) && (tps.end_time   < end_time) ) ||   //condition (2)
-	( (tps.start_time > start_time) && (tps.start_time < end_time) )    ) //condition (3)
+    if( ( (tps.end_time   > start_time) && (tps.end_time   < end_time) ) ||   //condition (1): see end of function
+	( (tps.start_time > start_time) && (tps.start_time < end_time) )    ) //condition (2): see end of function
     {
       tpsets_output.push_back(tps);
     }
@@ -71,14 +70,13 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
 
   return tpsets_output;
 
-
   /*
    Conditions:
 
-   (1) TPSet starts and ends withing the requested window:
+   (1) TPSet starts before start_time but finishes before end_time:
 
             start_time                    end_time
-                      |--TPSet-------|
+   |--TPSet-------------------------|
 
 
    (2) TPSet starts after start_time but finishes after end_time:
@@ -86,14 +84,7 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
             start_time                    end_time
                       |--TPSet-----------------------------|
 
-
-   (3) TPSet starts before start_time but finishes before end_time:
-
-            start_time                    end_time
-   |--TPSet-------------------------|
-
-
-   (4) TPSet transfer to buffer is delayed
+   (3) TPSet transfer to buffer is delayed
 
   */
 
