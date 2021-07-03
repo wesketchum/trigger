@@ -3,6 +3,7 @@
 #include "serialization/Serialization.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
 #include "logging/Logging.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -41,8 +42,8 @@ time_serialization(int tps_per_set)
       tp.adc_integral = uniform(generator);
       tp.adc_peak = uniform(generator);
       tp.detid = 1;
-      tp.type = 1;
-      tp.algorithm = 1;
+      tp.type = triggeralgs::TriggerPrimitive::Type::kUnknown;
+      tp.algorithm = triggeralgs::TriggerPrimitive::Algorithm::kTPCDefault;
       tp.version = 1;
       tp.flag = 1;
 
