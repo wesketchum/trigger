@@ -123,12 +123,12 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) 
       { }
 
-    std::vector<dataformats::timestamp_t> input_data_request;
+    dfmessages::DataRequest input_data_request;
     std::vector<trigger::TPSet> requested_tpset;
 
     try {
       m_input_queue_dr->pop(input_data_request, m_queueTimeout);
-      requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.at(0), input_data_request.at(1) );
+      requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
       ++requestedCount;
 
       dataformats::Fragment frag_out = convert_to_fragment(requested_tpset);

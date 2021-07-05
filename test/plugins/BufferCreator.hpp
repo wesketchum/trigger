@@ -11,6 +11,7 @@
 #include "dataformats/Fragment.hpp"
 
 #include "dfmessages/HSIEvent.hpp"
+#include "dfmessages/DataRequest.hpp"
 
 #include "trigger/buffercreator/Structs.hpp"
 #include "trigger/TPSet.hpp"
@@ -72,7 +73,7 @@ private:
   using tps_source_t = dunedaq::appfwk::DAQSource<trigger::TPSet>;
   std::unique_ptr<tps_source_t> m_input_queue_tps;
 
-  using dr_source_t = dunedaq::appfwk::DAQSource<std::vector<dataformats::timestamp_t>>; ///< data request queue (first element is start time, second is end time).
+  using dr_source_t = dunedaq::appfwk::DAQSource<dfmessages::DataRequest>;
   std::unique_ptr<dr_source_t> m_input_queue_dr;
 
   using fragment_sink_t = dunedaq::appfwk::DAQSink<dataformats::Fragment>;
