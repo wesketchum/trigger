@@ -82,7 +82,6 @@ private:
   trigger::BufferManager* m_buffer;
 
   uint64_t m_buffer_size;
-  uint64_t m_sleep_time;
 
   dataformats::Fragment convert_to_fragment(BufferManager::data_request_output);
 
