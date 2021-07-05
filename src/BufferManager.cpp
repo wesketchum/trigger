@@ -43,22 +43,24 @@ BufferManager::add(trigger::TPSet& tps)
   return m_tpset_buffer.insert(tps).second; //false if tps with same start_time already exists
 }
 
-std::vector<trigger::TPSet>
+BufferManager::data_request_output
 BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
 {
+  BufferManager::data_request_output ds_out;
   std::vector<trigger::TPSet> tpsets_output;
-
+  
   if(end_time < m_buffer_earliest_start_time)
   {
-    // add warning here saying data requested doesn't exist in the buffer anymore
-    return tpsets_output;
+    ds_out.tpsets_in_window = tpsets_output;
+    ds_out.ds_outcome = BufferManager::kEmpty;
+    return ds_out;
   }
 
   if(start_time > m_buffer_latest_end_time)
   {
-    // add warning here saying data requested hasn't arrived in the buffer yet
-    // need to create a queue of "pending" data request. How?
-    return tpsets_output;
+    ds_out.tpsets_in_window = tpsets_output;
+    ds_out.ds_outcome = BufferManager::kLate;
+    return ds_out;
   }
 
   trigger::TPSet tpset_low, tpset_up;
@@ -83,7 +85,10 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
     it++;
   }
 
-  return tpsets_output;
+  ds_out.tpsets_in_window = tpsets_output;
+  ds_out.ds_outcome = BufferManager::kSuccess;
+
+  return ds_out;
 
 }
 

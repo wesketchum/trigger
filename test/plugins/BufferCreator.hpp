@@ -84,7 +84,7 @@ private:
   uint64_t m_buffer_size;
   uint64_t m_sleep_time;
 
-  dataformats::Fragment convert_to_fragment(std::vector<trigger::TPSet>);
+  dataformats::Fragment convert_to_fragment(BufferManager::data_request_output);
 
 };
 } // namespace trigger

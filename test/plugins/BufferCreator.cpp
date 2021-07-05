@@ -97,9 +97,9 @@ BufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 dataformats::Fragment 
-BufferCreator::convert_to_fragment(std::vector<trigger::TPSet> tps)
+BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output)
 {
-  dataformats::Fragment frag(nullptr, tps.size());
+  dataformats::Fragment frag(nullptr, ds_output.tpsets_in_window.size());
 
   return frag;
 }
@@ -124,7 +124,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
       { }
 
     dfmessages::DataRequest input_data_request;
-    std::vector<trigger::TPSet> requested_tpset;
+    BufferManager::data_request_output requested_tpset;
 
     try {
       m_input_queue_dr->pop(input_data_request, m_queueTimeout);

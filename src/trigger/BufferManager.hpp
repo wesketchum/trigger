@@ -41,11 +41,22 @@ public:
    *  add a TPSet to the buffer. Remove oldest TPSets from buffer if we are at maximum size
    */
   bool add(trigger::TPSet& tps);
-  
+
+  enum DataRequestOutcome{
+    kEmpty,
+    kLate,
+    kSuccess
+  };
+
+  struct data_request_output{
+    std::vector<trigger::TPSet> tpsets_in_window;
+    DataRequestOutcome ds_outcome;
+  };
+
   /**
    * return a vector of all the TPSets in the buffer that overlap with [start_time, end_time]
    */
-  std::vector<trigger::TPSet> get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
+  data_request_output get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
 
 private:
 
