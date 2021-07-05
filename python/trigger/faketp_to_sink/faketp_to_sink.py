@@ -81,7 +81,8 @@ def generate(
             number_of_loops=-1, # Infinite
             tpset_time_offset=0,
             tpset_time_width=10000,
-            clock_frequency_hz=CLOCK_FREQUENCY_HZ
+            clock_frequency_hz=CLOCK_FREQUENCY_HZ,
+            maximum_wait_time_us=1000
         )),
     ])
 

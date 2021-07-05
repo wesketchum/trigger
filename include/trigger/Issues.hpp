@@ -67,6 +67,12 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        ((std::string)name),
                        ((std::string)filename))
 
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       UnsortedTP,
+                       appfwk::GeneralDAQModuleIssue,
+                       "TP with time_start " << time_start << "is higher than time_start of last TP and will be ignored." ,
+                       ((std::string)name),
+                       ((int64_t)time_start))
 } // namespace dunedaq
 
 #endif // TRIGGER_INCLUDE_TRIGGER_ISSUES_HPP_
