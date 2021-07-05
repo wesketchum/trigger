@@ -27,10 +27,12 @@ BufferManager::~BufferManager()
 bool
 BufferManager::add(trigger::TPSet& tps)
 {
-  if(m_tpset_buffer.size() >= m_buffer_max_size) //delete oldest TPSet if buffer full -> circular buffer
+  if(m_tpset_buffer.size() >= m_buffer_max_size) //delete oldest TPSet if buffer full (and updating earliest start time) -> circular buffer
   {
     auto firstIt = m_tpset_buffer.begin();
     m_tpset_buffer.erase(firstIt);
+    firstIt++;
+    m_buffer_earliest_start_time = (*firstIt).start_time;
   }
   if( (m_buffer_earliest_start_time == 0) || (tps.start_time < m_buffer_earliest_start_time) )
     m_buffer_earliest_start_time = tps.start_time;
