@@ -50,7 +50,8 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
   TPSet tpset;
 
   uint64_t prev_tpset_number = 0;
-  TPSet::seqno_t seqno = 0;
+  uint32_t seqno = 0;
+  uint64_t old_time_start = 0;
 
   // Read in the file and place the TPs in TPSets. TPSets have time
   // boundaries ( n*tpset_time_width + tpset_time_offset ), and TPs are placed
@@ -59,31 +60,38 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
   // This loop assumes the input file is sorted by TP start time
   while (file >> tp.time_start >> tp.time_over_threshold >> tp.time_peak >> tp.channel >> tp.adc_integral >>
          tp.adc_peak >> tp.detid >> tp.type) {
+    if (tp.time_start >= old_time_start) {
+      uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
+      old_time_start = tp.time_start;
 
-    uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
 
-    // If we crossed a time boundary, push the current TPSet and reset it
-    if (current_tpset_number > prev_tpset_number) {
-      if (!tpset.objects.empty()) {
-        // We don't send empty TPSets, so there's no point creating them
-        m_tpsets.push_back(tpset);
+      // If we crossed a time boundary, push the current TPSet and reset it
+      if (current_tpset_number > prev_tpset_number) {
+        if (!tpset.objects.empty()) {
+          // We don't send empty TPSets, so there's no point creating them
+          m_tpsets.push_back(tpset);
+        }
+        prev_tpset_number = current_tpset_number;
+  
+        tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
+        tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
+        tpset.seqno = seqno++;
+        // fixme: Should set this and region/element IDs via
+        // configuration.  See trigger/#41 for some discusssion.  For
+        // now, we leave region as invalid and element is "last one
+        // wins".
+        tpset.origin.element_id = tp.detid;
+        tpset.type = TPSet::Type::kPayload;
+        tpset.objects.clear();
       }
-      prev_tpset_number = current_tpset_number;
-
-      tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
-      tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
-      tpset.seqno = seqno++;
-      // fixme: Should set this and region/element IDs via
-      // configuration.  See trigger/#41 for some discusssion.  For
-      // now, we leave region as invalid and element is "last one
-      // wins".
-      tpset.origin.element_id = tp.detid;
-
-      tpset.type = TPSet::Type::kPayload;
-      tpset.objects.clear();
+      tpset.objects.push_back(tp);
+    } else {
+      ers::warning(UnsortedTP(ERS_HERE, get_name(), tp.time_start));
     }
-
-    tpset.objects.push_back(tp);
+  }
+  if (!tpset.objects.empty()) {
+    // We don't send empty TPSets, so there's no point creating them
+    m_tpsets.push_back(tpset);
   }
 }
 
@@ -160,10 +168,22 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       }
 
       auto next_tpset_send_time = prev_tpset_send_time + std::chrono::microseconds(wait_time_us);
-      // TODO P. Rodrigues 2021-06-14 This might be a long wait. We
-      // should check running_flag periodically so we don't wait too
-      // long after stop()
-      std::this_thread::sleep_until(next_tpset_send_time);
+      // check running_flag periodically using lambda
+      auto slice_period = std::chrono::microseconds(m_conf.maximum_wait_time_us);
+      auto next_slice_send_time = prev_tpset_send_time + slice_period;
+      bool break_flag = false;
+      while (next_tpset_send_time > next_slice_send_time + slice_period) {
+          if (!running_flag.load()) {
+            TLOG() << "while waiting to send next TP, negative running flag detected.";
+            break_flag = true;
+            break;
+          }
+          std::this_thread::sleep_until(next_slice_send_time);
+          next_slice_send_time = next_slice_send_time + slice_period;
+      }
+      if (break_flag == false) {
+          std::this_thread::sleep_until(next_tpset_send_time);
+      }
       prev_tpset_send_time = next_tpset_send_time;
       prev_tpset_start_time = tpset.start_time;
 
