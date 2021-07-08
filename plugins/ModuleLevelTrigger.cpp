@@ -156,9 +156,8 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
     request.component = link;
-    // TODO: set these from some config map
-    request.window_begin = tc.time_candidate;
-    request.window_end = tc.time_candidate + 1000;
+    request.window_begin = tc.time_start;
+    request.window_end = tc.time_end;
 
     decision.components.push_back(request);
   }
