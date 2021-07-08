@@ -11,9 +11,6 @@
 
 namespace dunedaq::trigger {
 
-dataformats::FragmentHeader
-create_fragment_header(const dfmessages::DataRequest& dr);
-
 std::unique_ptr<dataformats::Fragment>
 make_fragment(std::vector<TPSet>& tpsets);
 

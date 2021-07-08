@@ -5,23 +5,6 @@
 namespace dunedaq::trigger {
 
 //======================================================================
-
-dataformats::FragmentHeader
-create_fragment_header(const dfmessages::DataRequest& dr)
-{
-  dataformats::FragmentHeader fh;
-  fh.size = sizeof(fh);
-  fh.trigger_number = dr.trigger_number;
-  fh.trigger_timestamp = dr.trigger_timestamp;
-  fh.window_begin = dr.window_begin;
-  fh.window_end = dr.window_end;
-  fh.run_number = dr.run_number;
-  // fh.element_id = { m_geoid.system_type, m_geoid.region_id, m_geoid.element_id };
-  // fh.fragment_type = static_cast<dataformats::fragment_type_t>(ReadoutType::fragment_type);
-  return fh;
-}
-
-//======================================================================
 std::unique_ptr<dataformats::Fragment>
 make_fragment(std::vector<TPSet>& tpsets)
 {
