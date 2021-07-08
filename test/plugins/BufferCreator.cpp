@@ -105,6 +105,31 @@ BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output)
 }
  
 void
+BufferCreator::send_out_fragment(BufferManager::data_request_output requested_tpset, size_t& sentCount, std::atomic<bool>& running_flag)
+{
+  dataformats::Fragment frag_out = convert_to_fragment(requested_tpset);
+
+  std::string thisQueueName = m_output_queue_frag->get_name();
+  bool successfullyWasSent = false;
+  // do...while so that we always try at least once to send
+  // everything we generate, even if running_flag is changed
+  // to false between the top of the main loop and here
+  do {
+    TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
+    try {
+      m_output_queue_frag->push(std::move(frag_out), m_queueTimeout);
+      successfullyWasSent = true;
+      ++sentCount;
+    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+      std::ostringstream oss_warn;
+      oss_warn << "push to output queue \"" << thisQueueName << "\"";
+      ers::warning(
+		   dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
+    }
+  } while (!successfullyWasSent && running_flag.load());
+}
+
+void
 BufferCreator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
@@ -115,42 +140,65 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
   while (running_flag.load()) {
 
     trigger::TPSet input_tpset;
+    dfmessages::DataRequest input_data_request;
+    BufferManager::data_request_output requested_tpset;
 
+    // Block that receives TPSets and add them in buffer and check for pending data requests
     try {
       m_input_queue_tps->pop(input_tpset, m_queueTimeout);
       m_buffer->add(input_tpset);
       ++addedCount;
+
+      if( m_dr_on_hold->size() ){ //check if new data is part of data request on hold
+	
+	std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>>::iterator it = m_dr_on_hold->begin();
+
+	while(it != m_dr_on_hold->end()){
+
+	  if( it->first.window_begin < input_tpset.end_time || it->first.window_end > input_tpset.start_time ){ //new tpset is whithin data request windown?
+	    it->second.push_back(input_tpset);
+
+	    if( it->first.window_end < input_tpset.end_time ){ //If more TPSet aren't expected to arrive then push
+	      requested_tpset.tpsets_in_window = it->second;
+	      send_out_fragment(requested_tpset, sentCount, running_flag);
+	      m_dr_on_hold->erase(it);
+	      it--;
+	      continue;
+	    }
+	  }
+	  it++;
+	}
+	
+      }
+      if( m_dr_on_hold->size() ){ // if there are still requests pending, wait for more TPSets to be added in buffer.
+	continue;
+      }
+
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) 
       { }
 
-    dfmessages::DataRequest input_data_request;
-    BufferManager::data_request_output requested_tpset;
-
+    // Block that reveives data requests and return fragments from buffer
     try {
       m_input_queue_dr->pop(input_data_request, m_queueTimeout);
       requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
       ++requestedCount;
 
-      dataformats::Fragment frag_out = convert_to_fragment(requested_tpset);
-
-      std::string thisQueueName = m_output_queue_frag->get_name();
-      bool successfullyWasSent = false;
-      // do...while so that we always try at least once to send
-      // everything we generate, even if running_flag is changed
-      // to false between the top of the main loop and here
-      do {
-	TLOG_DEBUG(TLVL_GENERATION) << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
-	try {
-	  m_output_queue_frag->push(std::move(frag_out), m_queueTimeout);
-	  successfullyWasSent = true;
-	  ++sentCount;
-	} catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
-	  std::ostringstream oss_warn;
-	  oss_warn << "push to output queue \"" << thisQueueName << "\"";
-	  ers::warning(
-		       dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queueTimeout.count()));
-	}
-      } while (!successfullyWasSent && running_flag.load());
+      switch(requested_tpset.ds_outcome) {
+        case BufferManager::kEmpty:
+	  TLOG() << get_name() << " Buffer does not contain data requested. Returning empty fragment.";
+	  send_out_fragment(requested_tpset, sentCount, running_flag);
+	  break;
+        case BufferManager::kLate:
+	  TLOG() << get_name() << " Requested data has not arrived in buffer yet. Holding request until more data arrives.";
+	  m_dr_on_hold->insert(std::make_pair(input_data_request, requested_tpset.tpsets_in_window));
+	  break; // don't send anything yet. Wait for more data to arrived.
+        case BufferManager::kSuccess:
+	  TLOG_DEBUG(0) << get_name() << "Sending requested data.";
+	  send_out_fragment(requested_tpset, sentCount, running_flag);
+	  break;
+        default :
+	  TLOG() << get_name() << " Data request failled!";
+      }
 
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       // skip if no data request in the queue

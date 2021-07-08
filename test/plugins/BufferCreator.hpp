@@ -28,6 +28,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace dunedaq {
 namespace trigger {
@@ -83,7 +84,17 @@ private:
 
   uint64_t m_buffer_size;
 
+  struct DataRequestComp{
+    bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const{
+      return left.window_begin < right.window_end;
+    }
+  };
+
+  std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>* m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
+
   dataformats::Fragment convert_to_fragment(BufferManager::data_request_output);
+
+  void send_out_fragment(BufferManager::data_request_output, size_t&, std::atomic<bool>&);
 
 };
 } // namespace trigger
