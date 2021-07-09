@@ -22,12 +22,12 @@ make_fragment(std::vector<TPSet>& tpsets)
 std::unique_ptr<dataformats::Fragment>
 make_fragment(std::vector<triggeralgs::TriggerPrimitive>& tps)
 {
-  size_t n_bytes = sizeof(dataformats::TriggerPrimitivesFragment) +
+  size_t num_bytes = sizeof(dataformats::TriggerPrimitivesFragment) +
                    tps.size() * sizeof(dataformats::TriggerPrimitivesFragment::TriggerPrimitive);
-  std::unique_ptr<uint8_t[]> buffer(new uint8_t[n_bytes]);
+  std::unique_ptr<uint8_t[]> buffer(new uint8_t[num_bytes]);
   dataformats::TriggerPrimitivesFragment* tpf = reinterpret_cast<dataformats::TriggerPrimitivesFragment*>(buffer.get());
   tpf->version = dataformats::TriggerPrimitivesFragment::s_tpf_version;
-  tpf->n_trigger_primitives = tps.size();
+  tpf->num_trigger_primitives = tps.size();
   size_t counter = 0;
   for (auto const& tp : tps) {
     dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->at(counter++);
@@ -44,7 +44,7 @@ make_fragment(std::vector<triggeralgs::TriggerPrimitive>& tps)
     fragment_tp.flag = tp.flag;
   }
 
-  std::unique_ptr<dataformats::Fragment> frag = std::make_unique<dataformats::Fragment>(buffer.get(), n_bytes);
+  std::unique_ptr<dataformats::Fragment> frag = std::make_unique<dataformats::Fragment>(buffer.get(), num_bytes);
   return frag;
 }
 
@@ -55,7 +55,7 @@ read_fragment_to_trigger_primitives(dataformats::Fragment* frag)
   std::vector<triggeralgs::TriggerPrimitive> tps;
   const dataformats::TriggerPrimitivesFragment* tpf =
     reinterpret_cast<const dataformats::TriggerPrimitivesFragment*>(frag->get_data());
-  for (uint64_t i = 0; i < tpf->n_trigger_primitives; ++i) {
+  for (uint64_t i = 0; i < tpf->num_trigger_primitives; ++i) {
     const dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->at(i);
 
     triggeralgs::TriggerPrimitive tp;

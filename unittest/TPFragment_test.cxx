@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(Basics)
   dataformats::TriggerPrimitivesFragment* tpf =
     reinterpret_cast<dataformats::TriggerPrimitivesFragment*>(frag->get_data());
 
-  BOOST_REQUIRE_EQUAL(tpf->n_trigger_primitives, n_trigger_primitives);
+  BOOST_REQUIRE_EQUAL(tpf->num_trigger_primitives, n_trigger_primitives);
   BOOST_REQUIRE_EQUAL(tpf->version, 1);
 
   std::vector<triggeralgs::TriggerPrimitive> tps_out = trigger::read_fragment_to_trigger_primitives(frag.get());
