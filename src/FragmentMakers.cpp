@@ -30,18 +30,18 @@ make_fragment(std::vector<triggeralgs::TriggerPrimitive>& tps)
   tpf->n_trigger_primitives = tps.size();
   size_t counter = 0;
   for (auto const& tp : tps) {
-    dataformats::TriggerPrimitivesFragment::TriggerPrimitive& tp_fragment = tpf->primitives[counter++];
-    tp_fragment.time_start = tp.time_start;
-    tp_fragment.time_peak = tp.time_peak;
-    tp_fragment.time_over_threshold = tp.time_over_threshold;
-    tp_fragment.channel = tp.channel;
-    tp_fragment.adc_integral = tp.adc_integral;
-    tp_fragment.adc_peak = tp.adc_peak;
-    tp_fragment.detid = tp.detid;
-    tp_fragment.type = static_cast<uint32_t>(tp.type);
-    tp_fragment.algorithm = static_cast<uint32_t>(tp.algorithm);
-    tp_fragment.version = tp.version;
-    tp_fragment.flag = tp.flag;
+    dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->primitives[counter++];
+    fragment_tp.time_start = tp.time_start;
+    fragment_tp.time_peak = tp.time_peak;
+    fragment_tp.time_over_threshold = tp.time_over_threshold;
+    fragment_tp.channel = tp.channel;
+    fragment_tp.adc_integral = tp.adc_integral;
+    fragment_tp.adc_peak = tp.adc_peak;
+    fragment_tp.detid = tp.detid;
+    fragment_tp.type = static_cast<uint32_t>(tp.type);
+    fragment_tp.algorithm = static_cast<uint32_t>(tp.algorithm);
+    fragment_tp.version = tp.version;
+    fragment_tp.flag = tp.flag;
   }
 
   std::unique_ptr<dataformats::Fragment> frag = std::make_unique<dataformats::Fragment>(buffer.get(), n_bytes);
@@ -56,20 +56,20 @@ read_fragment_to_trigger_primitives(dataformats::Fragment* frag)
   const dataformats::TriggerPrimitivesFragment* tpf =
     reinterpret_cast<const dataformats::TriggerPrimitivesFragment*>(frag->get_data());
   for (uint64_t i = 0; i < tpf->n_trigger_primitives; ++i) {
-    const dataformats::TriggerPrimitivesFragment::TriggerPrimitive& tp_fragment = tpf->primitives[i];
+    const dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->primitives[i];
 
     triggeralgs::TriggerPrimitive tp;
-    tp.time_start = tp_fragment.time_start;
-    tp.time_peak = tp_fragment.time_peak;
-    tp.time_over_threshold = tp_fragment.time_over_threshold;
-    tp.channel = tp_fragment.channel;
-    tp.adc_integral = tp_fragment.adc_integral;
-    tp.adc_peak = tp_fragment.adc_peak;
-    tp.detid = tp_fragment.detid;
-    tp.type = static_cast<triggeralgs::TriggerPrimitive::Type>(tp_fragment.type);
-    tp.algorithm = static_cast<triggeralgs::TriggerPrimitive::Algorithm>(tp_fragment.algorithm);
-    tp.version = tp_fragment.version;
-    tp.flag = tp_fragment.flag;
+    tp.time_start = fragment_tp.time_start;
+    tp.time_peak = fragment_tp.time_peak;
+    tp.time_over_threshold = fragment_tp.time_over_threshold;
+    tp.channel = fragment_tp.channel;
+    tp.adc_integral = fragment_tp.adc_integral;
+    tp.adc_peak = fragment_tp.adc_peak;
+    tp.detid = fragment_tp.detid;
+    tp.type = static_cast<triggeralgs::TriggerPrimitive::Type>(fragment_tp.type);
+    tp.algorithm = static_cast<triggeralgs::TriggerPrimitive::Algorithm>(fragment_tp.algorithm);
+    tp.version = fragment_tp.version;
+    tp.flag = fragment_tp.flag;
 
     tps.push_back(tp);
   }
