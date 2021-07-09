@@ -30,7 +30,7 @@ make_fragment(std::vector<triggeralgs::TriggerPrimitive>& tps)
   tpf->n_trigger_primitives = tps.size();
   size_t counter = 0;
   for (auto const& tp : tps) {
-    dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->primitives[counter++];
+    dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->at(counter++);
     fragment_tp.time_start = tp.time_start;
     fragment_tp.time_peak = tp.time_peak;
     fragment_tp.time_over_threshold = tp.time_over_threshold;
@@ -56,7 +56,7 @@ read_fragment_to_trigger_primitives(dataformats::Fragment* frag)
   const dataformats::TriggerPrimitivesFragment* tpf =
     reinterpret_cast<const dataformats::TriggerPrimitivesFragment*>(frag->get_data());
   for (uint64_t i = 0; i < tpf->n_trigger_primitives; ++i) {
-    const dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->primitives[i];
+    const dataformats::TriggerPrimitivesFragment::TriggerPrimitive& fragment_tp = tpf->at(i);
 
     triggeralgs::TriggerPrimitive tp;
     tp.time_start = fragment_tp.time_start;
