@@ -12,6 +12,9 @@
 #include "trigger/Issues.hpp"
 #include "trigger/buffercreator/Nljs.hpp"
 
+#include "dataformats/FragmentHeader.hpp"
+#include "dataformats/GeoID.hpp"
+
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
 
@@ -97,18 +100,34 @@ BufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 dataformats::Fragment 
-BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output)
+BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output, dfmessages::DataRequest input_data_request)
 {
   dataformats::Fragment frag(nullptr, ds_output.tpsets_in_window.size());
+  
+  dataformats::GeoID          geoid;
+  dataformats::FragmentHeader frag_h;
+  frag_h.trigger_number    = input_data_request.trigger_number;
+  frag_h.trigger_timestamp = input_data_request.trigger_timestamp;
+  frag_h.window_begin      = input_data_request.window_begin;
+  frag_h.window_end        = input_data_request.window_end;
+  frag_h.run_number        = input_data_request.run_number;
+  frag_h.element_id        = geoid;
+  frag_h.error_bits        = 0;
+  frag_h.fragment_type     = 0;
+  //frag_h.sequence_number = input_data_request.sequence_number; -->compilation error. sequence_number still only on develop branch
+
+  frag.set_header_fields(frag_h);
+
+  /*  >>> need to fill the fragment with
+      the contents of the TPSet vector here
+   */
 
   return frag;
 }
  
 void
-BufferCreator::send_out_fragment(BufferManager::data_request_output requested_tpset, size_t& sentCount, std::atomic<bool>& running_flag)
+BufferCreator::send_out_fragment(dataformats::Fragment& frag_out, size_t& sentCount, std::atomic<bool>& running_flag)
 {
-  dataformats::Fragment frag_out = convert_to_fragment(requested_tpset);
-
   std::string thisQueueName = m_output_queue_frag->get_name();
   bool successfullyWasSent = false;
   // do...while so that we always try at least once to send
@@ -160,7 +179,8 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
 
 	    if( it->first.window_end < input_tpset.end_time ){ //If more TPSet aren't expected to arrive then push
 	      requested_tpset.tpsets_in_window = it->second;
-	      send_out_fragment(requested_tpset, sentCount, running_flag);
+	      dataformats::Fragment frag_out = convert_to_fragment(requested_tpset,it->first);
+	      send_out_fragment(frag_out, sentCount, running_flag);
 	      m_dr_on_hold->erase(it);
 	      it--;
 	      continue;
@@ -183,10 +203,12 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
       requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
       ++requestedCount;
 
+      dataformats::Fragment frag_out = convert_to_fragment(requested_tpset, input_data_request);
+
       switch(requested_tpset.ds_outcome) {
         case BufferManager::kEmpty:
 	  TLOG() << get_name() << " Buffer does not contain data requested. Returning empty fragment.";
-	  send_out_fragment(requested_tpset, sentCount, running_flag);
+	  send_out_fragment(frag_out, sentCount, running_flag);
 	  break;
         case BufferManager::kLate:
 	  TLOG() << get_name() << " Requested data has not arrived in buffer yet. Holding request until more data arrives.";
@@ -194,7 +216,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
 	  break; // don't send anything yet. Wait for more data to arrived.
         case BufferManager::kSuccess:
 	  TLOG_DEBUG(0) << get_name() << "Sending requested data.";
-	  send_out_fragment(requested_tpset, sentCount, running_flag);
+	  send_out_fragment(frag_out, sentCount, running_flag);
 	  break;
         default :
 	  TLOG() << get_name() << " Data request failled!";

@@ -92,9 +92,9 @@ private:
 
   std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>* m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
-  dataformats::Fragment convert_to_fragment(BufferManager::data_request_output);
+  dataformats::Fragment convert_to_fragment(BufferManager::data_request_output, dfmessages::DataRequest);
 
-  void send_out_fragment(BufferManager::data_request_output, size_t&, std::atomic<bool>&);
+  void send_out_fragment(dataformats::Fragment&, size_t&, std::atomic<bool>&);
 
 };
 } // namespace trigger
