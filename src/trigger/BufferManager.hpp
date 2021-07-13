@@ -31,6 +31,7 @@ public:
   virtual ~BufferManager();
 
   void set_buffer_size(long unsigned int size) {m_buffer_max_size = size;}
+  long unsigned int get_stored_size() {return m_tpset_buffer.size();}
 
   BufferManager(BufferManager const&) = delete;
   BufferManager(BufferManager&&) = default;
