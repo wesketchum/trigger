@@ -13,8 +13,6 @@
 #include "dfmessages/DataRequest.hpp"
 
 #include <random>
-#include <chrono>
-#include <thread>
 
 /**
  * @brief Name of this test module
@@ -30,7 +28,7 @@ BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
 
 BOOST_AUTO_TEST_CASE(Basics)
 {
-  long unsigned int buffer_size = 100;
+  long unsigned int buffer_size = 10;
   trigger::BufferManager bm(buffer_size);
   trigger::TPSet input_tpset;
 
@@ -44,15 +42,54 @@ BOOST_AUTO_TEST_CASE(Basics)
   // Store a TPSet
   BOOST_CHECK_EQUAL(bm.add(input_tpset), true);
 
-  // Generate a random data request 
+  // Store another TPSet
+  input_tpset.start_time = 2000 + uniform(generator);
+  input_tpset.end_time   = input_tpset.start_time + uniform(generator);
+  BOOST_CHECK_EQUAL(bm.add(input_tpset), true);
+  BOOST_CHECK_EQUAL(bm.add(input_tpset), false);
+
+  // Generate a data request, but not available in buffer anymore
   trigger::BufferManager::data_request_output requested_tpset;
   dfmessages::DataRequest input_data_request;
+  input_data_request.window_begin = 100;
+  input_data_request.window_end   = 120;
+  requested_tpset = bm.get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
+  BOOST_CHECK_EQUAL(requested_tpset.ds_outcome, trigger::BufferManager::kEmpty);
 
-  // Request data
+  // Generate a data request, available in buffer
+  input_data_request.window_begin = 100;
+  input_data_request.window_end   = 3000;
   requested_tpset = bm.get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
   BOOST_CHECK_EQUAL(requested_tpset.ds_outcome, trigger::BufferManager::kSuccess);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  BOOST_CHECK_EQUAL(requested_tpset.tpsets_in_window.size(), 2);
+
+  // Generate a data request, but not available in buffer yet
+  input_data_request.window_begin = 3000;
+  input_data_request.window_end   = 4000;
+  requested_tpset = bm.get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
+  BOOST_CHECK_EQUAL(requested_tpset.ds_outcome, trigger::BufferManager::kLate);
+
+  // Fill buffer beyond its capacity
+  input_tpset.start_time = 3001;
+  input_tpset.end_time   = input_tpset.start_time + uniform(generator);
+  bm.add(input_tpset);  
+  int ntps = buffer_size-1;
+  for(int i=0; i<ntps; i++){
+    input_tpset.start_time = input_tpset.end_time + uniform(generator);
+    input_tpset.end_time   = input_tpset.start_time + uniform(generator);
+    bm.add(input_tpset);
+  }
+  BOOST_CHECK_EQUAL(bm.get_stored_size(), buffer_size);
+
+  input_data_request.window_begin = 0;
+  input_data_request.window_end   = 100000;
+  requested_tpset = bm.get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
+
+  BOOST_CHECK_EQUAL(requested_tpset.tpsets_in_window.size(), buffer_size);
+  BOOST_CHECK_GT(requested_tpset.tpsets_in_window.at(0).start_time, 3000);
+  BOOST_CHECK_LT(requested_tpset.tpsets_in_window.at(0).start_time, 3002);
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
