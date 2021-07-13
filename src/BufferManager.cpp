@@ -75,11 +75,13 @@ BufferManager::get_tpsets_in_window(dataformats::timestamp_t start_time, datafor
   it     = it_low;
 
   //checking if previous TPset has a end_time that is after the data request's start time
-  it--;
-  if((*it).end_time > start_time) tpsets_output.push_back(*it);
+  if(!(it == m_tpset_buffer.begin()) ){
+    it--;
+    if((*it).end_time > start_time) tpsets_output.push_back(*it);
+    it++;
+  }
 
   //loading TPSets
-  it++;
   while(it != it_up){
     tpsets_output.push_back(*it);
     it++;
