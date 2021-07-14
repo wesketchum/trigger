@@ -10,6 +10,7 @@
 #include "appfwk/ThreadHelper.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
 
+#include "trigger/triggerzipper/Nljs.hpp"
 #include "zipper.hpp"
 
 #include <list>
@@ -27,15 +28,17 @@ namespace dunedaq::trigger {
 //          typename 
 // >
 
-// Note, this is fake for now, it will be replaced by codegen'ed.
-struct TriggerZipperCfg {
-    size_t cardinality{0};
-    size_t max_latency_ms{100};
-};
-
+size_t zipper_stream_id(const dataformats::GeoID& geoid) {
+    return
+        (0xffff000000000000 & (static_cast<size_t>(geoid.system_type) << 48)) |
+        (0x0000ffff00000000 & (static_cast<size_t>(geoid.region_id) << 32)) |
+        (0x00000000ffffffff & geoid.element_id);
+}
+    
 template<typename TSET>
 class TriggerZipper : public dunedaq::appfwk::DAQModule {
 
+  public:
     // Derived types
     using tset_type = TSET;
     using ordering_type = typename TSET::timestamp_t;
@@ -47,46 +50,26 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
 
     using node_type = zipper::Node<payload_type>;
     using zm_type = zipper::merge<node_type>;
-    zm_type zm;
+    zm_type m_zm;
 
     // queues
     using source_t = appfwk::DAQSource<TSET>;
     using sink_t = appfwk::DAQSink<TSET>;
-    std::unique_ptr<source_t>  inq{};
-    std::unique_ptr< sink_t > outq{};
-    std::chrono::milliseconds ito{10}, oto{10};
+    std::unique_ptr<source_t>  m_inq{};
+    std::unique_ptr< sink_t > m_outq{};
 
-    // The generated schema provides:
-    //
-    // input_timeout_ms - maxium (real) time in milliseconds to wait
-    // for fresh input.
-    // 
-    // max_latency_ms - maximum latency (real) time in milliseconds
-    // that the zipper will inflict.  If zero, the zipper latency is
-    // unbound but zipper is lossless to tardy input.  If nonzero,
-    // tardy input will be dropped but any sets added to the zipper
-    // will be held no longer than this latency even if stream are
-    // incomplete.  Note, the input_timeout_ms adds to total latency.
-    TriggerZipperCfg cfg{};
+    using cfg_t = triggerzipper::ConfParams;
+    cfg_t m_cfg;
 
-    std::thread thread;
-    std::atomic<bool> running{false};
+    std::thread m_thread;
+    std::atomic<bool> m_running{false};
 
     // We store input TSETs in a list and send iterator though the
     // zipper as payload so as to not suffer copy overhead.
     cache_type cache;
 
-    size_t identify(const origin_type& geoid) {
-        return
-            (0xff000000 & (static_cast<size_t>(geoid.system_type) << 48)) |
-            (0x00ff0000 & (static_cast<size_t>(geoid.region_id) << 32)) |
-            (0x0000ffff & geoid.element_id);
-    }
-
-  public:
-        
     explicit TriggerZipper(const std::string& name)
-        : DAQModule(name), zm()
+        : DAQModule(name), m_zm()
     {
         // clang-format off
         register_command("conf",   &TriggerZipper<TSET>::do_configure);
@@ -97,55 +80,63 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
         register_command("scrap",  &TriggerZipper<TSET>::do_scrap);
         // clang-format on
     }
-    virtual ~TriggerZipper() {}
+    virtual ~TriggerZipper()
+    {
+    }
 
     void init(const nlohmann::json& ini)
     {
-        inq.reset(new source_t(appfwk::queue_inst(ini, "input")));
-        outq.reset(new sink_t(appfwk::queue_inst(ini, "output")));
+        set_input(appfwk::queue_inst(ini, "input"));
+        set_output(appfwk::queue_inst(ini, "output"));
+    }
+    void set_input(const std::string& name)
+    {
+        m_inq.reset(new source_t(name));
+    }
+    void set_output(const std::string& name)
+    {
+        m_outq.reset(new sink_t(name));
     }
 
-    void do_configure(const nlohmann::json& /*cfgobj*/)
+    void do_configure(const nlohmann::json& cfgobj)
     {
-        // fixme: we fake configuration for now
-        // auto cfg = cfgobj.get<TriggerZipperCfg>();
-        zm.set_cardinality(cfg.cardinality);
+        m_cfg = cfgobj.get<cfg_t>();
+        m_zm.set_cardinality(m_cfg.cardinality);
     }
 
     void do_scrap(const nlohmann::json& /*stopobj*/)
     {
-        cfg = TriggerZipperCfg{};
-        zm.clear();
-        zm.set_cardinality(0);
+        m_cfg = cfg_t{};
+        m_zm.set_cardinality(0);
     }
         
     void do_start(const nlohmann::json& /*startobj*/)
     {
-        running.store(true);
-        thread = std::thread(&TriggerZipper::worker, this);
+        m_running.store(true);
+        m_thread = std::thread(&TriggerZipper::worker, this);
     }
 
     void do_stop(const nlohmann::json& /*stopobj*/)
     {
-        running.store(false);
-        thread.join();
-        // should we zm.clear() here?
+        m_running.store(false);
+        m_thread.join();
+        flush();
     }
 
     void do_pause(const nlohmann::json& /*pauseobj*/)
     {
         // fixme: need a 2nd flag?
-        running.store(false);
+        m_running.store(false);
     }
 
     void do_resume(const nlohmann::json& /*resumeobj*/)
     {
-        running.store(true);
+        m_running.store(true);
     }
 
     // thread worker
     void worker() {
-        while (running.load()) {
+        while (m_running.load()) {
             proc_one();
         }
     }
@@ -155,7 +146,7 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
         cache.emplace_front();  // to be filled
         auto& tset = cache.front();
         try {
-            inq->pop(tset, std::chrono::milliseconds(10));
+            m_inq->pop(tset, std::chrono::milliseconds(10));
         }
         catch (appfwk::QueueTimeoutExpired&) {
             cache.pop_front(); // vestigial 
@@ -163,38 +154,55 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
             return;
         }
 
-        bool accepted = zm.feed(cache.begin(),tset.start_time,
-                                identify(tset.origin));
+        bool accepted = m_zm.feed(cache.begin(),tset.start_time,
+                                  zipper_stream_id(tset.origin));
         if (!accepted) {
             cache.pop_front(); // vestigial
         }
         drain();
     }
 
-    // call to maybe produce output
-    void drain()
+    void send_out(std::vector<node_type>& got)
     {
-        std::vector<node_type> got;
-        if (cfg.max_latency_ms) {
-            zm.drain_prompt(std::back_inserter(got));
-        }
-        else {
-            zm.drain_waiting(std::back_inserter(got));
-        }
-
         for (auto& node : got) {
             payload_type lit = node.payload;
             auto& tset = *lit;  // list iterator
+
+            // tell consumer "where" the set was produced
+            tset.origin.region_id = m_cfg.region_id;
+            tset.origin.element_id = m_cfg.element_id;
+
             try {
-                // Fixme: we should be re-setting tpset.origin to
-                // reflect us, the zipper.
-                outq->push(tset, std::chrono::milliseconds(10));
+                m_outq->push(tset, std::chrono::milliseconds(10));
             }
             catch (const dunedaq::appfwk::QueueTimeoutExpired& err) {
-                ers::warning(err);
+                // our output queue is stuffed.  should more be done
+                // here than simply complain and drop?
+                ers::error(err);
             }
             cache.erase(lit);
         }
+    }
+
+    // Maybe drain and send to out queue
+    void drain()
+    {
+        std::vector<node_type> got;
+        if (m_cfg.max_latency_ms) {
+            m_zm.drain_prompt(std::back_inserter(got));
+        }
+        else {
+            m_zm.drain_waiting(std::back_inserter(got));
+        }
+        send_out(got);
+    }
+
+    // Fully drain and send to out queue
+    void flush()
+    {
+        std::vector<node_type> got;
+        m_zm.drain_full(std::back_inserter(got));
+        send_out(got);
     }
 
 };
