@@ -59,6 +59,20 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << algorithm << " maker encountered Sets with inconsistent start/end times.",
                        ((std::string)name),
                        ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       TardyOutputError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker generated a tardy output, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       WindowlessOutputError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker generated an output that was not in any input window, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        BadTPInputFile,
