@@ -109,6 +109,7 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");
+  ers::info(TriggerStartOfRun(ERS_HERE, m_run_number));
 }
 
 void
@@ -118,6 +119,8 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
   m_send_trigger_decisions_thread.join();
   m_token_manager.reset(nullptr); // Calls TokenManager dtor
   m_livetime_counter.reset(); // Calls LivetimeCounter dtor?
+  ers::info(TriggerEndOfRun(ERS_HERE, m_run_number));
+
 }
 
 void

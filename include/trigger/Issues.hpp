@@ -27,6 +27,8 @@ ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration objec
 ERS_DECLARE_ISSUE(trigger, TriggerActive, "Trigger is active now", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t) runno))
+ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t) runno))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
