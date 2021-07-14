@@ -18,7 +18,6 @@
 #include "logging/Logging.hpp"
 
 #include "trigger/Issues.hpp"
-#include "trigger/LivetimeCounter.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
 
 #include "timinglibs/TimestampEstimator.hpp"
@@ -103,9 +102,7 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
   m_paused.store(true);
   m_running_flag.store(true);
 
-  m_livetime_counter.reset(new LivetimeCounter(LivetimeCounter::State::kPaused));
-  
-  m_token_manager.reset(new TokenManager(m_token_source, m_initial_tokens, m_run_number, m_livetime_counter));
+  m_token_manager.reset(new TokenManager(m_token_source, m_initial_tokens, m_run_number));
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");
@@ -117,14 +114,12 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
   m_running_flag.store(false);
   m_send_trigger_decisions_thread.join();
   m_token_manager.reset(nullptr); // Calls TokenManager dtor
-  m_livetime_counter.reset(); // Calls LivetimeCounter dtor?
 }
 
 void
 ModuleLevelTrigger::do_pause(const nlohmann::json& /*pauseobj*/)
 {
   m_paused.store(true);
-  m_livetime_counter->set_state(LivetimeCounter::State::kPaused);
   TLOG() << "******* Triggers PAUSED! *********";
 }
 
@@ -132,7 +127,6 @@ void
 ModuleLevelTrigger::do_resume(const nlohmann::json& /*resumeobj*/)
 {
   TLOG() << "******* Triggers RESUMED! *********";
-    m_livetime_counter->set_state(LivetimeCounter::State::kLive);
   m_paused.store(false);
 }
 

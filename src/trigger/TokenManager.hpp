@@ -14,10 +14,8 @@
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecisionToken.hpp"
 #include "dfmessages/Types.hpp"
-#include "trigger/LivetimeCounter.hpp"
 
 #include <atomic>
-#include <chrono>
 #include <memory>
 #include <set>
 #include <thread>
@@ -41,8 +39,7 @@ class TokenManager
 public:
   TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
                int initial_tokens,
-               dataformats::run_number_t run_number,
-               std::shared_ptr<LivetimeCounter> livetime_counter);
+               dataformats::run_number_t run_number);
 
   virtual ~TokenManager();
 
@@ -76,8 +73,6 @@ private:
   void read_token_queue();
   std::thread m_read_queue_thread;
 
-  std::shared_ptr<LivetimeCounter> m_livetime_counter;
-  
   // Are we running?
   std::atomic<bool> m_running_flag;
   // How many tokens are currently available?
@@ -89,11 +84,6 @@ private:
 
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& m_token_source;
   dataformats::run_number_t m_run_number;
-
- 
-  // The amount of time we have been dead, ie during which n_tokens==0
-  std::atomic<uint64_t> m_deadtime_ms{0};
-  std::atomic<uint64_t> m_last_deadtime_start{0};
 };
 
 } // namespace trigger
