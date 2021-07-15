@@ -24,6 +24,11 @@
 namespace dunedaq {
 
 ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration object was received", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerActive, "Trigger is active now", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t) runno))
+ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t) runno))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
@@ -73,6 +78,10 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "TP with time_start " << time_start << "is higher than time_start of last TP and will be ignored." ,
                        ((std::string)name),
                        ((int64_t)time_start))
+
+
+
+
 } // namespace dunedaq
 
 #endif // TRIGGER_INCLUDE_TRIGGER_ISSUES_HPP_

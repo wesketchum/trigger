@@ -106,6 +106,7 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");
+  ers::info(TriggerStartOfRun(ERS_HERE, m_run_number));
 }
 
 void
@@ -114,6 +115,7 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
   m_running_flag.store(false);
   m_send_trigger_decisions_thread.join();
   m_token_manager.reset(nullptr); // Calls TokenManager dtor
+  ers::info(TriggerEndOfRun(ERS_HERE, m_run_number));
 }
 
 void
@@ -121,11 +123,14 @@ ModuleLevelTrigger::do_pause(const nlohmann::json& /*pauseobj*/)
 {
   m_paused.store(true);
   TLOG() << "******* Triggers PAUSED! *********";
+  ers::info(TriggerPaused(ERS_HERE));
+
 }
 
 void
 ModuleLevelTrigger::do_resume(const nlohmann::json& /*resumeobj*/)
 {
+  ers::info(TriggerActive(ERS_HERE));
   TLOG() << "******* Triggers RESUMED! *********";
   m_paused.store(false);
 }
@@ -215,6 +220,7 @@ ModuleLevelTrigger::send_trigger_decisions()
       decision.trigger_number++;
       m_last_trigger_number++;
     } else if (!tokens_allow_triggers) {
+      ers::warning(TriggerInhibited(ERS_HERE));
       TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
       m_td_inhibited_count++;
