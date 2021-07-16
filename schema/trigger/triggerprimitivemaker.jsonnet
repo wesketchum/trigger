@@ -8,6 +8,8 @@ local types = {
     rows: s.number("rows", dtype="u8", doc="Number of rows"),
     freq: s.number("freq", dtype="u8", doc="A frequency"),
     microseconds: s.number("microseconds", dtype="u8", doc="Microseconds"),
+    region : s.number("region", "u2", doc="Region ID for GeoID"),
+    element : s.number("element", "u4", doc="Element ID for GeoID"),
 
     conf: s.record("ConfParams", [
         s.field("filename", self.pathname, "/tmp/example.csv",
@@ -22,6 +24,10 @@ local types = {
                 doc="Simulated clock frequency in Hz"),
         s.field("maximum_wait_time_us", self.microseconds, 1000,
                 doc="Maximum wait time until the running flag is checked in microseconds"),
+        s.field("region_id", self.region, 0,
+                doc="Detector region ID to be reported as the source of the TPs"),
+        s.field("element_id", self.element, 0,
+                doc="Detector element ID to be reported as the source of the TPs"),
     ], doc="TriggerPrimitiveMaker configuration"),
 
 };

@@ -18,7 +18,7 @@ find_package(nwqueueadapters REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LivetimeCounter.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
@@ -70,7 +70,6 @@ daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRA
 # Unit Tests
 
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
-daq_add_unit_test(LivetimeCounter_test           LINK_LIBRARIES trigger)
 daq_add_unit_test(TxSet_test                     LINK_LIBRARIES trigger)
 
 ##############################################################################
