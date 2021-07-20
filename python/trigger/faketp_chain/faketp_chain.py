@@ -74,7 +74,7 @@ def make_moo_record(conf_dict,name,path='temptypes'):
     moo.otypes.make_type(schema='record', fields=fields, name=name, path=path)
 
 def generate(
-        INPUT_FILE: str,
+        INPUT_FILES: str,
         SLOWDOWN_FACTOR: float,
         
         ACTIVITY_PLUGIN: str = 'TriggerActivityMakerPrescalePlugin',
@@ -101,7 +101,7 @@ def generate(
 
     # Define modules and queues
     queue_specs = [
-        app.QueueSpec(inst='tpset_q', kind='FollySPSCQueue', capacity=1000),
+        app.QueueSpec(inst='tpset_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='taset_q', kind='FollySPSCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_candidate_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_decision_q', kind='FollySPSCQueue', capacity=1000),
@@ -109,10 +109,11 @@ def generate(
     ]
 
     mod_specs = [
-        mspec('tpm', 'TriggerPrimitiveMaker', [ # File -> TPSet
+        mspec(f'tpm{i}', 'TriggerPrimitiveMaker', [ # File -> TPSet
             app.QueueInfo(name='tpset_sink', inst='tpset_q', dir='output'),
-        ]),
-        
+        ])
+        for i in range(len(INPUT_FILES))
+    ] +  [
         mspec('tam', 'TriggerActivityMaker', [ # TPSet -> TASet
             app.QueueInfo(name='input', inst='tpset_q', dir='input'),
             app.QueueInfo(name='output', inst='taset_q', dir='output'),
@@ -142,14 +143,15 @@ def generate(
     import temptypes
 
     cmd_data['conf'] = acmd([
-        ('tpm', tpm.ConfParams(
-            filename=INPUT_FILE,
+        (f'tpm{i}', tpm.ConfParams(
+            filename=input_file,
             number_of_loops=-1, # Infinite
             tpset_time_offset=0,
             tpset_time_width=10000,
             clock_frequency_hz=CLOCK_FREQUENCY_HZ,
             maximum_wait_time_us=1000
-        )),
+        )) for i,input_file in enumerate(INPUT_FILES)
+        ] + [
         ('tam', tam.Conf(
             activity_maker=ACTIVITY_PLUGIN,
             geoid_region=0, # Fake placeholder
@@ -176,8 +178,9 @@ def generate(
     ])
 
     startpars = rccmd.StartParams(run=1)
-    cmd_data['start'] = acmd([
-        ('tpm', startpars),
+    cmd_data['start'] = acmd(
+        [ (f'tpm{i}', startpars) for i in range(len(INPUT_FILES)) ] +
+        [
         ('tam', startpars),
         ('tcm', startpars),
         ('mlt', startpars),
@@ -193,16 +196,18 @@ def generate(
         ('mlt', resumepars)
     ])
     
-    cmd_data['stop'] = acmd([
-        ('tpm', None),
+    cmd_data['stop'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
         ('tam', None),
         ('tcm', None),
         ('mlt', None),
         ('fdf', None)
     ])
 
-    cmd_data['scrap'] = acmd([
-        ('tpm', None),
+    cmd_data['scrap'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
         ('tam', None),
         ('tcm', None),
         ('mlt', None),

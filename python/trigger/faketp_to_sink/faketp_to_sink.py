@@ -12,6 +12,7 @@ moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet')
+moo.otypes.load_types('trigger/triggerzipper.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -19,6 +20,7 @@ import dunedaq.rcif.cmd as rccmd # AddressedCmd,
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd,
 import dunedaq.trigger.triggerprimitivemaker as tpm
+import dunedaq.trigger.triggerzipper as tzip
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -50,7 +52,7 @@ def acmd(mods: list) -> cmd.CmdObj:
 #===============================================================================
 def generate(
         OUTPUT_PATH: str,
-        INPUT_FILE: str,
+        INPUT_FILES: str,
         SLOWDOWN_FACTOR: float
 ):
     cmd_data = {}
@@ -60,49 +62,72 @@ def generate(
 
     # Define modules and queues
     queue_specs = [
-        app.QueueSpec(inst="tpset_q", kind='FollySPSCQueue', capacity=1000),
+        app.QueueSpec(inst="tpset_q", kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst="zipped_tpset_q", kind='FollyMPMCQueue', capacity=1000),
     ]
 
     mod_specs = [
-        mspec("tpm", "TriggerPrimitiveMaker", [
+        mspec(f"tpm{i}", "TriggerPrimitiveMaker", [
             app.QueueInfo(name="tpset_sink", inst="tpset_q", dir="output"),
+        ]) for i in range(len(INPUT_FILES))
+        ] + [
+
+        mspec("zip", "TPZipper", [
+            app.QueueInfo(name="input", inst="tpset_q", dir="input"),
+            app.QueueInfo(name="output", inst="zipped_tpset_q", dir="output"),
         ]),
-        
         mspec("tps_sink", "TPSetSink", [
-            app.QueueInfo(name="tpset_source", inst="tpset_q", dir="input"),
+            app.QueueInfo(name="tpset_source", inst="zipped_tpset_q", dir="input"),
         ]),
     ]
 
     cmd_data['init'] = app.Init(queues=queue_specs, modules=mod_specs)
 
     cmd_data['conf'] = acmd([
-        ("tpm", tpm.ConfParams(
-            filename=INPUT_FILE,
+        (f"tpm{i}", tpm.ConfParams(
+            filename=input_file,
             number_of_loops=-1, # Infinite
             tpset_time_offset=0,
             tpset_time_width=10000,
             clock_frequency_hz=CLOCK_FREQUENCY_HZ,
-            maximum_wait_time_us=1000
-        )),
+            maximum_wait_time_us=1000,
+            region_id=0,
+            element_id=i,
+        )) for i,input_file in enumerate(INPUT_FILES)
+    ] + [
+        ("zip", tzip.ConfParams(
+            cardinality=len(INPUT_FILES),
+            max_latency_ms=1000,
+            region_id=0,
+            element_id=0
+        ))
     ])
 
     startpars = rccmd.StartParams(run=1, disable_data_storage=False)
-    cmd_data['start'] = acmd([
-        ("tpm", startpars),
-        ("tps_sink", startpars),
-    ])
+    cmd_data['start'] = acmd(
+        [
+            ("zip", startpars),
+            ("tps_sink", startpars),
+        ] +
+        [ (f'tpm{i}', startpars) for i in range(len(INPUT_FILES)) ]
+    )
 
     cmd_data['pause'] = acmd([])
 
     cmd_data['resume'] = acmd([])
     
-    cmd_data['stop'] = acmd([
-        ("tpm", None),
+    cmd_data['stop'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
+        ("zip", None),
         ("tps_sink", None),
     ])
 
-    cmd_data['scrap'] = acmd([
-        ("tpm", None),
-    ])
+    cmd_data['scrap'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
+            ("zip", None)
+        ]
+    )
 
     return cmd_data
