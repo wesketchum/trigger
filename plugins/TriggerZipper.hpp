@@ -43,6 +43,7 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
     using tset_type = TSET;
     using ordering_type = typename TSET::timestamp_t;
     using origin_type = typename TSET::origin_t; // GeoID
+    using seqno_type = typename TSET::seqno_t; // GeoID
 
     using cache_type = std::list<TSET>;
     using payload_type = typename cache_type::iterator;
@@ -67,6 +68,7 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
     // We store input TSETs in a list and send iterator though the
     // zipper as payload so as to not suffer copy overhead.
     cache_type cache;
+    seqno_type m_next_seqno{0};
 
     explicit TriggerZipper(const std::string& name)
         : DAQModule(name), m_zm()
@@ -171,6 +173,7 @@ class TriggerZipper : public dunedaq::appfwk::DAQModule {
             // tell consumer "where" the set was produced
             tset.origin.region_id = m_cfg.region_id;
             tset.origin.element_id = m_cfg.element_id;
+            tset.seqno = m_next_seqno++;
 
             try {
                 m_outq->push(tset, std::chrono::milliseconds(10));
