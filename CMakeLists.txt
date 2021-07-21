@@ -18,12 +18,12 @@ find_package(nwqueueadapters REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp BufferManager.cpp LivetimeCounter.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LivetimeCounter.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
 
-daq_codegen( buffercreator.jsonnet fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet faketpcreatorheartbeatmaker.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet triggerprimitivemaker.jsonnet triggeractivitymaker.jsonnet triggercandidatemaker.jsonnet triggerdecisionmaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+daq_codegen( tpsetbuffercreator.jsonnet fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet faketpcreatorheartbeatmaker.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet triggerprimitivemaker.jsonnet triggeractivitymaker.jsonnet triggercandidatemaker.jsonnet triggerdecisionmaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
@@ -41,7 +41,7 @@ daq_add_plugin(TPSetSink duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTPCreatorHeartbeatMaker duneDAQModule LINK_LIBRARIES trigger)
-daq_add_plugin(BufferCreator duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(TPSetBufferCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 
 daq_add_plugin(TPZipper duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TAZipper duneDAQModule LINK_LIBRARIES trigger)

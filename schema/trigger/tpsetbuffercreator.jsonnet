@@ -1,5 +1,5 @@
 local moo = import "moo.jsonnet";
-local ns = "dunedaq.trigger.buffercreator";
+local ns = "dunedaq.trigger.tpsetbuffercreator";
 local s = moo.oschema.schema(ns);
 
 local types = {
@@ -7,11 +7,11 @@ local types = {
 
     conf: s.record("Conf", [
 
-      s.field("buffer_size", self.size, 100,
+      s.field("tpset_buffer_size", self.size, 100,
         doc="Maximum number of TPSet that buffer will store. If maximum reached, oldest is deleted to give room for new entry (circular buffer)"),
 
 
-    ], doc="BufferManager configuration parameters"),
+    ], doc="TPSetBufferManager configuration parameters"),
 
 };
 

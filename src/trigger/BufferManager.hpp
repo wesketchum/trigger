@@ -10,7 +10,6 @@
 #define TRIGGER_SRC_TRIGGER_BUFFERMANAGER_HPP_
 
 #include "dataformats/Types.hpp"
-#include "trigger/TPSet.hpp"
 
 #include <set>
 #include <atomic>
@@ -22,16 +21,24 @@ namespace trigger {
  * @brief BufferManager description.
  *
  */
+template<typename BSET>
 class BufferManager
 {
 public:
   BufferManager();
-  BufferManager(long unsigned int buffer_size);
+  BufferManager(long unsigned int buffer_size)
+    : m_buffer_max_size(buffer_size)
+    , m_buffer_earliest_start_time(0)
+    ,  m_buffer_latest_end_time(0) 
+  {
+  }
 
-  virtual ~BufferManager();
+  virtual ~BufferManager()
+  {
+  }
 
   void set_buffer_size(long unsigned int size) {m_buffer_max_size = size;}
-  long unsigned int get_stored_size() {return m_tpset_buffer.size();}
+  long unsigned int get_stored_size() {return m_txset_buffer.size();}
 
   BufferManager(BufferManager const&) = delete;
   BufferManager(BufferManager&&) = default;
@@ -39,9 +46,25 @@ public:
   BufferManager& operator=(BufferManager&&) = default;
 
   /**
-   *  add a TPSet to the buffer. Remove oldest TPSets from buffer if we are at maximum size
+   *  add a TxSet to the buffer. Remove oldest TxSets from buffer if we are at maximum size
    */
-  bool add(trigger::TPSet& tps);
+  bool add(BSET& txs)
+  {
+    if(m_txset_buffer.size() >= m_buffer_max_size) //delete oldest TxSet if buffer full (and updating earliest start time) -> circular buffer 
+    {
+      auto firstIt = m_txset_buffer.begin();
+      m_txset_buffer.erase(firstIt);
+      firstIt++; 
+      m_buffer_earliest_start_time = (*firstIt).start_time;
+    }
+    if( (m_buffer_earliest_start_time == 0) || (txs.start_time < m_buffer_earliest_start_time))
+      m_buffer_earliest_start_time = txs.start_time;
+
+    if( (m_buffer_latest_end_time == 0) || (txs.end_time > m_buffer_latest_end_time) ) 
+      m_buffer_latest_end_time = txs.end_time;
+
+    return m_txset_buffer.insert(txs).second; //false if txs with same start_time already exists
+  }
 
   enum DataRequestOutcome{
     kEmpty,
@@ -50,28 +73,76 @@ public:
   };
 
   struct data_request_output{
-    std::vector<trigger::TPSet> tpsets_in_window;
+    typename std::vector<BSET> txsets_in_window;
     DataRequestOutcome ds_outcome;
   };
 
   /**
-   * return a vector of all the TPSets in the buffer that overlap with [start_time, end_time]
+   * return a vector of all the TxSets in the buffer that overlap with [start_time, end_time]
    */
-  data_request_output get_tpsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time);
+  data_request_output get_txsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
+  {
+    BufferManager::data_request_output ds_out;
+    std::vector<BSET> txsets_output;
+
+    if(end_time < m_buffer_earliest_start_time) 
+    {
+      ds_out.txsets_in_window = txsets_output;
+      ds_out.ds_outcome = BufferManager::kEmpty;
+      return ds_out;  
+    }
+
+    if(start_time > m_buffer_latest_end_time)
+    {
+      ds_out.txsets_in_window = txsets_output;
+      ds_out.ds_outcome = BufferManager::kLate;
+      return ds_out; 
+    }
+
+    BSET txset_low, txset_up;
+    txset_low.start_time = start_time;
+    txset_up.start_time  = end_time; 
+
+    typename std::set<BSET,TxSetCmp>::iterator it, it_low,it_up;
+
+    //checking first and last TxSet of buffer that have a start_time within data request limits
+    it_low = m_txset_buffer.lower_bound(txset_low); 
+    it_up  = m_txset_buffer.upper_bound(txset_up);
+    it     = it_low; 
+
+    //checking if previous TxSet has a end_time that is after the data request's start time 
+    if(!(it == m_txset_buffer.begin()) ){  
+      it--; 
+      if((*it).end_time > start_time) txsets_output.push_back(*it);  
+      it++; 
+    }
+
+    //loading TxSets
+    while(it != it_up){
+      txsets_output.push_back(*it);
+      it++; 
+    }
+
+    ds_out.txsets_in_window = txsets_output;
+    ds_out.ds_outcome = BufferManager::kSuccess;
+
+    return ds_out;
+
+  }
 
 private:
 
-  //Buffer contains TPSet ordered by start_time
-  struct TPSetCmp {
-    bool operator()(const TPSet& ltps, const TPSet& rtps) const {
+  //Buffer contains TxSet ordered by start_time
+  struct TxSetCmp {
+    bool operator()(const BSET& ltps, const BSET& rtps) const {
       dataformats::timestamp_t const LTPS = ltps.start_time;
       dataformats::timestamp_t const RTPS = rtps.start_time;
       return LTPS < RTPS;
     }
   };
 
-  //Where the TPSet will be buffered
-  std::set<trigger::TPSet,TPSetCmp> m_tpset_buffer;
+  //Where the TxSet will be buffered
+  std::set<BSET,TxSetCmp> m_txset_buffer;
 
   //Buffer maximum size.
   std::atomic<long unsigned int> m_buffer_max_size;

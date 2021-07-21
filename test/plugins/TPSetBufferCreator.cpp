@@ -1,5 +1,5 @@
 /**
- * @file BufferCreator.cpp BufferCreator class
+ * @file TPSetBufferCreator.cpp TPSetBufferCreator class
  * implementation
  *
  * This is part of the DUNE DAQ Software Suite, copyright 2020.
@@ -8,9 +8,9 @@
  */
 
 //#include "CommonIssues.hpp"
-#include "BufferCreator.hpp"
+#include "TPSetBufferCreator.hpp"
 #include "trigger/Issues.hpp"
-#include "trigger/buffercreator/Nljs.hpp"
+#include "trigger/tpsetbuffercreator/Nljs.hpp"
 
 #include "dataformats/FragmentHeader.hpp"
 #include "dataformats/GeoID.hpp"
@@ -29,23 +29,23 @@
 namespace dunedaq {
 namespace trigger {
 
-BufferCreator::BufferCreator(const std::string& name)
+TPSetBufferCreator::TPSetBufferCreator(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
-  , m_thread(std::bind(&BufferCreator::do_work, this, std::placeholders::_1))
+  , m_thread(std::bind(&TPSetBufferCreator::do_work, this, std::placeholders::_1))
   , m_queueTimeout(100)
   , m_input_queue_tps()
   , m_input_queue_dr()
   , m_output_queue_frag()
-  , m_buffer()
+  , m_tps_buffer()
 {
-  register_command("conf", &BufferCreator::do_configure);
-  register_command("start", &BufferCreator::do_start);
-  register_command("stop", &BufferCreator::do_stop);
-  register_command("scrap", &BufferCreator::do_scrap);
+  register_command("conf", &TPSetBufferCreator::do_configure);
+  register_command("start", &TPSetBufferCreator::do_start);
+  register_command("stop", &TPSetBufferCreator::do_stop);
+  register_command("scrap", &TPSetBufferCreator::do_scrap);
 }
 
 void
-BufferCreator::init(const nlohmann::json& init_data)
+TPSetBufferCreator::init(const nlohmann::json& init_data)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering init() method";
 
@@ -57,25 +57,25 @@ BufferCreator::init(const nlohmann::json& init_data)
 }
 
 void
-BufferCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
+TPSetBufferCreator::get_info(opmonlib::InfoCollector& /*ci*/, int /*level*/)
 {}
 
 void
-BufferCreator::do_configure(const nlohmann::json& obj)
+TPSetBufferCreator::do_configure(const nlohmann::json& obj)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_configure() method";
 
-  auto params = obj.get<buffercreator::Conf>();
+  auto params = obj.get<tpsetbuffercreator::Conf>();
 
-  m_buffer_size = params.buffer_size;
+  m_tps_buffer_size = params.tpset_buffer_size;
 
-  m_buffer->set_buffer_size(m_buffer_size);
+  m_tps_buffer->set_buffer_size(m_tps_buffer_size);
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_configure() method";
 }
 
 void
-BufferCreator::do_start(const nlohmann::json& /*args*/)
+TPSetBufferCreator::do_start(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
   m_thread.start_working_thread("buffer-man");
@@ -84,7 +84,7 @@ BufferCreator::do_start(const nlohmann::json& /*args*/)
 }
 
 void
-BufferCreator::do_stop(const nlohmann::json& /*args*/)
+TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_stop() method";
   m_thread.stop_working_thread();
@@ -93,16 +93,16 @@ BufferCreator::do_stop(const nlohmann::json& /*args*/)
 }
 
 void
-BufferCreator::do_scrap(const nlohmann::json& /*args*/)
+TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_scrap() method";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
 
 dataformats::Fragment 
-BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output, dfmessages::DataRequest input_data_request)
+TPSetBufferCreator::convert_to_fragment(TPSetBuffer::data_request_output ds_output, dfmessages::DataRequest input_data_request)
 {
-  dataformats::Fragment frag(nullptr, ds_output.tpsets_in_window.size());
+  dataformats::Fragment frag(nullptr, ds_output.txsets_in_window.size());
   
   dataformats::GeoID          geoid;
   dataformats::FragmentHeader frag_h;
@@ -126,7 +126,7 @@ BufferCreator::convert_to_fragment(BufferManager::data_request_output ds_output,
 }
  
 void
-BufferCreator::send_out_fragment(dataformats::Fragment& frag_out, size_t& sentCount, std::atomic<bool>& running_flag)
+TPSetBufferCreator::send_out_fragment(dataformats::Fragment& frag_out, size_t& sentCount, std::atomic<bool>& running_flag)
 {
   std::string thisQueueName = m_output_queue_frag->get_name();
   bool successfullyWasSent = false;
@@ -149,7 +149,7 @@ BufferCreator::send_out_fragment(dataformats::Fragment& frag_out, size_t& sentCo
 }
 
 void
-BufferCreator::do_work(std::atomic<bool>& running_flag)
+TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
   size_t addedCount = 0;
@@ -160,12 +160,12 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
 
     trigger::TPSet input_tpset;
     dfmessages::DataRequest input_data_request;
-    BufferManager::data_request_output requested_tpset;
+    TPSetBuffer::data_request_output requested_tpset;
 
     // Block that receives TPSets and add them in buffer and check for pending data requests
     try {
       m_input_queue_tps->pop(input_tpset, m_queueTimeout);
-      m_buffer->add(input_tpset);
+      m_tps_buffer->add(input_tpset);
       ++addedCount;
 
       if( m_dr_on_hold->size() ){ //check if new data is part of data request on hold
@@ -178,7 +178,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
 	    it->second.push_back(input_tpset);
 
 	    if( it->first.window_end < input_tpset.end_time ){ //If more TPSet aren't expected to arrive then push
-	      requested_tpset.tpsets_in_window = it->second;
+	      requested_tpset.txsets_in_window = it->second;
 	      dataformats::Fragment frag_out = convert_to_fragment(requested_tpset,it->first);
 	      send_out_fragment(frag_out, sentCount, running_flag);
 	      m_dr_on_hold->erase(it);
@@ -200,21 +200,21 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
     // Block that reveives data requests and return fragments from buffer
     try {
       m_input_queue_dr->pop(input_data_request, m_queueTimeout);
-      requested_tpset = m_buffer->get_tpsets_in_window( input_data_request.window_begin, input_data_request.window_end );
+      requested_tpset = m_tps_buffer->get_txsets_in_window( input_data_request.window_begin, input_data_request.window_end );
       ++requestedCount;
 
       dataformats::Fragment frag_out = convert_to_fragment(requested_tpset, input_data_request);
 
       switch(requested_tpset.ds_outcome) {
-        case BufferManager::kEmpty:
+        case TPSetBuffer::kEmpty:
 	  TLOG() << get_name() << " Buffer does not contain data requested. Returning empty fragment.";
 	  send_out_fragment(frag_out, sentCount, running_flag);
 	  break;
-        case BufferManager::kLate:
+        case TPSetBuffer::kLate:
 	  TLOG() << get_name() << " Requested data has not arrived in buffer yet. Holding request until more data arrives.";
-	  m_dr_on_hold->insert(std::make_pair(input_data_request, requested_tpset.tpsets_in_window));
+	  m_dr_on_hold->insert(std::make_pair(input_data_request, requested_tpset.txsets_in_window));
 	  break; // don't send anything yet. Wait for more data to arrived.
-        case BufferManager::kSuccess:
+        case TPSetBuffer::kSuccess:
 	  TLOG_DEBUG(0) << get_name() << "Sending requested data.";
 	  send_out_fragment(frag_out, sentCount, running_flag);
 	  break;
@@ -237,7 +237,7 @@ BufferCreator::do_work(std::atomic<bool>& running_flag)
 } // namespace trigger
 } // namespace dunedaq
 
-DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::BufferCreator)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TPSetBufferCreator)
 
 // Local Variables:
 // c-basic-offset: 2

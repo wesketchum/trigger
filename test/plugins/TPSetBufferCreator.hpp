@@ -4,8 +4,8 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
+#ifndef TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
+#define TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
 #include "dataformats/Types.hpp"
 #include "dataformats/Fragment.hpp"
@@ -13,9 +13,9 @@
 #include "dfmessages/HSIEvent.hpp"
 #include "dfmessages/DataRequest.hpp"
 
-#include "trigger/buffercreator/Structs.hpp"
+#include "trigger/tpsetbuffercreator/Structs.hpp"
 #include "trigger/TPSet.hpp"
-#include "trigger/BufferManager.hpp"
+#include "../../src/trigger/TPSetBuffer.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -34,25 +34,25 @@ namespace dunedaq {
 namespace trigger {
 
 /**
- * @brief BufferCreator creates a buffer that stores TPSets and handles data requests.
+ * @brief TPSetBufferCreator creates a buffer that stores TPSets and handles data requests.
  */
-class BufferCreator : public dunedaq::appfwk::DAQModule
+class TPSetBufferCreator : public dunedaq::appfwk::DAQModule
 {
 public:
   /**
-   * @brief BufferCreator Constructor
-   * @param name Instance name for this BufferCreator instance
+   * @brief TPSetBufferCreator Constructor
+   * @param name Instance name for this TPSetBufferCreator instance
    */
-  explicit BufferCreator(const std::string& name);
+  explicit TPSetBufferCreator(const std::string& name);
 
-  BufferCreator(const BufferCreator&) =
-    delete; ///< BufferCreator is not copy-constructible
-  BufferCreator& operator=(const BufferCreator&) =
-    delete; ///< BufferCreator is not copy-assignable
-  BufferCreator(BufferCreator&&) =
-    delete; ///< BufferCreator is not move-constructible
-  BufferCreator& operator=(BufferCreator&&) =
-    delete; ///< BufferCreator is not move-assignable
+  TPSetBufferCreator(const TPSetBufferCreator&) =
+    delete; ///< TPSetBufferCreator is not copy-constructible
+  TPSetBufferCreator& operator=(const TPSetBufferCreator&) =
+    delete; ///< TPSetBufferCreator is not copy-assignable
+  TPSetBufferCreator(TPSetBufferCreator&&) =
+    delete; ///< TPSetBufferCreator is not move-constructible
+  TPSetBufferCreator& operator=(TPSetBufferCreator&&) =
+    delete; ///< TPSetBufferCreator is not move-assignable
 
   void init(const nlohmann::json& obj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -80,9 +80,9 @@ private:
   using fragment_sink_t = dunedaq::appfwk::DAQSink<dataformats::Fragment>;
   std::unique_ptr<fragment_sink_t> m_output_queue_frag;
 
-  trigger::BufferManager* m_buffer;
+  trigger::TPSetBuffer* m_tps_buffer;
 
-  uint64_t m_buffer_size;
+  uint64_t m_tps_buffer_size;
 
   struct DataRequestComp{
     bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const{
@@ -92,7 +92,7 @@ private:
 
   std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>* m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
-  dataformats::Fragment convert_to_fragment(BufferManager::data_request_output, dfmessages::DataRequest);
+  dataformats::Fragment convert_to_fragment(TPSetBuffer::data_request_output, dfmessages::DataRequest);
 
   void send_out_fragment(dataformats::Fragment&, size_t&, std::atomic<bool>&);
 
