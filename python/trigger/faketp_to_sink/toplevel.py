@@ -47,7 +47,7 @@ def generate_boot( faketp_spec: dict) -> dict:
                 "DUNEDAQ_SHARE_PATH": "getenv",
                 "LD_LIBRARY_PATH": "getenv",
                 "PATH": "getenv",
-                "DUNEDAQ_ERS_DEBUG_LEVEL": "1"
+                "DUNEDAQ_ERS_DEBUG_LEVEL": "getenv"
             },
             "cmd": [
                 "CMD_FAC=rest://localhost:${APP_PORT}",
