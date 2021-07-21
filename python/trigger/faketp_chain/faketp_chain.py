@@ -154,6 +154,7 @@ def generate(
             activity_maker=ACTIVITY_PLUGIN,
             geoid_region=0, # Fake placeholder
             geoid_element=0, # Fake placeholder
+            buffer_time=625000, # 10ms in 62.5 MHz ticks
             activity_maker_config=temptypes.ActivityConf(**ACTIVITY_CONFIG)
         )),
         ('tcm', tcm.Conf(
