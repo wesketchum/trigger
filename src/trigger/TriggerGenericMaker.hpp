@@ -11,6 +11,8 @@
 
 #include "trigger/Set.hpp"
 #include "trigger/Issues.hpp"
+#include "trigger/TimeSliceInputBuffer.hpp"
+#include "trigger/TimeSliceOutputBuffer.hpp"
  
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -33,6 +35,11 @@ namespace dunedaq::trigger {
 template<class IN, class OUT, class MAKER>
 class TriggerGenericWorker;
 
+// This template class reads IN items from queues, passes them to MAKER objects,
+// and writes the resulting OUT objects to another queue. The behavior of 
+// passing IN objects to the MAKER and creating OUT objects from the MAKER is 
+// encapsulated by TriggerGenericWorker<IN,OUT,MAKER> templates, defined later
+// in this file
 template<class IN, class OUT, class MAKER>
 class TriggerGenericMaker : public dunedaq::appfwk::DAQModule
 {
@@ -76,10 +83,17 @@ protected:
     m_algorithm_name = name;
   }
 
+  // Only applies to makers that output Set<B>
   void set_geoid(uint16_t region_id, uint32_t element_id)
   {
     m_geoid_region_id = region_id;
     m_geoid_element_id = element_id;
+  }
+  
+  // Only applies to makers that output Set<B>
+  void set_buffer_time(dataformats::timestamp_t buffer_time)
+  {
+    m_buffer_time = buffer_time;
   }
 
 private:
@@ -104,10 +118,12 @@ private:
   uint16_t m_geoid_region_id;
   uint32_t m_geoid_element_id;
 
+  dataformats::timestamp_t m_buffer_time;
+
   std::shared_ptr<MAKER> m_maker;
   
-  // This should return a shared_ptr to the MAKER created from conf command
-  // arguments. Should also call set_algorithm_name and set_geoid (if desired)
+  // This should return a shared_ptr to the MAKER created from conf command arguments. 
+  // Should also call set_algorithm_name and set_geoid/buffer_time (if desired)
   virtual std::shared_ptr<MAKER> make_maker(const nlohmann::json& obj) = 0;
   
   void do_start(const nlohmann::json& /*obj*/)
@@ -201,61 +217,7 @@ public:
   }
 };
 
-// When Set<T> are used, we want to buffer all Set<T> with the same time_start,
-// and time_end, and then get a vector of all contained objects in time order
-// when a Set<T> with a different time_start arrives. 
-// This class encapsulates that logic.
-template<class T>
-class TimeSliceBuffer
-{
-public:
-  // Parameters purely for ers warning metadata
-  TimeSliceBuffer(const std::string &name, const std::string &algorithm) 
-    : m_name(name)
-    , m_algorithm(algorithm)
-  { }
-  // Add a new Set<T> to the buffer. If it's inconsistent with buffered events,
-  // fill time_slice, start_time, end_time with the previous (complete) slice.
-  // Returns whether the previous slice was complete (and time_slice etc was filled)
-  bool buffer(Set<T> in, std::vector<T> &time_slice,
-              dataformats::timestamp_t &start_time,
-              dataformats::timestamp_t &end_time) {
-    if (m_buffer.size() == 0 || m_buffer.back().start_time == in.start_time) { 
-      // if `in` is the current time slice
-      m_buffer.emplace_back(in);
-      return false; // buffer the time slice
-    }
-    // obtain the current (complete) time slice
-    flush(time_slice,start_time,end_time);
-    // add `in`, which is the next time slice
-    m_buffer.emplace_back(in);
-    return true;
-  }
-  // Fill time_slice with the sorted buffer, and clear the buffer
-  void flush(std::vector<T> &time_slice, 
-             dataformats::timestamp_t &start_time, 
-             dataformats::timestamp_t &end_time) {
-    // build a vector of the T objects from all the sets in the slice
-    start_time = m_buffer[0].start_time;
-    end_time = m_buffer[0].end_time;
-    for (Set<T> &x : m_buffer) {
-      if (x.start_time != start_time || x.end_time != end_time) {
-        ers::warning(InconsistentSetTimeError(ERS_HERE, m_name, m_algorithm));
-      }
-      time_slice.insert(time_slice.end(), x.objects.begin(), x.objects.end());
-    }
-    // clear the buffer
-    m_buffer.clear();
-    // sort the vector by time_start property of T
-    std::sort(time_slice.begin(), time_slice.end(), 
-              [](const T &a, const T &b) { return a.time_start < b.time_start; } );
-    // TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc) 
-    // included a natural ordering with operator<()
-  }
-private:
-  std::vector<Set<T>> m_buffer;
-  const std::string &m_name, &m_algorithm;
-};
+
 
 // Partial specialization for IN = Set<A>, OUT = Set<B> and assumes the MAKER has:
 // operator()(A, std::vector<B>)
@@ -265,12 +227,14 @@ class TriggerGenericWorker<Set<A>, Set<B>, MAKER>
 public:
   explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, Set<B>, MAKER> &parent) 
     : m_parent(parent)
-    , m_buffer(parent.get_name(), parent.m_algorithm_name)
+    , m_in_buffer(parent.get_name(), parent.m_algorithm_name)
+    , m_out_buffer(parent.get_name(), parent.m_algorithm_name, parent.m_buffer_time)
   { }
   
   TriggerGenericMaker<Set<A>, Set<B>, MAKER> &m_parent;
   
-  TimeSliceBuffer<A> m_buffer;
+  TimeSliceInputBuffer<A> m_in_buffer;
+  TimeSliceOutputBuffer<B> m_out_buffer;
   
   void do_work(std::atomic<bool> &running_flag)
   {
@@ -280,13 +244,13 @@ public:
         continue; //nothing to do
       }
 
-      Set<B> out; // either a whole time slice, flushed from a heartbeat, or empty
+      std::vector<B> elems; //Bs to buffer for the next window
       switch (in.type) {
         case Set<A>::Type::kPayload:
           {
             std::vector<A> time_slice;
             dataformats::timestamp_t start_time, end_time;
-            if (!m_buffer.buffer(in, time_slice, start_time, end_time)) {
+            if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
               continue; //no complete time slice yet (`in` was part of buffered slice)
             }
             // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
@@ -299,11 +263,13 @@ public:
                 ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
                 return;
               }
-              out.objects.insert(out.objects.end(), out_vec.begin(), out_vec.end());
+              elems.insert(elems.end(), out_vec.begin(), out_vec.end());
             }
-            out.type = Set<B>::Type::kPayload;
-            out.start_time = start_time;
-            out.end_time = end_time;
+            //register this window
+            // TODO BJL July 14-2021 this must be called for each possible window emitted as Set<B>
+            // but will all Set<B> fall within a window of Set<A>? Is there a better way to know
+            // what windows to allow than what windows we receive?
+            m_out_buffer.add_window(start_time, end_time);
           }
           break;
         case Set<A>::Type::kHeartbeat:
@@ -324,15 +290,12 @@ public:
             }
             // flush the maker
             try {
-              m_parent.m_maker->flush(in.end_time, out.objects);
+              // TODO BJL July 14-2021 flushed events go into the buffer... until a window is ready?
+              m_parent.m_maker->flush(in.end_time, elems);
             } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
               ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
               return;
             }
-            out.type = Set<B>::Type::kPayload;
-            // TODO BJL June 01-2021 using the heartbeat times here may not be correct
-            out.start_time = in.start_time;
-            out.end_time = in.end_time;
           }
           break;
         case Set<A>::Type::kUnknown:
@@ -340,16 +303,31 @@ public:
           break;
       }
           
-      if (out.objects.size() > 0) {
+      // add new elements to output buffer
+      if (elems.size() > 0) {
+        m_out_buffer.buffer(elems);
+      }
+      
+      // emit completed windows
+      while (m_out_buffer.ready()) {
+        Set<B> out;
         out.seqno = m_parent.m_sent_count;
-        
+        out.type = Set<B>::Type::kPayload;
+        m_out_buffer.flush(out.objects, out.start_time, out.end_time);
         out.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
                                         m_parent.m_geoid_region_id,
                                         m_parent.m_geoid_element_id);
-        
-        while (running_flag.load()) {
-          if (m_parent.send(out)) {
-            break;
+        TLOG() << "Output window ready with start time " << out.start_time 
+               << " end time " << out.end_time << " and " 
+               << out.objects.size() << " members";
+        if (out.objects.size() == 0) {
+          TLOG() << "Suppressing empty window";
+          // out discarded
+        } else {
+          while (running_flag.load()) {
+            if (m_parent.send(out)) {
+              break;
+            }
           }
         }
       }
@@ -369,12 +347,12 @@ class TriggerGenericWorker<Set<A>, OUT, MAKER>
 public:
   explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, OUT, MAKER> &parent) 
     : m_parent(parent)
-    , m_buffer(parent.get_name(), parent.m_algorithm_name)
+    , m_in_buffer(parent.get_name(), parent.m_algorithm_name)
   { }
   
   TriggerGenericMaker<Set<A>, OUT, MAKER> &m_parent;
   
-  TimeSliceBuffer<A> m_buffer;
+  TimeSliceInputBuffer<A> m_in_buffer;
   
   void do_work(std::atomic<bool> &running_flag)
   {
@@ -390,7 +368,7 @@ public:
           {
             std::vector<A> time_slice;
             dataformats::timestamp_t start_time, end_time;
-            if (!m_buffer.buffer(in, time_slice, start_time, end_time)) {
+            if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
               continue; //no complete time slice yet (`in` was part of buffered slice)
             }
             // time_slice is a full slice (all Set<A> combined), time ordered, vector of A

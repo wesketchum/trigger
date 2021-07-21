@@ -24,6 +24,11 @@
 namespace dunedaq {
 
 ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration object was received", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerActive, "Trigger is active now", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t) runno))
+ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t) runno))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
@@ -59,6 +64,20 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << algorithm << " maker encountered Sets with inconsistent start/end times.",
                        ((std::string)name),
                        ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       TardyOutputError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker generated a tardy output, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       WindowlessOutputError,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker generated an output that was not in any input window, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        BadTPInputFile,
@@ -73,6 +92,10 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "TP with time_start " << time_start << "is higher than time_start of last TP and will be ignored." ,
                        ((std::string)name),
                        ((int64_t)time_start))
+
+
+
+
 } // namespace dunedaq
 
 #endif // TRIGGER_INCLUDE_TRIGGER_ISSUES_HPP_

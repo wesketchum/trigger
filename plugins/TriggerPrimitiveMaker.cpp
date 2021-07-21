@@ -76,11 +76,11 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
         tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
         tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
         tpset.seqno = seqno++;
-        // fixme: Should set this and region/element IDs via
-        // configuration.  See trigger/#41 for some discusssion.  For
-        // now, we leave region as invalid and element is "last one
-        // wins".
-        tpset.origin.element_id = tp.detid;
+
+        // 12-Jul-2021, KAB: setting origin fields from configuration
+        tpset.origin.region_id = m_conf.region_id;
+        tpset.origin.element_id = m_conf.element_id;
+
         tpset.type = TPSet::Type::kPayload;
         tpset.objects.clear();
       }
@@ -147,16 +147,6 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       if (!running_flag.load()) {
         break;
       }
-
-      // Increase seqno and the timestamps in the TPSet and TPs so they don't
-      // repeat when we do multiple loops over the file
-      tpset.start_time += input_file_duration;
-      tpset.end_time += input_file_duration;
-      for (auto& tp : tpset.objects) {
-        tp.time_start += input_file_duration;
-        tp.time_peak += input_file_duration;
-      }
-      tpset.seqno = seqno++;
       
       // We send out the first TPSet right away. After that we space each TPSet in time by their start time
       auto wait_time_us = 0;
@@ -195,6 +185,16 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
         ers::warning(e);
         ++push_failed_count;
       }
+
+      // Increase seqno and the timestamps in the TPSet and TPs so they don't
+      // repeat when we do multiple loops over the file
+      tpset.start_time += input_file_duration;
+      tpset.end_time += input_file_duration;
+      for (auto& tp : tpset.objects) {
+        tp.time_start += input_file_duration;
+        tp.time_peak += input_file_duration;
+      }
+      tpset.seqno = seqno++;
 
     } // end loop over tpsets
     ++current_iteration;

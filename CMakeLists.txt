@@ -18,12 +18,31 @@ find_package(nwqueueadapters REQUIRED)
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LivetimeCounter.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
 
 ##############################################################################
 # Codegen
 
-daq_codegen( tpsetbuffercreator.jsonnet fakedataflow.jsonnet faketimestampeddatagenerator.jsonnet faketpcreatorheartbeatmaker.jsonnet intervaltccreator.jsonnet intervaltriggercreator.jsonnet moduleleveltrigger.jsonnet randomtriggercandidatemaker.jsonnet timingtriggercandidatemaker.jsonnet triggerprimitivemaker.jsonnet triggeractivitymaker.jsonnet triggercandidatemaker.jsonnet triggerdecisionmaker.jsonnet  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+## As a one liner, this call is a major source of git conflicts due to
+## us all changing it.  Please keep one file per line to give git
+## merge a chance to succeed.
+daq_codegen(
+  fakedataflow.jsonnet
+  faketimestampeddatagenerator.jsonnet
+  faketpcreatorheartbeatmaker.jsonnet
+  intervaltccreator.jsonnet
+  intervaltriggercreator.jsonnet
+  moduleleveltrigger.jsonnet
+  randomtriggercandidatemaker.jsonnet
+  timingtriggercandidatemaker.jsonnet
+  triggerprimitivemaker.jsonnet
+  triggeractivitymaker.jsonnet
+  triggercandidatemaker.jsonnet
+  triggerdecisionmaker.jsonnet
+  triggerzipper.jsonnet
+  tpsetbuffercreator.jsonnet
+  TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
@@ -69,9 +88,9 @@ daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRA
 # Unit Tests
 
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
-daq_add_unit_test(LivetimeCounter_test           LINK_LIBRARIES trigger)
 daq_add_unit_test(TxSet_test                     LINK_LIBRARIES trigger)
 daq_add_unit_test(BufferManager_test             LINK_LIBRARIES trigger)
+daq_add_unit_test(TriggerZipper_test LINK_LIBRARIES trigger)
 
 ##############################################################################
 
