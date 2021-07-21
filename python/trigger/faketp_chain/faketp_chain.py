@@ -16,6 +16,7 @@ moo.otypes.load_types('trigger/triggeractivitymaker.jsonnet')
 moo.otypes.load_types('trigger/triggercandidatemaker.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
 moo.otypes.load_types('trigger/fakedataflow.jsonnet')
+moo.otypes.load_types('trigger/triggerzipper.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -27,6 +28,7 @@ import dunedaq.trigger.triggeractivitymaker as tam
 import dunedaq.trigger.triggercandidatemaker as tcm
 import dunedaq.trigger.moduleleveltrigger as mlt
 import dunedaq.trigger.fakedataflow as fdf
+import dunedaq.trigger.triggerzipper as tzip
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -102,6 +104,7 @@ def generate(
     # Define modules and queues
     queue_specs = [
         app.QueueSpec(inst='tpset_q', kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst='zipped_tpset_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='taset_q', kind='FollySPSCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_candidate_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_decision_q', kind='FollySPSCQueue', capacity=1000),
@@ -114,8 +117,14 @@ def generate(
         ])
         for i in range(len(INPUT_FILES))
     ] +  [
+
+        mspec("zip", "TPZipper", [
+            app.QueueInfo(name="input", inst="tpset_q", dir="input"),
+            app.QueueInfo(name="output", inst="zipped_tpset_q", dir="output"),
+        ]),
+
         mspec('tam', 'TriggerActivityMaker', [ # TPSet -> TASet
-            app.QueueInfo(name='input', inst='tpset_q', dir='input'),
+            app.QueueInfo(name='input', inst='zipped_tpset_q', dir='input'),
             app.QueueInfo(name='output', inst='taset_q', dir='output'),
         ]),
         
@@ -152,6 +161,12 @@ def generate(
             maximum_wait_time_us=1000
         )) for i,input_file in enumerate(INPUT_FILES)
         ] + [
+        ("zip", tzip.ConfParams(
+            cardinality=len(INPUT_FILES),
+            max_latency_ms=1000,
+            region_id=0, # Fake placeholder
+            element_id=0 # Fake placeholder
+        )),
         ('tam', tam.Conf(
             activity_maker=ACTIVITY_PLUGIN,
             geoid_region=0, # Fake placeholder
@@ -179,13 +194,17 @@ def generate(
 
     startpars = rccmd.StartParams(run=1)
     cmd_data['start'] = acmd(
-        [ (f'tpm{i}', startpars) for i in range(len(INPUT_FILES)) ] +
         [
-        ('tam', startpars),
-        ('tcm', startpars),
-        ('mlt', startpars),
-        ('fdf', startpars)
-    ])
+            (f'tpm{i}', startpars) for i in range(len(INPUT_FILES))
+        ] +
+        [
+            ('zip', startpars),
+            ('tam', startpars),
+            ('tcm', startpars),
+            ('mlt', startpars),
+            ('fdf', startpars)
+        ]
+    )
 
     cmd_data['pause'] = acmd([
         ('mlt', None)
@@ -197,21 +216,29 @@ def generate(
     ])
     
     cmd_data['stop'] = acmd(
-        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
         [
-        ('tam', None),
-        ('tcm', None),
-        ('mlt', None),
-        ('fdf', None)
-    ])
+            (f'tpm{i}', None) for i in range(len(INPUT_FILES))
+        ] +
+        [
+            ('zip', None),
+            ('tam', None),
+            ('tcm', None),
+            ('mlt', None),
+            ('fdf', None)
+        ]
+    )
 
     cmd_data['scrap'] = acmd(
-        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
         [
-        ('tam', None),
-        ('tcm', None),
-        ('mlt', None),
-        ('fdf', None)
-    ])
+            (f'tpm{i}', None) for i in range(len(INPUT_FILES))
+        ] +
+        [
+            ('zip', None),
+            ('tam', None),
+            ('tcm', None),
+            ('mlt', None),
+            ('fdf', None)
+        ]
+    )
 
     return cmd_data
