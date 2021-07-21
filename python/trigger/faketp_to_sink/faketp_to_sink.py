@@ -13,14 +13,16 @@ moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet')
 moo.otypes.load_types('trigger/triggerzipper.jsonnet')
+moo.otypes.load_types('trigger/faketpcreatorheartbeatmaker.jsonnet')
 
 # Import new types
-import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
-import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
-import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
+import dunedaq.cmdlib.cmd as basecmd # AddressedCmd,
+import dunedaq.rcif.cmd as rccmd # AddressedCmd,
+import dunedaq.appfwk.cmd as cmd # AddressedCmd,
 import dunedaq.appfwk.app as app # AddressedCmd,
 import dunedaq.trigger.triggerprimitivemaker as tpm
 import dunedaq.trigger.triggerzipper as tzip
+import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -31,14 +33,14 @@ from pprint import pprint
 
 #===============================================================================
 def acmd(mods: list) -> cmd.CmdObj:
-    """ 
+    """
     Helper function to create appfwk's Commands addressed to modules.
-        
+
     :param      cmdid:  The coommand id
     :type       cmdid:  str
-    :param      mods:   List of module name/data structures 
+    :param      mods:   List of module name/data structures
     :type       mods:   list
-    
+
     :returns:   A constructed Command object
     :rtype:     dunedaq.appfwk.cmd.Command
     """
@@ -62,18 +64,27 @@ def generate(
 
     # Define modules and queues
     queue_specs = [
-        app.QueueSpec(inst="tpset_q", kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst=f"tpset_q{i}", kind='FollySPSCQueue', capacity=1000)
+        for i in range(len(INPUT_FILES))
+    ] +    [
+        app.QueueSpec(inst="tpset_plus_hb_q", kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst="zipped_tpset_q", kind='FollyMPMCQueue', capacity=1000),
     ]
 
     mod_specs = [
         mspec(f"tpm{i}", "TriggerPrimitiveMaker", [
-            app.QueueInfo(name="tpset_sink", inst="tpset_q", dir="output"),
+            app.QueueInfo(name="tpset_sink", inst=f"tpset_q{i}", dir="output"),
         ]) for i in range(len(INPUT_FILES))
-        ] + [
+    ] + [
 
+        mspec(f"ftpchm{i}", "FakeTPCreatorHeartbeatMaker", [
+            app.QueueInfo(name="tpset_source", inst=f"tpset_q{i}", dir="input"),
+            app.QueueInfo(name="tpset_sink", inst="tpset_plus_hb_q", dir="output"),
+        ]) for i in range(len(INPUT_FILES))
+
+    ] + [
         mspec("zip", "TPZipper", [
-            app.QueueInfo(name="input", inst="tpset_q", dir="input"),
+            app.QueueInfo(name="input", inst="tpset_plus_hb_q", dir="input"),
             app.QueueInfo(name="output", inst="zipped_tpset_q", dir="output"),
         ]),
         mspec("tps_sink", "TPSetSink", [
@@ -95,6 +106,10 @@ def generate(
             element_id=i,
         )) for i,input_file in enumerate(INPUT_FILES)
     ] + [
+        (f"ftpchm{i}", ftpchm.Conf(
+          heartbeat_interval = 50000
+        )) for i in range(len(INPUT_FILES))
+    ] + [
         ("zip", tzip.ConfParams(
             cardinality=len(INPUT_FILES),
             max_latency_ms=1000,
@@ -109,21 +124,24 @@ def generate(
             ("zip", startpars),
             ("tps_sink", startpars),
         ] +
+        [ (f'ftpchm{i}', startpars) for i in range(len(INPUT_FILES)) ] +
         [ (f'tpm{i}', startpars) for i in range(len(INPUT_FILES)) ]
     )
 
     cmd_data['pause'] = acmd([])
 
     cmd_data['resume'] = acmd([])
-    
+
     cmd_data['stop'] = acmd(
         [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [ (f'ftpchm{i}', None) for i in range(len(INPUT_FILES)) ] +
         [
         ("zip", None),
         ("tps_sink", None),
     ])
 
     cmd_data['scrap'] = acmd(
+        [ (f'ftpchm{i}', None) for i in range(len(INPUT_FILES)) ] +
         [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
         [
             ("zip", None)
