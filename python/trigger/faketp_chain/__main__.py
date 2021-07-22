@@ -87,7 +87,7 @@ import click
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--slowdown-factor', default=1.0)
-@click.option('-f', '--input-file', type=click.Path())
+@click.option('-f', '--input-file', type=click.Path(), multiple=True)
 @click.option('-c', '--candidate-plugin', default='TriggerCandidateMakerPrescalePlugin')
 @click.option('-C', '--candidate-config', default='dict(prescale=1000)')
 @click.option('-a', '--activity-plugin', default='TriggerActivityMakerPrescalePlugin')
@@ -105,7 +105,7 @@ def cli(slowdown_factor, input_file,
     console.log(f'Generating configs')
 
     cmd_data_faketp = faketp_chain.generate(
-        INPUT_FILE = input_file,
+        INPUT_FILES = input_file,
         SLOWDOWN_FACTOR = slowdown_factor,
         CANDIDATE_PLUGIN = candidate_plugin,
         CANDIDATE_CONFIG = eval(candidate_config),

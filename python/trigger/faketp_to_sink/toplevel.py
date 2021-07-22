@@ -47,7 +47,7 @@ def generate_boot( faketp_spec: dict) -> dict:
                 "DUNEDAQ_SHARE_PATH": "getenv",
                 "LD_LIBRARY_PATH": "getenv",
                 "PATH": "getenv",
-                "DUNEDAQ_ERS_DEBUG_LEVEL": "1"
+                "DUNEDAQ_ERS_DEBUG_LEVEL": "getenv"
             },
             "cmd": [
                 "CMD_FAC=rest://localhost:${APP_PORT}",
@@ -87,7 +87,7 @@ import click
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.option('-s', '--slowdown-factor', default=1.0)
-@click.option('-f', '--input-file', type=click.Path())
+@click.option('-f', '--input-file', type=click.Path(), multiple=True)
 @click.argument('json_dir', type=click.Path())
 def cli(slowdown_factor, input_file, json_dir):
     """
@@ -98,7 +98,7 @@ def cli(slowdown_factor, input_file, json_dir):
     console.log(f"Generating configs")
 
     cmd_data_faketp = faketp_to_sink.generate(
-        INPUT_FILE = input_file,
+        INPUT_FILES = input_file,
         SLOWDOWN_FACTOR = slowdown_factor,
         OUTPUT_PATH = json_dir,
     )

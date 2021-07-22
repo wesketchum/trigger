@@ -23,6 +23,7 @@
 #include "dataformats/GeoID.hpp"
 
 #include "logging/Logging.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <memory>
 #include <string>
@@ -238,12 +239,20 @@ public:
   
   void do_work(std::atomic<bool> &running_flag)
   {
+    dataformats::timestamp_t prev_start_time=0;
+    
     while (running_flag.load()) {
       Set<A> in;
       if (!m_parent.receive(in)) {
         continue; //nothing to do
       }
 
+      if (prev_start_time != 0 && in.start_time < prev_start_time) {
+        ers::warning(OutOfOrderSets(ERS_HERE, m_parent.get_name(), prev_start_time, in.start_time));
+      }
+
+      prev_start_time = in.start_time;
+      
       std::vector<B> elems; //Bs to buffer for the next window
       switch (in.type) {
         case Set<A>::Type::kPayload:

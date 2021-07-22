@@ -11,6 +11,7 @@
 
 #include "appfwk/DAQModule.hpp"
 #include "ers/Issue.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <string>
 
@@ -71,7 +72,14 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << algorithm << " maker generated a tardy output, which will be dropped.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       OutOfOrderSets,
+                       appfwk::GeneralDAQModuleIssue,
+                       "Received sets with start_times out of order: previous was " << previous << " current is " << current,
+                       ((std::string)name),
+                       ((triggeralgs::timestamp_t)previous)((triggeralgs::timestamp_t)current))
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        WindowlessOutputError,
                        appfwk::GeneralDAQModuleIssue,

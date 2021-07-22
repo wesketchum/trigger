@@ -16,6 +16,8 @@ moo.otypes.load_types('trigger/triggeractivitymaker.jsonnet')
 moo.otypes.load_types('trigger/triggercandidatemaker.jsonnet')
 moo.otypes.load_types('trigger/moduleleveltrigger.jsonnet')
 moo.otypes.load_types('trigger/fakedataflow.jsonnet')
+moo.otypes.load_types('trigger/triggerzipper.jsonnet')
+moo.otypes.load_types('trigger/faketpcreatorheartbeatmaker.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -27,6 +29,8 @@ import dunedaq.trigger.triggeractivitymaker as tam
 import dunedaq.trigger.triggercandidatemaker as tcm
 import dunedaq.trigger.moduleleveltrigger as mlt
 import dunedaq.trigger.fakedataflow as fdf
+import dunedaq.trigger.triggerzipper as tzip
+import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -74,7 +78,7 @@ def make_moo_record(conf_dict,name,path='temptypes'):
     moo.otypes.make_type(schema='record', fields=fields, name=name, path=path)
 
 def generate(
-        INPUT_FILE: str,
+        INPUT_FILES: str,
         SLOWDOWN_FACTOR: float,
         
         ACTIVITY_PLUGIN: str = 'TriggerActivityMakerPrescalePlugin',
@@ -101,7 +105,11 @@ def generate(
 
     # Define modules and queues
     queue_specs = [
-        app.QueueSpec(inst='tpset_q', kind='FollySPSCQueue', capacity=1000),
+        app.QueueSpec(inst=f"tpset_q{i}", kind='FollySPSCQueue', capacity=1000)
+        for i in range(len(INPUT_FILES))
+    ] +  [
+        app.QueueSpec(inst="tpset_plus_hb_q", kind='FollyMPMCQueue', capacity=1000),
+        app.QueueSpec(inst='zipped_tpset_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='taset_q', kind='FollySPSCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_candidate_q', kind='FollyMPMCQueue', capacity=1000),
         app.QueueSpec(inst='trigger_decision_q', kind='FollySPSCQueue', capacity=1000),
@@ -109,12 +117,26 @@ def generate(
     ]
 
     mod_specs = [
-        mspec('tpm', 'TriggerPrimitiveMaker', [ # File -> TPSet
-            app.QueueInfo(name='tpset_sink', inst='tpset_q', dir='output'),
+        mspec(f'tpm{i}', 'TriggerPrimitiveMaker', [ # File -> TPSet
+            app.QueueInfo(name='tpset_sink', inst=f'tpset_q{i}', dir='output'),
+        ])
+        for i in range(len(INPUT_FILES))
+    ] + [
+
+        mspec(f"ftpchm{i}", "FakeTPCreatorHeartbeatMaker", [
+            app.QueueInfo(name="tpset_source", inst=f"tpset_q{i}", dir="input"),
+            app.QueueInfo(name="tpset_sink", inst="tpset_plus_hb_q", dir="output"),
+        ]) for i in range(len(INPUT_FILES))
+
+    ] +  [
+
+        mspec("zip", "TPZipper", [
+            app.QueueInfo(name="input", inst="tpset_plus_hb_q", dir="input"),
+            app.QueueInfo(name="output", inst="zipped_tpset_q", dir="output"),
         ]),
-        
+
         mspec('tam', 'TriggerActivityMaker', [ # TPSet -> TASet
-            app.QueueInfo(name='input', inst='tpset_q', dir='input'),
+            app.QueueInfo(name='input', inst='zipped_tpset_q', dir='input'),
             app.QueueInfo(name='output', inst='taset_q', dir='output'),
         ]),
         
@@ -142,13 +164,24 @@ def generate(
     import temptypes
 
     cmd_data['conf'] = acmd([
-        ('tpm', tpm.ConfParams(
-            filename=INPUT_FILE,
+        (f'tpm{i}', tpm.ConfParams(
+            filename=input_file,
             number_of_loops=-1, # Infinite
             tpset_time_offset=0,
             tpset_time_width=10000,
             clock_frequency_hz=CLOCK_FREQUENCY_HZ,
             maximum_wait_time_us=1000
+        )) for i,input_file in enumerate(INPUT_FILES)
+    ] + [
+        (f"ftpchm{i}", ftpchm.Conf(
+          heartbeat_interval = 100000
+        )) for i in range(len(INPUT_FILES))
+    ] + [
+        ("zip", tzip.ConfParams(
+            cardinality=len(INPUT_FILES),
+            max_latency_ms=1000,
+            region_id=0, # Fake placeholder
+            element_id=0 # Fake placeholder
         )),
         ('tam', tam.Conf(
             activity_maker=ACTIVITY_PLUGIN,
@@ -176,13 +209,17 @@ def generate(
     ])
 
     startpars = rccmd.StartParams(run=1)
-    cmd_data['start'] = acmd([
-        ('tpm', startpars),
-        ('tam', startpars),
-        ('tcm', startpars),
-        ('mlt', startpars),
-        ('fdf', startpars)
-    ])
+    cmd_data['start'] = acmd(
+        [
+            ('fdf', startpars),
+            ('mlt', startpars),
+            ('tcm', startpars),
+            ('tam', startpars),
+            ('zip', startpars),
+        ] +
+        [ (f'ftpchm{i}', startpars) for i in range(len(INPUT_FILES)) ] +
+        [ (f'tpm{i}', startpars) for i in range(len(INPUT_FILES)) ]
+    )
 
     cmd_data['pause'] = acmd([
         ('mlt', None)
@@ -193,20 +230,28 @@ def generate(
         ('mlt', resumepars)
     ])
     
-    cmd_data['stop'] = acmd([
-        ('tpm', None),
-        ('tam', None),
-        ('tcm', None),
-        ('mlt', None),
-        ('fdf', None)
-    ])
+    cmd_data['stop'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [ (f'ftpchm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
+            ('zip', None),
+            ('tam', None),
+            ('tcm', None),
+            ('mlt', None),
+            ('fdf', None)
+        ]
+    )
 
-    cmd_data['scrap'] = acmd([
-        ('tpm', None),
-        ('tam', None),
-        ('tcm', None),
-        ('mlt', None),
-        ('fdf', None)
-    ])
+    cmd_data['scrap'] = acmd(
+        [ (f'tpm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [ (f'ftpchm{i}', None) for i in range(len(INPUT_FILES)) ] +
+        [
+            ('zip', None),
+            ('tam', None),
+            ('tcm', None),
+            ('mlt', None),
+            ('fdf', None)
+        ]
+    )
 
     return cmd_data
