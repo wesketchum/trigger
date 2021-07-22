@@ -41,7 +41,7 @@ public:
   // Parameters for ers warning metadata and config
   TimeSliceOutputBuffer(const std::string &name, 
                         const std::string &algorithm, 
-                        const dataformats::timestamp_t buffer_time) 
+                        const dataformats::timestamp_t buffer_time = 0) 
     : m_name(name)
     , m_algorithm(algorithm)
     , m_buffer_time(buffer_time)
@@ -69,6 +69,12 @@ public:
         }
       }
     }
+  }
+  
+  // Set the time to wait after a window before a window is emitted in ticks
+  void set_buffer_time(const dataformats::timestamp_t buffer_time)
+  {
+    m_buffer_time = buffer_time;
   }
   
   // True if this buffer has gone m_buffer_time past the end of the first window
@@ -106,7 +112,7 @@ private:
   std::queue<std::pair<dataformats::timestamp_t,dataformats::timestamp_t> > m_windows;
   std::priority_queue<T, std::vector<T>, time_start_greater_t<T> > m_buffer;
   const std::string &m_name, &m_algorithm;
-  const dataformats::timestamp_t m_buffer_time;
+  dataformats::timestamp_t m_buffer_time;
   dataformats::timestamp_t m_largest_time;
 };
 

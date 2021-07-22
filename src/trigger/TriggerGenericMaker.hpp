@@ -49,7 +49,6 @@ public:
 
   explicit TriggerGenericMaker(const std::string& name)
     : DAQModule(name)
-    , worker(*this)
     , m_thread(std::bind(&TriggerGenericMaker::do_work, this, std::placeholders::_1))
     , m_input_queue(nullptr)
     , m_output_queue(nullptr)
@@ -57,6 +56,8 @@ public:
     , m_algorithm_name("[uninitialized]")
     , m_geoid_region_id(dunedaq::dataformats::GeoID::s_invalid_region_id)
     , m_geoid_element_id(dunedaq::dataformats::GeoID::s_invalid_element_id)
+    , m_buffer_time(0)
+    , worker(*this) // should be last; may use other members
   {
     register_command("start", &TriggerGenericMaker::do_start);
     register_command("stop", &TriggerGenericMaker::do_stop);
@@ -98,8 +99,6 @@ protected:
 
 private:
 
-  TriggerGenericWorker<IN,OUT,MAKER> worker;
-
   dunedaq::appfwk::ThreadHelper m_thread;
   
   size_t m_received_count;
@@ -122,6 +121,8 @@ private:
 
   std::shared_ptr<MAKER> m_maker;
   
+  TriggerGenericWorker<IN,OUT,MAKER> worker;
+  
   // This should return a shared_ptr to the MAKER created from conf command arguments. 
   // Should also call set_algorithm_name and set_geoid/buffer_time (if desired)
   virtual std::shared_ptr<MAKER> make_maker(const nlohmann::json& obj) = 0;
@@ -141,6 +142,8 @@ private:
   void do_configure(const nlohmann::json& obj)
   {
     m_maker = make_maker(obj);
+    // worker should be notified that configuration potentially changed
+    worker.reconfigure();
   }
   
   void do_work(std::atomic<bool> &running_flag)
@@ -189,6 +192,10 @@ public:
   
   TriggerGenericMaker<IN, OUT, MAKER> &m_parent;
   
+  void reconfigure()
+  {
+  }
+  
   void do_work(std::atomic<bool> &running_flag)
   {
     while (running_flag.load()) {
@@ -235,6 +242,11 @@ public:
   
   TimeSliceInputBuffer<A> m_in_buffer;
   TimeSliceOutputBuffer<B> m_out_buffer;
+  
+  void reconfigure()
+  {
+    m_out_buffer.set_buffer_time(m_parent.m_buffer_time);
+  }
   
   void do_work(std::atomic<bool> &running_flag)
   {
@@ -352,7 +364,11 @@ public:
   
   TriggerGenericMaker<Set<A>, OUT, MAKER> &m_parent;
   
-  TimeSliceInputBuffer<A> m_in_buffer;
+  TimeSliceInputBuffer<A> m_in_buffer;  
+  
+  void reconfigure()
+  {
+  }
   
   void do_work(std::atomic<bool> &running_flag)
   {
