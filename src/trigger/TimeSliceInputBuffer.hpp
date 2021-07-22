@@ -48,10 +48,14 @@ public:
     m_buffer.emplace_back(in);
     return true;
   }
-  // Fill time_slice with the sorted buffer, and clear the buffer
-  void flush(std::vector<T> &time_slice, 
+  // Fill time_slice with the sorted buffer, clear the buffer, and return true
+  // Returns false and does nothing if the buffer is empty
+  bool flush(std::vector<T> &time_slice, 
              dataformats::timestamp_t &start_time, 
              dataformats::timestamp_t &end_time) {
+    if (m_buffer.size() == 0) {
+        return false;
+    }
     // build a vector of the T objects from all the sets in the slice
     start_time = m_buffer[0].start_time;
     end_time = m_buffer[0].end_time;
@@ -68,6 +72,7 @@ public:
               [](const T &a, const T &b) { return a.time_start < b.time_start; } );
     // TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc) 
     // included a natural ordering with operator<()
+    return true;
   }
 private:
   std::vector<Set<T>> m_buffer;

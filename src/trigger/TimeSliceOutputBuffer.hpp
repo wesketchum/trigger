@@ -79,11 +79,15 @@ public:
   
   // True if this buffer has gone m_buffer_time past the end of the first window
   bool ready() {
-    if ( m_buffer.empty() ) {
+    if ( empty() ) {
       return false;
     } else {
       return m_largest_time - m_windows.front().second > m_buffer_time;
     }
+  }
+  
+  bool empty() {
+    return m_buffer.empty();
   }
   
   // Fills time_slice, start_time, and end_time with the contents of the buffer

@@ -148,7 +148,18 @@ private:
   
   void do_work(std::atomic<bool> &running_flag)
   {
-    worker.do_work(running_flag);
+    // Loop until a stop is received
+    while (running_flag.load()) {
+      // While there are items in the input queue, continue draining even if
+      // the running_flag is false, but stop _immediately_ when input is empty
+      IN in;
+      while (receive(in)) {
+        worker.process(in);
+      } 
+    }
+    worker.drain();
+    TLOG() << ": Exiting do_work() method, received " << m_received_count 
+           << " inputs and successfully sent " << m_sent_count << " outputs. ";
   }
   
   bool receive(IN &in) {
@@ -196,31 +207,27 @@ public:
   {
   }
   
-  void do_work(std::atomic<bool> &running_flag)
+  void process(IN &in)
   {
-    while (running_flag.load()) {
-      IN in;
-      if (!m_parent.receive(in)) {
-        continue; //nothing to do
-      }
-  
-      std::vector<OUT> out_vec; // one input -> many outputs
-      try {
-        m_parent.m_maker->operator()(in, out_vec);
-      } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-        ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-        return;
-      }
+    std::vector<OUT> out_vec; // one input -> many outputs
+    try {
+      m_parent.m_maker->operator()(in, out_vec);
+    } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+      ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+      return;
+    }
 
-      while (out_vec.size() && running_flag.load()) {
-        if (m_parent.send(out_vec.back())) {
-          out_vec.pop_back();
-        }
+    while (out_vec.size()) {
+      if (!m_parent.send(out_vec.back())) {
+        ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        // out_vec.back() is dropped
       }
-    } // end while (running_flag.load())
-
-    TLOG() << ": Exiting do_work() method, received " << m_parent.m_received_count 
-           << " inputs and successfully sent " << m_parent.m_sent_count << " outputs. ";
+      out_vec.pop_back();
+    }
+  }
+    
+  void drain()
+  {
   }
 };
 
@@ -248,110 +255,135 @@ public:
     m_out_buffer.set_buffer_time(m_parent.m_buffer_time);
   }
   
-  void do_work(std::atomic<bool> &running_flag)
+  void process_slice(const std::vector<A> &time_slice, std::vector<B> &out_vec)
   {
-    while (running_flag.load()) {
-      Set<A> in;
-      if (!m_parent.receive(in)) {
-        continue; //nothing to do
+    // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
+    // call operator for each of the objects in the vector
+    for (const A &x : time_slice) {
+      try {
+        m_parent.m_maker->operator()(x, out_vec);
+      } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+        ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        return;
       }
-
-      std::vector<B> elems; //Bs to buffer for the next window
-      switch (in.type) {
-        case Set<A>::Type::kPayload:
-          {
-            std::vector<A> time_slice;
-            dataformats::timestamp_t start_time, end_time;
-            if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
-              continue; //no complete time slice yet (`in` was part of buffered slice)
-            }
-            // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
-            // call operator for each of the objects in the vector
-            for (A &x : time_slice) {
-              std::vector<B> out_vec;
-              try {
-                m_parent.m_maker->operator()(x, out_vec);
-              } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-                ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-                return;
-              }
-              elems.insert(elems.end(), out_vec.begin(), out_vec.end());
-            }
-            //register this window
-            // TODO BJL July 14-2021 this must be called for each possible window emitted as Set<B>
-            // but will all Set<B> fall within a window of Set<A>? Is there a better way to know
-            // what windows to allow than what windows we receive?
-            m_out_buffer.add_window(start_time, end_time);
+    }
+  }
+  
+  void process(Set<A> &in)
+  {
+    std::vector<B> elems; //Bs to buffer for the next window
+    switch (in.type) {
+      case Set<A>::Type::kPayload:
+        {
+          std::vector<A> time_slice;
+          dataformats::timestamp_t start_time, end_time;
+          if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
+            return; //no complete time slice yet (`in` was part of buffered slice)
           }
-          break;
-        case Set<A>::Type::kHeartbeat:
-          { 
-            // forward the heartbeat
-            Set<B> heartbeat;
-            heartbeat.seqno = m_parent.m_sent_count;
-            heartbeat.type = Set<B>::Type::kHeartbeat;
-            heartbeat.start_time = in.start_time;
-            heartbeat.end_time = in.end_time;
-            heartbeat.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
-                                                  m_parent.m_geoid_region_id,
-                                                  m_parent.m_geoid_element_id);
-            while (running_flag.load()) {
-              if (m_parent.send(heartbeat)) {
-                break;
-              }
-            }
-            // flush the maker
-            try {
-              // TODO BJL July 14-2021 flushed events go into the buffer... until a window is ready?
-              m_parent.m_maker->flush(in.end_time, elems);
-            } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-              ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-              return;
-            }
+          process_slice(time_slice, elems);
+          //register this window
+          // TODO BJL July 14-2021 this must be called for each possible window emitted as Set<B>
+          // but will all Set<B> fall within a window of Set<A>? Is there a better way to know
+          // what windows to allow than what windows we receive?
+          m_out_buffer.add_window(start_time, end_time);
+        }
+        break;
+      case Set<A>::Type::kHeartbeat:
+        { 
+          // forward the heartbeat
+          Set<B> heartbeat;
+          heartbeat.seqno = m_parent.m_sent_count;
+          heartbeat.type = Set<B>::Type::kHeartbeat;
+          heartbeat.start_time = in.start_time;
+          heartbeat.end_time = in.end_time;
+          heartbeat.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
+                                                m_parent.m_geoid_region_id,
+                                              m_parent.m_geoid_element_id);
+          if (!m_parent.send(heartbeat)) {
+            ers::error(AlgorithmFailedToHeartbeat(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+            //heartbeat is dropped
           }
-          break;
-        case Set<A>::Type::kUnknown:
-          ers::error(UnknownSetError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-          break;
-      }
           
-      // add new elements to output buffer
-      if (elems.size() > 0) {
-        m_out_buffer.buffer(elems);
-      }
-      
-      // emit completed windows
-      while (m_out_buffer.ready()) {
-        Set<B> out;
+          // flush the maker
+          try {
+            // TODO BJL July 14-2021 flushed events go into the buffer... until a window is ready?
+            m_parent.m_maker->flush(in.end_time, elems);
+          } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+            ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+            return;
+          }
+        }
+        break;
+      case Set<A>::Type::kUnknown:
+        ers::error(UnknownSetError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        break;
+    }
+        
+    // add new elements to output buffer
+    if (elems.size() > 0) {
+      m_out_buffer.buffer(elems);
+    }
+    
+    // emit completed windows
+    while (m_out_buffer.ready()) {
+      Set<B> out;
+      m_out_buffer.flush(out.objects, out.start_time, out.end_time);
+      // Only form and send Set<B> if it has a nonzero number of objects
+      if (out.objects.size() != 0) {
         out.seqno = m_parent.m_sent_count;
         out.type = Set<B>::Type::kPayload;
-        m_out_buffer.flush(out.objects, out.start_time, out.end_time);
         out.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
                                         m_parent.m_geoid_region_id,
                                         m_parent.m_geoid_element_id);
-        TLOG() << "Output window ready with start time " << out.start_time 
+        TLOG() << "Output set window ready with start time " << out.start_time 
                << " end time " << out.end_time << " and " 
                << out.objects.size() << " members";
-        if (out.objects.size() == 0) {
-          TLOG() << "Suppressing empty window";
-          // out discarded
-        } else {
-          while (running_flag.load()) {
-            if (m_parent.send(out)) {
-              break;
-            }
-          }
+        if (!m_parent.send(out)) {
+          ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+          // out is dropped
         }
       }
-      
-    } // end while (running_flag.load())
-
-    TLOG() << ": Exiting do_work() method, received " << m_parent.m_received_count 
-           << " inputs and successfully sent " << m_parent.m_sent_count << " outputs. ";
+    }
+  }
+  
+  void drain()
+  {
+    // First, send anything in the input buffer to the algorithm, and add any
+    // results to output buffer
+    std::vector<A> time_slice;
+    dataformats::timestamp_t start_time, end_time;
+    if (m_in_buffer.flush(time_slice, start_time, end_time)) {
+      std::vector<B> elems;
+      process_slice(time_slice, elems);
+      if (elems.size() > 0) {
+        m_out_buffer.buffer(elems);
+      }
+    }
+    // Second, drain the output buffer onto the queue. These may not be "fully 
+    // formed" windows, but at this point we're getting no more data anyway.
+    while (!m_out_buffer.empty()) {
+      Set<B> out;
+      m_out_buffer.flush(out.objects, out.start_time, out.end_time);
+      // Only form and send Set<B> if it has a nonzero number of objects
+      if (out.objects.size() != 0) {
+        out.seqno = m_parent.m_sent_count;
+        out.type = Set<B>::Type::kPayload;
+        out.origin = dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection, 
+                                        m_parent.m_geoid_region_id,
+                                        m_parent.m_geoid_element_id);
+        TLOG() << "Output set window drained with start time " << out.start_time 
+               << " end time " << out.end_time << " and " 
+               << out.objects.size() << " members";
+        if (!m_parent.send(out)) {
+          ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+          // out is dropped
+        }
+      }
+    }
   }
 };
 
-// Partial specilization for IN = Set<A> and assumes the the MAKER has:
+// Partial specialization for IN = Set<A> and assumes the the MAKER has:
 // operator()(A, std::vector<OUT>)
 template<class A, class OUT, class MAKER> 
 class TriggerGenericWorker<Set<A>, OUT, MAKER> 
@@ -370,58 +402,74 @@ public:
   {
   }
   
-  void do_work(std::atomic<bool> &running_flag)
+  void process_slice(const std::vector<A> &time_slice, std::vector<OUT> &out_vec)
   {
-    while (running_flag.load()) {
-      Set<A> in;
-      if (!m_parent.receive(in)) {
-        continue; //nothing to do
+    // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
+    // call operator for each of the objects in the vector
+    for (const A &x : time_slice) {
+      try {
+        m_parent.m_maker->operator()(x, out_vec);
+      } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+        ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        return;
       }
-
-      std::vector<OUT> out_vec; // either a whole time slice, heartbeat flushed, or empty
-      switch (in.type) {
-        case Set<A>::Type::kPayload:   
-          {
-            std::vector<A> time_slice;
-            dataformats::timestamp_t start_time, end_time;
-            if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
-              continue; //no complete time slice yet (`in` was part of buffered slice)
-            }
-            // time_slice is a full slice (all Set<A> combined), time ordered, vector of A
-            // call operator for each of the objects in the vector
-            for (A &x : time_slice) {
-              try {
-                m_parent.m_maker->operator()(x, out_vec);
-              } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-                ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-                return;
-              }
-            }
+    }
+  }
+  
+  void process(Set<A> &in)
+  {
+    std::vector<OUT> out_vec; // either a whole time slice, heartbeat flushed, or empty
+    switch (in.type) {
+      case Set<A>::Type::kPayload:   
+        {
+          std::vector<A> time_slice;
+          dataformats::timestamp_t start_time, end_time;
+          if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
+            return; //no complete time slice yet (`in` was part of buffered slice)
           }
-          break;
-        case Set<A>::Type::kHeartbeat:
-          // TODO BJL May-28-2021 should anything happen with the heartbeat when OUT is not a Set<T>?
-          try {
-            m_parent.m_maker->flush(in.end_time, out_vec);
-          } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
-            ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-            return;
-          }
-          break;
-        case Set<A>::Type::kUnknown:
-          ers::error(UnknownSetError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
-          break;
-      }
-      
-      while (out_vec.size() && running_flag.load()) {
-        if (m_parent.send(out_vec.back())) {
-          out_vec.pop_back();
+          process_slice(time_slice, out_vec);
         }
+        break;
+      case Set<A>::Type::kHeartbeat:
+        // TODO BJL May-28-2021 should anything happen with the heartbeat when OUT is not a Set<T>?
+        try {
+          m_parent.m_maker->flush(in.end_time, out_vec);
+        } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+          ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+          return;
+        }
+        break;
+      case Set<A>::Type::kUnknown:
+        ers::error(UnknownSetError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        break;
+    }
+    
+    while (out_vec.size()) {
+      if (!m_parent.send(out_vec.back())) {
+        ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+        // out.back() is dropped
       }
-    } // end while (running_flag.load())
-
-    TLOG() << ": Exiting do_work() method, received " << m_parent.m_received_count 
-           << " inputs and successfully sent " << m_parent.m_sent_count << " outputs. ";
+      out_vec.pop_back();
+    }
+  }
+  
+  void drain()
+  {
+    // Send anything in the input buffer to the algorithm, and put any results 
+    // on the output queue
+    std::vector<A> time_slice;
+    dataformats::timestamp_t start_time, end_time;
+    if (m_in_buffer.flush(time_slice, start_time, end_time)) {
+      std::vector<OUT> out_vec;
+      process_slice(time_slice, out_vec);
+      while (out_vec.size()) {
+        if (!m_parent.send(out_vec.back())) {
+          ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
+          // out.back() is dropped
+        }
+        out_vec.pop_back();
+      }
+    }
   }
 };
 

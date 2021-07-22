@@ -73,6 +73,20 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        ((std::string)algorithm))
                        
 ERS_DECLARE_ISSUE_BASE(trigger,
+                       AlgorithmFailedToSend,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker failed to add output to a queue, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       AlgorithmFailedToHeartbeat,
+                       appfwk::GeneralDAQModuleIssue,
+                       "The " << algorithm << " maker failed to add a heartbeat to a queue, which will be dropped.",
+                       ((std::string)name),
+                       ((std::string)algorithm))
+                       
+ERS_DECLARE_ISSUE_BASE(trigger,
                        WindowlessOutputError,
                        appfwk::GeneralDAQModuleIssue,
                        "The " << algorithm << " maker generated an output that was not in any input window, which will be dropped.",
