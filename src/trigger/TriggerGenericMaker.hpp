@@ -23,6 +23,7 @@
 #include "dataformats/GeoID.hpp"
 
 #include "logging/Logging.hpp"
+#include "triggeralgs/Types.hpp"
 
 #include <memory>
 #include <string>
@@ -254,6 +255,8 @@ public:
   TimeSliceInputBuffer<A> m_in_buffer;
   TimeSliceOutputBuffer<B> m_out_buffer;
   
+  dataformats::timestamp_t prev_start_time = 0;
+  
   void reconfigure()
   {
     m_out_buffer.set_window_time(m_parent.m_window_time);
@@ -280,6 +283,10 @@ public:
     switch (in.type) {
       case Set<A>::Type::kPayload:
         {
+          if (prev_start_time != 0 && in.start_time < prev_start_time) {
+            ers::warning(OutOfOrderSets(ERS_HERE, m_parent.get_name(), prev_start_time, in.start_time));
+          }
+          prev_start_time = in.start_time;
           std::vector<A> time_slice;
           dataformats::timestamp_t start_time, end_time;
           if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
