@@ -16,6 +16,8 @@ local types = {
       doc="The region used in the GeoID for TASets produced by this maker"),
     s.field("geoid_element", self.element,
       doc="The element used in the GeoID for TASets produced by this maker"),
+    s.field("window_time", self.time,
+      doc="The with of windows for TASets. Windows start at a multiple of this value"),
     s.field("buffer_time", self.time,
       doc="The time to buffer past a window before emitting a TASet for that window in ticks"),
     s.field("activity_maker_config", self.any,

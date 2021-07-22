@@ -154,6 +154,7 @@ def generate(
             activity_maker=ACTIVITY_PLUGIN,
             geoid_region=0, # Fake placeholder
             geoid_element=0, # Fake placeholder
+            window_time=10000, # should match whatever makes TPSets, in principle
             buffer_time=625000, # 10ms in 62.5 MHz ticks
             activity_maker_config=temptypes.ActivityConf(**ACTIVITY_CONFIG)
         )),

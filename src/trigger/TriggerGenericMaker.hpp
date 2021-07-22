@@ -57,6 +57,7 @@ public:
     , m_geoid_region_id(dunedaq::dataformats::GeoID::s_invalid_region_id)
     , m_geoid_element_id(dunedaq::dataformats::GeoID::s_invalid_element_id)
     , m_buffer_time(0)
+    , m_window_time(625000)
     , worker(*this) // should be last; may use other members
   {
     register_command("start", &TriggerGenericMaker::do_start);
@@ -92,8 +93,10 @@ protected:
   }
   
   // Only applies to makers that output Set<B>
-  void set_buffer_time(dataformats::timestamp_t buffer_time)
+  void set_windowing(dataformats::timestamp_t window_time, 
+                     dataformats::timestamp_t buffer_time)
   {
+    m_window_time = window_time;
     m_buffer_time = buffer_time;
   }
 
@@ -118,13 +121,14 @@ private:
   uint32_t m_geoid_element_id;
 
   dataformats::timestamp_t m_buffer_time;
+  dataformats::timestamp_t m_window_time;
 
   std::shared_ptr<MAKER> m_maker;
   
   TriggerGenericWorker<IN,OUT,MAKER> worker;
   
   // This should return a shared_ptr to the MAKER created from conf command arguments. 
-  // Should also call set_algorithm_name and set_geoid/buffer_time (if desired)
+  // Should also call set_algorithm_name and set_geoid/set_windowing (if desired)
   virtual std::shared_ptr<MAKER> make_maker(const nlohmann::json& obj) = 0;
   
   void do_start(const nlohmann::json& /*obj*/)
@@ -252,6 +256,7 @@ public:
   
   void reconfigure()
   {
+    m_out_buffer.set_window_time(m_parent.m_window_time);
     m_out_buffer.set_buffer_time(m_parent.m_buffer_time);
   }
   
@@ -281,11 +286,6 @@ public:
             return; //no complete time slice yet (`in` was part of buffered slice)
           }
           process_slice(time_slice, elems);
-          //register this window
-          // TODO BJL July 14-2021 this must be called for each possible window emitted as Set<B>
-          // but will all Set<B> fall within a window of Set<A>? Is there a better way to know
-          // what windows to allow than what windows we receive?
-          m_out_buffer.add_window(start_time, end_time);
         }
         break;
       case Set<A>::Type::kHeartbeat:
