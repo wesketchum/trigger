@@ -60,7 +60,7 @@ TPSetSink::do_work()
   triggeralgs::timestamp_t last_timestamp = 0;
 
   uint32_t last_seqno = 0;
-  
+
   while (true) {
     TPSet tpset;
     try {
@@ -80,21 +80,19 @@ TPSetSink::do_work()
     if (last_seqno != 0 && tpset.seqno != last_seqno + 1) {
       TLOG() << "Missed TPSets: last_seqno=" << last_seqno << ", current seqno=" << tpset.seqno;
     }
-    last_seqno=tpset.seqno;
-    
+    last_seqno = tpset.seqno;
+
     if (tpset.start_time < last_timestamp) {
       TLOG() << "TPSets out of order: last start time " << last_timestamp << ", current start time "
              << tpset.start_time;
     }
-    if(tpset.type==TPSet::Type::kHeartbeat){
+    if (tpset.type == TPSet::Type::kHeartbeat) {
       TLOG() << "Heartbeat TPSet with start time " << tpset.start_time;
-    }
-    else if (tpset.objects.empty()) {
+    } else if (tpset.objects.empty()) {
       TLOG() << "Empty TPSet with start time " << tpset.start_time;
     }
     for (auto const& tp : tpset.objects) {
-      if (tp.time_start < tpset.start_time ||
-          tp.time_start > tpset.end_time) {
+      if (tp.time_start < tpset.start_time || tp.time_start > tpset.end_time) {
         TLOG() << "TPSet with start time " << tpset.start_time << ", end time " << tpset.end_time
                << " contains out-of-bounds TP with start time " << tp.time_start;
       }

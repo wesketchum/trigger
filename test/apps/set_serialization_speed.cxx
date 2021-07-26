@@ -1,8 +1,8 @@
-#include "trigger/TPSet.hpp"
-#include "trigger/TASet.hpp"
-#include "serialization/Serialization.hpp"
-#include "triggeralgs/TriggerPrimitive.hpp"
 #include "logging/Logging.hpp"
+#include "serialization/Serialization.hpp"
+#include "trigger/TASet.hpp"
+#include "trigger/TPSet.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
 #include "triggeralgs/Types.hpp"
 
 #include <chrono>
@@ -28,15 +28,15 @@ time_serialization(int tps_per_set)
   std::uniform_int_distribution<int> uniform(0, 1000);
 
   std::vector<dunedaq::trigger::TPSet> sets;
-  for(int i=0; i<N; ++i){
+  for (int i = 0; i < N; ++i) {
     dunedaq::trigger::TPSet set;
-    set.seqno=i+1;
-    set.start_time = (i+1)*5000;
-    set.end_time = (i+2)*5000-1;
-    for(int j=0; j<tps_per_set; ++j){
+    set.seqno = i + 1;
+    set.start_time = (i + 1) * 5000;
+    set.end_time = (i + 2) * 5000 - 1;
+    for (int j = 0; j < tps_per_set; ++j) {
       triggeralgs::TriggerPrimitive tp;
       tp.time_start = 1234963454;
-      tp.time_peak = tp.time_start+10000;
+      tp.time_peak = tp.time_start + 10000;
       tp.time_over_threshold = uniform(generator);
       tp.channel = uniform(generator);
       tp.adc_integral = uniform(generator);
@@ -55,29 +55,31 @@ time_serialization(int tps_per_set)
   uint64_t start_time = now_us(); // NOLINT(build/unsigned)
 
   for (int i = 0; i < N; ++i) {
-    std::vector<uint8_t> bytes = dunedaq::serialization::serialize(sets[i], dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
+    std::vector<uint8_t> bytes =
+      dunedaq::serialization::serialize(sets[i], dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
     dunedaq::trigger::TPSet set_recv = dunedaq::serialization::deserialize<dunedaq::trigger::TPSet>(bytes);
     total += set_recv.seqno;
   }
   uint64_t end_time = now_us(); // NOLINT(build/unsigned)
-  
+
   double time_taken_s = 1e-6 * (end_time - start_time);
   double msg_kHz = 1e-3 * N / time_taken_s;
   double tp_kHz = 1e-3 * tps_per_set * N / time_taken_s;
-  std::cout << "Sent " << N << " messages in " << time_taken_s << " (" << msg_kHz << " kHz of msgs, " << tp_kHz << " kHz of TPs) " << total << std::endl; // NOLINT
-
+  std::cout << "Sent " << N << " messages in " << time_taken_s << " (" << msg_kHz << " kHz of msgs, " << tp_kHz
+            << " kHz of TPs) " << total << std::endl; // NOLINT
 }
 
-int main()
+int
+main()
 {
-  std::vector<int> n_tps{0, 1, 10, 100, 1000};
-  for(auto n: n_tps){
+  std::vector<int> n_tps{ 0, 1, 10, 100, 1000 };
+  for (auto n : n_tps) {
     std::cout << n << " TPs per set: " << std::flush;
     time_serialization(n);
   }
 
   dunedaq::trigger::TASet taset;
-  std::vector<uint8_t> bytes = dunedaq::serialization::serialize(taset, dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
+  std::vector<uint8_t> bytes =
+    dunedaq::serialization::serialize(taset, dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
   dunedaq::trigger::TASet set_recv = dunedaq::serialization::deserialize<dunedaq::trigger::TASet>(bytes);
-  
 }

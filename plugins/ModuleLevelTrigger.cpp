@@ -88,7 +88,7 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     m_links.push_back(
-        dfmessages::GeoID{ dataformats::GeoID::string_to_system_type(link.system), link.region, link.element });
+      dfmessages::GeoID{ dataformats::GeoID::string_to_system_type(link.system), link.region, link.element });
   }
 
   m_configured_flag.store(true);
@@ -124,7 +124,6 @@ ModuleLevelTrigger::do_pause(const nlohmann::json& /*pauseobj*/)
   m_paused.store(true);
   TLOG() << "******* Triggers PAUSED! *********";
   ers::info(TriggerPaused(ERS_HERE));
-
 }
 
 void

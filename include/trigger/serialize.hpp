@@ -16,10 +16,11 @@
 #include "serialization/Serialization.hpp"
 
 #include "triggeralgs/TriggerActivity.hpp"
-#include "triggeralgs/TriggerPrimitive.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerPrimitive,
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs,
+                                 TriggerPrimitive,
                                  time_start,
                                  time_peak,
                                  time_over_threshold,
@@ -32,7 +33,8 @@ DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerPrimitive,
                                  version,
                                  flag)
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerActivity,
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs,
+                                 TriggerActivity,
                                  time_start,
                                  time_end,
                                  time_peak,
@@ -50,7 +52,8 @@ DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerActivity,
 
 MSGPACK_ADD_ENUM(triggeralgs::TriggerCandidateType)
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerCandidate,
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs,
+                                 TriggerCandidate,
                                  time_start,
                                  time_end,
                                  time_candidate,

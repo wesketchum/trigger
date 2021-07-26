@@ -14,14 +14,15 @@
 #define TRIGGER_INCLUDE_TRIGGER_TRIGGERCANDIDATE_SERIALIZATION_HPP_
 
 #include "serialization/Serialization.hpp"
-#include "triggeralgs/TriggerCandidate.hpp"
 #include "trigger/TriggerActivity_serialization.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
 
 MSGPACK_ADD_ENUM(triggeralgs::TriggerCandidate::Type)
 
 MSGPACK_ADD_ENUM(triggeralgs::TriggerCandidate::Algorithm)
 
-DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs, TriggerCandidate,
+DUNE_DAQ_SERIALIZE_NON_INTRUSIVE(triggeralgs,
+                                 TriggerCandidate,
                                  time_start,
                                  time_end,
                                  time_candidate,
