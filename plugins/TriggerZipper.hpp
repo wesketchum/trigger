@@ -99,6 +99,7 @@ public:
   void do_configure(const nlohmann::json& cfgobj)
   {
     m_cfg = cfgobj.get<cfg_t>();
+    m_zm.set_max_latency(std::chrono::milliseconds(m_cfg.max_latency_ms));
     m_zm.set_cardinality(m_cfg.cardinality);
   }
 
