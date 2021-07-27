@@ -70,7 +70,7 @@ public:
 
   // We store input TSETs in a list and send iterator though the
   // zipper as payload so as to not suffer copy overhead.
-  cache_type cache;
+  cache_type m_cache;
   seqno_type m_next_seqno{ 0 };
 
   explicit TriggerZipper(const std::string& name)
@@ -139,19 +139,19 @@ public:
 
   void proc_one()
   {
-    cache.emplace_front(); // to be filled
-    auto& tset = cache.front();
+    m_cache.emplace_front(); // to be filled
+    auto& tset = m_cache.front();
     try {
       m_inq->pop(tset, std::chrono::milliseconds(10));
     } catch (appfwk::QueueTimeoutExpired&) {
-      cache.pop_front(); // vestigial
+      m_cache.pop_front(); // vestigial
       drain();
       return;
     }
 
-    bool accepted = m_zm.feed(cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
+    bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
     if (!accepted) {
-      cache.pop_front(); // vestigial
+      m_cache.pop_front(); // vestigial
     }
     drain();
   }
@@ -174,7 +174,7 @@ public:
         // here than simply complain and drop?
         ers::error(err);
       }
-      cache.erase(lit);
+      m_cache.erase(lit);
     }
   }
 
