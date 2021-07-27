@@ -14,6 +14,7 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
+find_package(dataformats REQUIRED)
 
 ##############################################################################
 # Main library
