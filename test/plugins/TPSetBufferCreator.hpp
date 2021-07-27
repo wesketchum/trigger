@@ -77,10 +77,10 @@ private:
   using dr_source_t = dunedaq::appfwk::DAQSource<dfmessages::DataRequest>;
   std::unique_ptr<dr_source_t> m_input_queue_dr;
 
-  using fragment_sink_t = dunedaq::appfwk::DAQSink<dataformats::Fragment>;
+  using fragment_sink_t = dunedaq::appfwk::DAQSink<std::unique_ptr<dataformats::Fragment>>;
   std::unique_ptr<fragment_sink_t> m_output_queue_frag;
 
-  trigger::TPSetBuffer* m_tps_buffer;
+  std::unique_ptr<trigger::TPSetBuffer> m_tps_buffer;
 
   uint64_t m_tps_buffer_size;
 
@@ -90,11 +90,11 @@ private:
     }
   };
 
-  std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>* m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
+  std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp> m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
-  dataformats::Fragment convert_to_fragment(TPSetBuffer::data_request_output, dfmessages::DataRequest);
+  std::unique_ptr<dataformats::Fragment> convert_to_fragment(TPSetBuffer::data_request_output, dfmessages::DataRequest);
 
-  void send_out_fragment(dataformats::Fragment&, size_t&, std::atomic<bool>&);
+  void send_out_fragment(std::unique_ptr<dataformats::Fragment>, size_t&, std::atomic<bool>&);
 
 };
 } // namespace trigger
