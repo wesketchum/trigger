@@ -10,6 +10,8 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
+#include "dataformats/GeoID.hpp"
+
 #include "trigger/triggerzipper/Nljs.hpp"
 #include "zipper.hpp"
 
