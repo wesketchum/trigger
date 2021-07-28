@@ -7,15 +7,15 @@
 #ifndef TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
 #define TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
-#include "dataformats/Types.hpp"
 #include "dataformats/Fragment.hpp"
+#include "dataformats/Types.hpp"
 
-#include "dfmessages/HSIEvent.hpp"
 #include "dfmessages/DataRequest.hpp"
+#include "dfmessages/HSIEvent.hpp"
 
-#include "trigger/tpsetbuffercreator/Structs.hpp"
-#include "trigger/TPSet.hpp"
 #include "../../src/trigger/TPSetBuffer.hpp"
+#include "trigger/TPSet.hpp"
+#include "trigger/tpsetbuffercreator/Structs.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -25,10 +25,10 @@
 #include <ers/Issue.hpp>
 
 #include <chrono>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace dunedaq {
 namespace trigger {
@@ -45,14 +45,10 @@ public:
    */
   explicit TPSetBufferCreator(const std::string& name);
 
-  TPSetBufferCreator(const TPSetBufferCreator&) =
-    delete; ///< TPSetBufferCreator is not copy-constructible
-  TPSetBufferCreator& operator=(const TPSetBufferCreator&) =
-    delete; ///< TPSetBufferCreator is not copy-assignable
-  TPSetBufferCreator(TPSetBufferCreator&&) =
-    delete; ///< TPSetBufferCreator is not move-constructible
-  TPSetBufferCreator& operator=(TPSetBufferCreator&&) =
-    delete; ///< TPSetBufferCreator is not move-assignable
+  TPSetBufferCreator(const TPSetBufferCreator&) = delete;            ///< TPSetBufferCreator is not copy-constructible
+  TPSetBufferCreator& operator=(const TPSetBufferCreator&) = delete; ///< TPSetBufferCreator is not copy-assignable
+  TPSetBufferCreator(TPSetBufferCreator&&) = delete;                 ///< TPSetBufferCreator is not move-constructible
+  TPSetBufferCreator& operator=(TPSetBufferCreator&&) = delete;      ///< TPSetBufferCreator is not move-assignable
 
   void init(const nlohmann::json& obj) override;
   void get_info(opmonlib::InfoCollector& ci, int level) override;
@@ -84,18 +80,20 @@ private:
 
   uint64_t m_tps_buffer_size;
 
-  struct DataRequestComp{
-    bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const{
+  struct DataRequestComp
+  {
+    bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const
+    {
       return left.window_begin < right.window_end;
     }
   };
 
-  std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp> m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
+  std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>
+    m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
   std::unique_ptr<dataformats::Fragment> convert_to_fragment(TPSetBuffer::data_request_output, dfmessages::DataRequest);
 
   void send_out_fragment(std::unique_ptr<dataformats::Fragment>, size_t&, std::atomic<bool>&);
-
 };
 } // namespace trigger
 } // namespace dunedaq
