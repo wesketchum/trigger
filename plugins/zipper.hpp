@@ -71,7 +71,7 @@ public:
      See @ref set_cardinality() for the "k" parameter.
 
      A nonzero max_latency must be supplied to enable latency
-     guaratees.
+     guarantees.
    */
   explicit merge(size_t k = 0, duration_t max_latency = duration_t::zero())
     : cardinality(k)
@@ -105,6 +105,11 @@ public:
       undefined behavior as described above.
   */
   void set_cardinality(size_t k) { cardinality = k; }
+
+  /**
+     Set the maximum latency
+   */
+  void set_max_latency(duration_t max_latency) { latency = max_latency; }
 
   /**
      Clear the zipper merge buffer.
@@ -294,7 +299,7 @@ public:
 
 private:
   size_t cardinality;
-  const duration_t latency{ 0 };
+  duration_t latency{ 0 };
   ordering_t origin;
   struct Stream
   {
