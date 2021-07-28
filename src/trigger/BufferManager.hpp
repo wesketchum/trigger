@@ -29,7 +29,7 @@ public:
   BufferManager(long unsigned int buffer_size)
     : m_buffer_max_size(buffer_size)
     , m_buffer_earliest_start_time(0)
-    ,  m_buffer_latest_end_time(0) 
+    ,  m_buffer_latest_end_time(0)
   {
   }
 
@@ -50,17 +50,17 @@ public:
    */
   bool add(BSET& txs)
   {
-    if(m_txset_buffer.size() >= m_buffer_max_size) //delete oldest TxSet if buffer full (and updating earliest start time) -> circular buffer 
+    if(m_txset_buffer.size() >= m_buffer_max_size) //delete oldest TxSet if buffer full (and updating earliest start time) -> circular buffer
     {
       auto firstIt = m_txset_buffer.begin();
       m_txset_buffer.erase(firstIt);
-      firstIt++; 
+      firstIt++;
       m_buffer_earliest_start_time = (*firstIt).start_time;
     }
     if( (m_buffer_earliest_start_time == 0) || (txs.start_time < m_buffer_earliest_start_time))
       m_buffer_earliest_start_time = txs.start_time;
 
-    if( (m_buffer_latest_end_time == 0) || (txs.end_time > m_buffer_latest_end_time) ) 
+    if( (m_buffer_latest_end_time == 0) || (txs.end_time > m_buffer_latest_end_time) )
       m_buffer_latest_end_time = txs.end_time;
 
     return m_txset_buffer.insert(txs).second; //false if txs with same start_time already exists
@@ -85,42 +85,42 @@ public:
     BufferManager::data_request_output ds_out;
     std::vector<BSET> txsets_output;
 
-    if(end_time < m_buffer_earliest_start_time) 
+    if(end_time < m_buffer_earliest_start_time)
     {
       ds_out.txsets_in_window = txsets_output;
       ds_out.ds_outcome = BufferManager::kEmpty;
-      return ds_out;  
+      return ds_out;
     }
 
     if(start_time > m_buffer_latest_end_time)
     {
       ds_out.txsets_in_window = txsets_output;
       ds_out.ds_outcome = BufferManager::kLate;
-      return ds_out; 
+      return ds_out;
     }
 
     BSET txset_low, txset_up;
     txset_low.start_time = start_time;
-    txset_up.start_time  = end_time; 
+    txset_up.start_time  = end_time;
 
     typename std::set<BSET,TxSetCmp>::iterator it, it_low,it_up;
 
     //checking first and last TxSet of buffer that have a start_time within data request limits
-    it_low = m_txset_buffer.lower_bound(txset_low); 
+    it_low = m_txset_buffer.lower_bound(txset_low);
     it_up  = m_txset_buffer.upper_bound(txset_up);
-    it     = it_low; 
+    it     = it_low;
 
-    //checking if previous TxSet has a end_time that is after the data request's start time 
-    if(!(it == m_txset_buffer.begin()) ){  
-      it--; 
-      if((*it).end_time > start_time) txsets_output.push_back(*it);  
-      it++; 
+    //checking if previous TxSet has a end_time that is after the data request's start time
+    if(!(it == m_txset_buffer.begin()) ){
+      it--;
+      if((*it).end_time > start_time) txsets_output.push_back(*it);
+      it++;
     }
 
     //loading TxSets
     while(it != it_up){
       txsets_output.push_back(*it);
-      it++; 
+      it++;
     }
 
     ds_out.txsets_in_window = txsets_output;
@@ -129,6 +129,9 @@ public:
     return ds_out;
 
   }
+
+  dataformats::timestamp_t get_earliest_start_time() const { return m_buffer_earliest_start_time; }
+  dataformats::timestamp_t get_latest_end_time() const { return m_buffer_latest_end_time; }
 
 private:
 
@@ -149,7 +152,7 @@ private:
 
   //Earliest start time stored in the buffer
   dataformats::timestamp_t m_buffer_earliest_start_time;
-  
+
   //Latest end time stored in the buffer
   dataformats::timestamp_t m_buffer_latest_end_time;
 
