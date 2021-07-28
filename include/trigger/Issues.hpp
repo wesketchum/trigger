@@ -28,8 +28,8 @@ ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration objec
 ERS_DECLARE_ISSUE(trigger, TriggerActive, "Trigger is active now", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
-ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t) runno))
-ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t) runno))
+ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t)runno))
+ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t)runno))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
@@ -44,28 +44,28 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << queueType << " queue was not successfully created.",
                        ((std::string)name),
                        ((std::string)queueType))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        AlgorithmFatalError,
                        appfwk::GeneralDAQModuleIssue,
                        "The " << algorithm << " failed to run.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        UnknownSetError,
                        appfwk::GeneralDAQModuleIssue,
                        "The " << algorithm << " encountered an unknown Set type.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        InconsistentSetTimeError,
                        appfwk::GeneralDAQModuleIssue,
                        "The " << algorithm << " maker encountered Sets with inconsistent start/end times.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        TardyOutputError,
                        appfwk::GeneralDAQModuleIssue,
@@ -76,7 +76,8 @@ ERS_DECLARE_ISSUE_BASE(trigger,
 ERS_DECLARE_ISSUE_BASE(trigger,
                        OutOfOrderSets,
                        appfwk::GeneralDAQModuleIssue,
-                       "Received sets with start_times out of order: previous was " << previous << " current is " << current,
+                       "Received sets with start_times out of order: previous was " << previous << " current is "
+                                                                                    << current,
                        ((std::string)name),
                        ((triggeralgs::timestamp_t)previous)((triggeralgs::timestamp_t)current))
 
@@ -86,18 +87,19 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "The " << algorithm << " maker failed to add output to a queue, which will be dropped.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        AlgorithmFailedToHeartbeat,
                        appfwk::GeneralDAQModuleIssue,
                        "The " << algorithm << " maker failed to add a heartbeat to a queue, which will be dropped.",
                        ((std::string)name),
                        ((std::string)algorithm))
-                       
+
 ERS_DECLARE_ISSUE_BASE(trigger,
                        WindowlessOutputError,
                        appfwk::GeneralDAQModuleIssue,
-                       "The " << algorithm << " maker generated an output that was not in any input window, which will be dropped.",
+                       "The " << algorithm
+                              << " maker generated an output that was not in any input window, which will be dropped.",
                        ((std::string)name),
                        ((std::string)algorithm))
 
@@ -111,12 +113,10 @@ ERS_DECLARE_ISSUE_BASE(trigger,
 ERS_DECLARE_ISSUE_BASE(trigger,
                        UnsortedTP,
                        appfwk::GeneralDAQModuleIssue,
-                       "TP with time_start " << time_start << "is higher than time_start of last TP and will be ignored." ,
+                       "TP with time_start " << time_start
+                                             << "is higher than time_start of last TP and will be ignored.",
                        ((std::string)name),
                        ((int64_t)time_start))
-
-
-
 
 } // namespace dunedaq
 

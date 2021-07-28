@@ -64,7 +64,8 @@ private:
 
   std::chrono::milliseconds m_queue_timeout;
 
-  std::map<uint32_t, std::pair<triggeralgs::timestamp_t, triggeralgs::timestamp_t>> m_detid_offsets_map; // NOLINT(build/unsigned)
+  std::map<uint32_t, std::pair<triggeralgs::timestamp_t, triggeralgs::timestamp_t>>
+    m_detid_offsets_map; // NOLINT(build/unsigned)
 
   // Opmon variables
   using metric_counter_type = decltype(timingtriggercandidatemakerinfo::Info::tsd_received_count);

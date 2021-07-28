@@ -161,7 +161,7 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
   double khz = 1e-3 * generatedCount / doublesec(end_time - start_time).count();
 
   TLOG() << ": Exiting the do_work() method, generated " << generatedCount << " TSD set and successfully sent "
-           << sentCount << " copies. " << khz << "kHz";
+         << sentCount << " copies. " << khz << "kHz";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 

@@ -9,11 +9,11 @@
 #ifndef TRIGGER_INCLUDE_TRIGGER_TCSET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_TCSET_HPP_
 
+#include "dfmessages/GeoID_serialization.hpp"
+#include "serialization/Serialization.hpp"
 #include "trigger/Set.hpp"
 #include "trigger/TriggerCandidate_serialization.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
-#include "dfmessages/GeoID_serialization.hpp"
-#include "serialization/Serialization.hpp"
 
 namespace dunedaq::trigger {
 

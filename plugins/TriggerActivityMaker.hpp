@@ -5,7 +5,7 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
- 
+
 #ifndef TRIGGER_PLUGINS_TRIGGERACTIVITYMAKER_HPP_
 #define TRIGGER_PLUGINS_TRIGGERACTIVITYMAKER_HPP_
 
@@ -15,21 +15,21 @@
 #include "triggeralgs/TriggerActivityMaker.hpp"
 #include "triggeralgs/TriggerPrimitive.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace dunedaq::trigger {
 
-class TriggerActivityMaker 
-  : public TriggerGenericMaker < 
-    Set<triggeralgs::TriggerPrimitive>, 
-    Set<triggeralgs::TriggerActivity>, 
-    triggeralgs::TriggerActivityMaker 
-  >
+class TriggerActivityMaker
+  : public TriggerGenericMaker<Set<triggeralgs::TriggerPrimitive>,
+                               Set<triggeralgs::TriggerActivity>,
+                               triggeralgs::TriggerActivityMaker>
 {
 public:
-  explicit TriggerActivityMaker(const std::string& name) : TriggerGenericMaker(name) { }
-  
+  explicit TriggerActivityMaker(const std::string& name)
+    : TriggerGenericMaker(name)
+  {}
+
   TriggerActivityMaker(const TriggerActivityMaker&) = delete;
   TriggerActivityMaker& operator=(const TriggerActivityMaker&) = delete;
   TriggerActivityMaker(TriggerActivityMaker&&) = delete;
@@ -37,7 +37,6 @@ public:
 
 private:
   virtual std::shared_ptr<triggeralgs::TriggerActivityMaker> make_maker(const nlohmann::json& obj);
-  
 };
 
 } // namespace dunedaq::trigger
