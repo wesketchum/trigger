@@ -323,7 +323,7 @@ public:
         out.type = Set<B>::Type::kPayload;
         out.origin = dataformats::GeoID(
           dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
-        TLOG() << "Output set window ready with start time " << out.start_time << " end time " << out.end_time
+        TLOG_DEBUG(2) << "Output set window ready with start time " << out.start_time << " end time " << out.end_time
                << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
           ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
@@ -357,7 +357,7 @@ public:
         out.type = Set<B>::Type::kPayload;
         out.origin = dataformats::GeoID(
           dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
-        TLOG() << "Output set window drained with start time " << out.start_time << " end time " << out.end_time
+        TLOG_DEBUG(2) << "Output set window drained with start time " << out.start_time << " end time " << out.end_time
                << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
           ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
