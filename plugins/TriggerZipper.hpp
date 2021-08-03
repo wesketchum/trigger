@@ -81,8 +81,6 @@ public:
         register_command("conf",   &TriggerZipper<TSET>::do_configure);
         register_command("start",  &TriggerZipper<TSET>::do_start);
         register_command("stop",   &TriggerZipper<TSET>::do_stop);
-        register_command("pause",  &TriggerZipper<TSET>::do_pause);
-        register_command("resume", &TriggerZipper<TSET>::do_resume);
         register_command("scrap",  &TriggerZipper<TSET>::do_scrap);
     // clang-format on
   }
@@ -121,14 +119,6 @@ public:
     m_thread.join();
     flush();
   }
-
-  void do_pause(const nlohmann::json& /*pauseobj*/)
-  {
-    // fixme: need a 2nd flag?
-    m_running.store(false);
-  }
-
-  void do_resume(const nlohmann::json& /*resumeobj*/) { m_running.store(true); }
 
   // thread worker
   void worker()
