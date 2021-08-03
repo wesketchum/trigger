@@ -1,5 +1,5 @@
 /**
- * @file TriggerDecisionMakerSupernova.cpp
+ * @file TriggerActivityMakerSupernova.cpp
  *
  * This is part of the DUNE DAQ Application Framework, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -7,6 +7,6 @@
  */
 
 #include "trigger/AlgorithmPlugins.hpp"
-#include "triggeralgs/Supernova/TriggerDecisionMakerSupernova.hpp"
+#include "triggeralgs/ADCSimpleWindow/TriggerActivityMakerADCSimpleWindow.hpp"
 
-DEFINE_DUNE_TD_MAKER(triggeralgs::TriggerDecisionMakerSupernova)
+DEFINE_DUNE_TA_MAKER(triggeralgs::TriggerActivityMakerADCSimpleWindow)

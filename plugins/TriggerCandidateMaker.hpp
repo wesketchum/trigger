@@ -5,31 +5,31 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
- 
+
 #ifndef TRIGGER_PLUGINS_TRIGGERCANDIDATEMAKER_HPP_
 #define TRIGGER_PLUGINS_TRIGGERCANDIDATEMAKER_HPP_
 
 #include "trigger/TriggerGenericMaker.hpp"
 
+#include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 #include "triggeralgs/TriggerCandidateMaker.hpp"
-#include "triggeralgs/TriggerActivity.hpp"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace dunedaq::trigger {
 
-class TriggerCandidateMaker 
-  : public TriggerGenericMaker < 
-    Set<triggeralgs::TriggerActivity>, 
-    triggeralgs::TriggerCandidate, 
-    triggeralgs::TriggerCandidateMaker 
-  >
+class TriggerCandidateMaker
+  : public TriggerGenericMaker<Set<triggeralgs::TriggerActivity>,
+                               triggeralgs::TriggerCandidate,
+                               triggeralgs::TriggerCandidateMaker>
 {
 public:
-  explicit TriggerCandidateMaker(const std::string& name) : TriggerGenericMaker(name) { }
-  
+  explicit TriggerCandidateMaker(const std::string& name)
+    : TriggerGenericMaker(name)
+  {}
+
   TriggerCandidateMaker(const TriggerCandidateMaker&) = delete;
   TriggerCandidateMaker& operator=(const TriggerCandidateMaker&) = delete;
   TriggerCandidateMaker(TriggerCandidateMaker&&) = delete;
@@ -37,7 +37,6 @@ public:
 
 private:
   virtual std::shared_ptr<triggeralgs::TriggerCandidateMaker> make_maker(const nlohmann::json& obj);
-  
 };
 
 } // namespace dunedaq::trigger

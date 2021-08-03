@@ -64,7 +64,6 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
       uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
       old_time_start = tp.time_start;
 
-
       // If we crossed a time boundary, push the current TPSet and reset it
       if (current_tpset_number > prev_tpset_number) {
         if (!tpset.objects.empty()) {
@@ -72,7 +71,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
           m_tpsets.push_back(tpset);
         }
         prev_tpset_number = current_tpset_number;
-  
+
         tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
         tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
         tpset.seqno = seqno++;
@@ -136,7 +135,7 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
   auto run_start_time = std::chrono::steady_clock::now();
 
   uint32_t seqno = 0;
-  
+
   while (running_flag.load()) {
     if (m_conf.number_of_loops > 0 && current_iteration >= m_conf.number_of_loops) {
       break;
@@ -147,7 +146,7 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       if (!running_flag.load()) {
         break;
       }
-      
+
       // We send out the first TPSet right away. After that we space each TPSet in time by their start time
       auto wait_time_us = 0;
       if (prev_tpset_start_time == 0) {
@@ -163,16 +162,16 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
       auto next_slice_send_time = prev_tpset_send_time + slice_period;
       bool break_flag = false;
       while (next_tpset_send_time > next_slice_send_time + slice_period) {
-          if (!running_flag.load()) {
-            TLOG() << "while waiting to send next TP, negative running flag detected.";
-            break_flag = true;
-            break;
-          }
-          std::this_thread::sleep_until(next_slice_send_time);
-          next_slice_send_time = next_slice_send_time + slice_period;
+        if (!running_flag.load()) {
+          TLOG() << "while waiting to send next TP, negative running flag detected.";
+          break_flag = true;
+          break;
+        }
+        std::this_thread::sleep_until(next_slice_send_time);
+        next_slice_send_time = next_slice_send_time + slice_period;
       }
       if (break_flag == false) {
-          std::this_thread::sleep_until(next_tpset_send_time);
+        std::this_thread::sleep_until(next_tpset_send_time);
       }
       prev_tpset_send_time = next_tpset_send_time;
       prev_tpset_start_time = tpset.start_time;
@@ -205,7 +204,8 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
   auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(run_end_time - run_start_time).count();
   float rate_hz = 1e3 * static_cast<float>(generated_count) / time_ms;
 
-  TLOG() << "Generated " << generated_count << " TP sets (" << generated_tp_count << " TPs) in " << time_ms << " ms. (" << rate_hz << " TPSets/s). " << push_failed_count << " failed to push";
+  TLOG() << "Generated " << generated_count << " TP sets (" << generated_tp_count << " TPs) in " << time_ms << " ms. ("
+         << rate_hz << " TPSets/s). " << push_failed_count << " failed to push";
 
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }

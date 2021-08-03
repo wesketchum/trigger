@@ -31,17 +31,15 @@ struct TxSetTestFixture
 {
   TxSetTestFixture() {}
 
-  void setup()
-  {
-  }
+  void setup() {}
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(TxSetTestFixture);
 
 BOOST_AUTO_TEST_CASE(Initialization)
 {
-    trigger::TPSet tpset;
-    BOOST_CHECK_EQUAL(tpset.origin.system_type, dataformats::GeoID::SystemType::kDataSelection);
+  trigger::TPSet tpset;
+  BOOST_CHECK_EQUAL(tpset.origin.system_type, dataformats::GeoID::SystemType::kDataSelection);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

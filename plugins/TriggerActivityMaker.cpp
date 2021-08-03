@@ -5,7 +5,7 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
- 
+
 #include "TriggerActivityMaker.hpp"
 
 #include "trigger/AlgorithmPlugins.hpp"
@@ -15,17 +15,17 @@
 
 namespace dunedaq::trigger {
 
-  std::shared_ptr<triggeralgs::TriggerActivityMaker>
-  TriggerActivityMaker::make_maker(const nlohmann::json& obj)
-  {
-    auto params = obj.get<triggeractivitymaker::Conf>();
-    set_algorithm_name(params.activity_maker);
-    set_geoid(params.geoid_region, params.geoid_element);
-    set_buffer_time(params.buffer_time);
-    std::shared_ptr<triggeralgs::TriggerActivityMaker> maker = make_ta_maker(params.activity_maker);
-    maker->configure(params.activity_maker_config);
-    return maker;
-  }
+std::shared_ptr<triggeralgs::TriggerActivityMaker>
+TriggerActivityMaker::make_maker(const nlohmann::json& obj)
+{
+  auto params = obj.get<triggeractivitymaker::Conf>();
+  set_algorithm_name(params.activity_maker);
+  set_geoid(params.geoid_region, params.geoid_element);
+  set_windowing(params.window_time, params.buffer_time);
+  std::shared_ptr<triggeralgs::TriggerActivityMaker> maker = make_ta_maker(params.activity_maker);
+  maker->configure(params.activity_maker_config);
+  return maker;
+}
 
 } // namespace dunedaq::trigger
 

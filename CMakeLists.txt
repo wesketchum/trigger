@@ -14,6 +14,7 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
+find_package(dataformats REQUIRED)
 
 ##############################################################################
 # Main library
@@ -68,6 +69,8 @@ daq_add_plugin(TCZipper duneDAQModule LINK_LIBRARIES trigger)
 
 
 # Algorithm plugins
+daq_add_plugin(TriggerActivityMakerADCSimpleWindowPlugin duneTAMaker LINK_LIBRARIES trigger)
+daq_add_plugin(TriggerCandidateMakerADCSimpleWindowPlugin duneTCMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerActivityMakerPrescalePlugin duneTAMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerCandidateMakerPrescalePlugin duneTCMaker LINK_LIBRARIES trigger)
 daq_add_plugin(TriggerActivityMakerSupernovaPlugin duneTAMaker LINK_LIBRARIES trigger)
