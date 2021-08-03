@@ -70,6 +70,8 @@ public:
     }
   }
 
+  void reset() { m_next_window_start = 0; }
+
   void set_window_time(const dataformats::timestamp_t window_time)
   {
     m_window_time = window_time;

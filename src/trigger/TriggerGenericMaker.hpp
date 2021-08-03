@@ -144,17 +144,23 @@ private:
   void do_work(std::atomic<bool>& running_flag)
   {
     // Loop until a stop is received
-    while (running_flag.load()) {
+    while (true) {
       // While there are items in the input queue, continue draining even if
       // the running_flag is false, but stop _immediately_ when input is empty
       IN in;
-      while (receive(in)) {
+      bool got = receive(in);
+      if (got) {
         worker.process(in);
+      } else {
+        if (!running_flag.load()) {
+          break;
+        }
       }
-    }
+    } // end while(true)
     worker.drain();
     TLOG() << ": Exiting do_work() method, received " << m_received_count << " inputs and successfully sent "
            << m_sent_count << " outputs. ";
+    worker.reset();
   }
 
   bool receive(IN& in)
@@ -203,6 +209,8 @@ public:
 
   void reconfigure() {}
 
+  void reset() {}
+
   void process(IN& in)
   {
     std::vector<OUT> out_vec; // one input -> many outputs
@@ -242,12 +250,18 @@ public:
   TimeSliceInputBuffer<A> m_in_buffer;
   TimeSliceOutputBuffer<B> m_out_buffer;
 
-  dataformats::timestamp_t prev_start_time = 0;
+  dataformats::timestamp_t m_prev_start_time = 0;
 
   void reconfigure()
   {
     m_out_buffer.set_window_time(m_parent.m_window_time);
     m_out_buffer.set_buffer_time(m_parent.m_buffer_time);
+  }
+
+  void reset()
+  {
+    m_prev_start_time = 0;
+    m_out_buffer.reset();
   }
 
   void process_slice(const std::vector<A>& time_slice, std::vector<B>& out_vec)
@@ -269,10 +283,10 @@ public:
     std::vector<B> elems; // Bs to buffer for the next window
     switch (in.type) {
       case Set<A>::Type::kPayload: {
-        if (prev_start_time != 0 && in.start_time < prev_start_time) {
-          ers::warning(OutOfOrderSets(ERS_HERE, m_parent.get_name(), prev_start_time, in.start_time));
+        if (m_prev_start_time != 0 && in.start_time < m_prev_start_time) {
+          ers::warning(OutOfOrderSets(ERS_HERE, m_parent.get_name(), m_prev_start_time, in.start_time));
         }
-        prev_start_time = in.start_time;
+        m_prev_start_time = in.start_time;
         std::vector<A> time_slice;
         dataformats::timestamp_t start_time, end_time;
         if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
@@ -324,7 +338,7 @@ public:
         out.origin = dataformats::GeoID(
           dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
         TLOG_DEBUG(2) << "Output set window ready with start time " << out.start_time << " end time " << out.end_time
-               << " and " << out.objects.size() << " members";
+                      << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
           ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
           // out is dropped
@@ -358,7 +372,7 @@ public:
         out.origin = dataformats::GeoID(
           dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
         TLOG_DEBUG(2) << "Output set window drained with start time " << out.start_time << " end time " << out.end_time
-               << " and " << out.objects.size() << " members";
+                      << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
           ers::error(AlgorithmFailedToSend(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
           // out is dropped
@@ -384,6 +398,8 @@ public:
   TimeSliceInputBuffer<A> m_in_buffer;
 
   void reconfigure() {}
+
+  void reset() {}
 
   void process_slice(const std::vector<A>& time_slice, std::vector<OUT>& out_vec)
   {
