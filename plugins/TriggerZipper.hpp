@@ -73,6 +73,9 @@ public:
   cache_type m_cache;
   seqno_type m_next_seqno{ 0 };
 
+  size_t m_n_received{ 0 };
+  size_t m_n_sent{ 0 };
+
   explicit TriggerZipper(const std::string& name)
     : DAQModule(name)
     , m_zm()
@@ -109,6 +112,8 @@ public:
 
   void do_start(const nlohmann::json& /*startobj*/)
   {
+    m_n_received = 0;
+    m_n_sent = 0;
     m_running.store(true);
     m_thread = std::thread(&TriggerZipper::worker, this);
   }
@@ -118,33 +123,44 @@ public:
     m_running.store(false);
     m_thread.join();
     flush();
+    m_zm.clear();
+    TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets.";
   }
 
   // thread worker
   void worker()
   {
-    while (m_running.load()) {
-      proc_one();
+    while (true) {
+      // Once we've received a stop command, keep reading the input
+      // queue until there's nothing left on it
+      if (!proc_one() && !m_running.load()) {
+        break;
+      }
     }
   }
 
-  void proc_one()
+  bool proc_one()
   {
     m_cache.emplace_front(); // to be filled
     auto& tset = m_cache.front();
     try {
       m_inq->pop(tset, std::chrono::milliseconds(10));
+      ++m_n_received;
     } catch (appfwk::QueueTimeoutExpired&) {
       m_cache.pop_front(); // vestigial
       drain();
-      return;
+      return false;
     }
 
     bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
+
     if (!accepted) {
+      // TODO PAR 2021-08-03: We get here if we received a tardy input
+      // set, so we should emit an ers warning
       m_cache.pop_front(); // vestigial
     }
     drain();
+    return true;
   }
 
   void send_out(std::vector<node_type>& got)
@@ -160,6 +176,7 @@ public:
 
       try {
         m_outq->push(tset, std::chrono::milliseconds(10));
+        ++m_n_sent;
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& err) {
         // our output queue is stuffed.  should more be done
         // here than simply complain and drop?
@@ -196,5 +213,5 @@ public:
 
 #endif
 // Local Variables:
-// c-basic-offset: 4
+// c-basic-offset: 2
 // End:
