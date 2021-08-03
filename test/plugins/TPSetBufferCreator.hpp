@@ -94,6 +94,7 @@ private:
   std::unique_ptr<dataformats::Fragment> convert_to_fragment(TPSetBuffer::data_request_output, dfmessages::DataRequest);
 
   void send_out_fragment(std::unique_ptr<dataformats::Fragment>, size_t&, std::atomic<bool>&);
+  void send_out_fragment(std::unique_ptr<dataformats::Fragment>);
 };
 } // namespace trigger
 } // namespace dunedaq
