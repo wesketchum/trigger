@@ -32,11 +32,15 @@ console = Console()
 #
 # Classes
 
-module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands',
-                    'external_connections_in', 'external_connections_out'], defaults=([], [], []))
+# TODO: Connections between modules are held in the module object, but
+# connections between applications are held in their own
+# structure. Not clear yet which is better, but should probably be
+# consistent either way
 
-app = namedtuple("app", ['modules', 'command_data',
-                 'host'], defaults=({}, "localhost"))
+# TODO: Understand whether extra_commands is actually needed. Seems like "resume" is already being sent to everyone?
+module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands'], defaults=([], [], []))
+
+app = namedtuple("app", ['modules', 'host'], defaults=({}, "localhost"))
 
 publisher = namedtuple(
     "publisher", ['msg_type', 'msg_module_name', 'subscribers'])
@@ -49,6 +53,18 @@ sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
 
 
 def make_module_deps(module_dict):
+    """Given a dictionary of `module` objects, produce a dictionary giving
+    the dependencies between them. A dependency is any connection between
+    modules (implemented using an appfwk queue). Connections whose
+    upstream ends begin with a '!' are not considered dependencies, to
+    allow us to break cycles in the DAG.
+
+    Returns a dictionary where each key is a module name, and the
+    corresponding value is a list of names of modules connected "downstream" of
+    that module.
+
+    """
+
     deps = {}
     for name, mod in module_dict.items():
         deps[name] = []
@@ -63,6 +79,16 @@ def make_module_deps(module_dict):
 
 
 def make_app_deps(apps, app_connections):
+    """Produce a dictionary giving
+    the dependencies between a set of applications, given their connections.
+
+    Returns a dictionary analogous to the return value of
+    make_module_deps: each key is an application name, and the
+    corresponding value is a list of names of applications connected
+    "downstream" of that app.
+
+    """
+
     deps = {}
     for app in apps.keys():
         deps[app] = []
@@ -77,6 +103,10 @@ def make_app_deps(apps, app_connections):
 
 
 def toposort(deps_orig):
+    """Perform a topological sort of a dependency dictionary as produced
+    by make_module_deps or make_app_deps. Throws ValueError if a cycle is
+    found in the graph"""
+
     # Kahn's algorithm for topological sort, from Wikipedia:
 
     # L <- Empty list that will contain the sorted elements
@@ -123,6 +153,11 @@ def toposort(deps_orig):
 
 
 def make_command_data(modules):
+    """Convert a dictionary of `module`s into 'command data' suitable for
+    feeding to nanorc. The needed queues are inferred from from
+    connections between modules, as are the start and stop order of the
+    modules"""
+
     start_order = toposort(make_module_deps(modules))
     stop_order = start_order[::-1]
 
@@ -131,6 +166,8 @@ def make_command_data(modules):
     queue_specs = []
 
     app_qinfos = defaultdict(list)
+
+    # Infer the queues we need based on the connections between modules
 
     # Terminology: an "endpoint" is "module.name"
     for name, mod in modules.items():
@@ -172,6 +209,8 @@ def make_command_data(modules):
     mod_specs = [mspec(name, mod.plugin, app_qinfos[name])
                  for name, mod in modules.items()]
 
+    # Fill in the "standard" command entries in the command_data structure
+
     command_data['init'] = appfwk.Init(queues=queue_specs, modules=mod_specs)
 
     # TODO: Conf ordering
@@ -186,13 +225,27 @@ def make_command_data(modules):
     command_data['scrap'] = acmd([(name, None) for name in stop_order])
 
     # Optional commands
+
+    # TODO: What does an empty "acmd" actually imply? Does the command get sent to everyone, or no-one?
     command_data['pause'] = acmd([])
     command_data['resume'] = acmd([])
+
+    # TODO: handle modules' `extra_commands`, including "record"
 
     return command_data
 
 
 def assign_network_endpoints(apps, app_connections):
+    """Given a set of applications and connections between them, come up
+    with a list of suitable zeromq endpoints. Return value is a mapping
+    from name of upstream end of connection to endpoint name.
+
+    Algorithm is to make an endpoint name like tcp://host:port, where
+    host is the hostname for the app at the upstream end of the
+    connection, port starts at some fixed value, and increases by 1
+    for each new endpoint on that host.
+
+    """
     endpoints = {}
     host_ports = defaultdict(int)
     first_port = 12345
@@ -239,8 +292,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
                                                                             receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
                                                                                                      address=network_endpoints[
                                                                                                          conn_name],
-                                                                                                     subscriptions=["foo"]))
-                                                             )
+                                                                                                     subscriptions=["foo"])))
 
         if hasattr(conn, "receiver") and app_name == conn.receiver.split(".")[0]:
             # We're a receiver. Add a NetworkToQueue of receiver type
@@ -330,12 +382,15 @@ cmd_set = ["init", "conf", "start", "stop", "pause", "resume", "scrap"]
 
 
 def make_app_json(app_name, app_command_data, data_dir):
+    """Make the json files for a single application"""
     for c in cmd_set:
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
 
 def make_apps_json(apps, app_connections, json_dir):
+    """Make the json files for all of the applications"""
+
     if exists(json_dir):
         raise RuntimeError(f"Directory {json_dir} already exists")
 
@@ -345,13 +400,12 @@ def make_apps_json(apps, app_connections, json_dir):
     endpoints = assign_network_endpoints(apps, app_connections)
 
     for app_name, app in apps.items():
+        # Add the NetworkToQueue/QueueToNetwork modules that are needed
         modules_plus_network = add_network(
             app_name, app, app_connections, endpoints)
 
-        if not app.command_data:
-            command_data = make_command_data(modules_plus_network)
-        else:
-            command_data = app.command_data
+        command_data = make_command_data(modules_plus_network)
+
         make_app_json(app_name, command_data, data_dir)
 
     app_deps = make_app_deps(apps, app_connections)
@@ -363,7 +417,6 @@ def make_apps_json(apps, app_connections, json_dir):
             cfg = {
                 "apps": {app_name: f'data/{app_name}_{c}' for app_name in apps.keys()}
             }
-            # TODO: Determine start order properly
             if c == 'start':
                 cfg['order'] = start_order
             elif c == 'stop':
