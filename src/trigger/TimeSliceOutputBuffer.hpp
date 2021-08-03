@@ -59,7 +59,7 @@ public:
     }
     for (const T& x : in) {
       if (x.time_start < m_next_window_start) {
-        ers::warning(TardyOutputError(ERS_HERE, m_name, m_algorithm));
+        ers::warning(TardyOutputError(ERS_HERE, m_name, m_algorithm, x.time_start, m_next_window_start));
         // x is discarded
       } else {
         m_buffer.push(x);
