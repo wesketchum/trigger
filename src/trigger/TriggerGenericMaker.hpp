@@ -144,19 +144,14 @@ private:
   void do_work(std::atomic<bool>& running_flag)
   {
     // Loop until a stop is received
-    while (true) {
+    while (running_flag.load()) {
       // While there are items in the input queue, continue draining even if
       // the running_flag is false, but stop _immediately_ when input is empty
       IN in;
-      bool got = receive(in);
-      if (got) {
+      while (receive(in)) {
         worker.process(in);
-      } else {
-        if (!running_flag.load()) {
-          break;
-        }
       }
-    } // end while(true)
+    }
     worker.drain();
     TLOG() << ": Exiting do_work() method, received " << m_received_count << " inputs and successfully sent "
            << m_sent_count << " outputs. ";
