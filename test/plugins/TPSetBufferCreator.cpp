@@ -10,7 +10,7 @@
 //#include "CommonIssues.hpp"
 #include "TPSetBufferCreator.hpp"
 #include "trigger/Issues.hpp"
-#include "trigger/tpsetbuffercreator/Nljs.hpp"
+
 
 #include "dataformats/FragmentHeader.hpp"
 #include "dataformats/GeoID.hpp"
@@ -66,9 +66,9 @@ TPSetBufferCreator::do_configure(const nlohmann::json& obj)
 {
   TLOG() << get_name() << ": Entering do_configure() method";
 
-  auto params = obj.get<tpsetbuffercreator::Conf>();
+  m_conf = obj.get<tpsetbuffercreator::Conf>();
 
-  m_tps_buffer_size = params.tpset_buffer_size;
+  m_tps_buffer_size = m_conf.tpset_buffer_size;
 
   m_tps_buffer.reset(new TPSetBuffer(m_tps_buffer_size));
 
@@ -96,13 +96,13 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
   size_t sentCount = 0;
   TPSetBuffer::data_request_output requested_tpset;
   if (m_dr_on_hold.size()) { // check if there are still data request on hold
-    TLOG() << "On hold DRs: " << m_dr_on_hold.size();
+    TLOG() << get_name() << ": On hold DRs: " << m_dr_on_hold.size();
     std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>>::iterator it = m_dr_on_hold.begin();
     while (it != m_dr_on_hold.end()) {
 
       requested_tpset.txsets_in_window = it->second;
       std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
-      TLOG() << get_name() << " Sending late requested data (" << (it->first).window_begin << ", "
+      TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
              << (it->first).window_end << "), containing " << requested_tpset.txsets_in_window.size() << " TPSets.";
 
       if (requested_tpset.txsets_in_window.size()) {
@@ -129,13 +129,13 @@ TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 std::unique_ptr<dataformats::Fragment>
-TPSetBufferCreator::convert_to_fragment(TPSetBuffer::data_request_output ds_output,
+TPSetBufferCreator::convert_to_fragment(TPSetBuffer::data_request_output /* ds_output */,
                                         dfmessages::DataRequest input_data_request)
 {
   auto ret = std::make_unique<dataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
   auto& frag = *ret.get();
 
-  dataformats::GeoID geoid;
+  dataformats::GeoID geoid(dataformats::GeoID::SystemType::kDataSelection, m_conf.region, m_conf.element);
   dataformats::FragmentHeader frag_h;
   frag_h.trigger_number = input_data_request.trigger_number;
   frag_h.trigger_timestamp = input_data_request.trigger_timestamp;
@@ -202,6 +202,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
 {
   TLOG() << get_name() << ": Entering do_work() method";
   size_t addedCount = 0;
+  size_t addFailedCount = 0;
   size_t requestedCount = 0;
   size_t sentCount = 0;
 
@@ -217,7 +218,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
     try {
       m_input_queue_tps->pop(input_tpset, m_queueTimeout);
       if (first) {
-        TLOG() << "Got first TPSet, with start_time=" << input_tpset.start_time
+        TLOG() << get_name() << ": Got first TPSet, with start_time=" << input_tpset.start_time
                << " and end_time=" << input_tpset.end_time;
         first = false;
       }
@@ -227,6 +228,9 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
         // TLOG() << "TPSet start_time=" << input_tpset.start_time << " and end_time=" << input_tpset.end_time<< " added
         // ("<< addedCount << ")! And buffer size is: " << m_tps_buffer->get_stored_size() << " /
         // "<<m_tps_buffer->get_buffer_size();
+      }
+      else{
+        ++addFailedCount;
       }
 
       if (m_dr_on_hold.size()) { // check if new data is part of data request on hold
@@ -247,12 +251,10 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
             // TLOG() << "Adding TPSet (sart_time="<<input_tpset.start_time <<" on DR on hold ("<<
             // it->first.window_begin  <<", "<< it->first.window_end  <<"). TPSet count: "<<it->second.size();
           }
-          if (it->first.window_end <
-              input_tpset
-                .start_time) { // If more TPSet aren't expected to arrive then push and remove peding data request
+          if (it->first.window_end < input_tpset.start_time) { // If more TPSet aren't expected to arrive then push and remove peding data request
             requested_tpset.txsets_in_window = it->second;
             std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
-            TLOG() << get_name() << " Sending late requested data (" << (it->first).window_begin << ", "
+            TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
                    << (it->first).window_end << "), containing " << requested_tpset.txsets_in_window.size()
                    << " TPSets.";
             if (!requested_tpset.txsets_in_window.size()) {
@@ -266,23 +268,26 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
           }
           it++;
         }
-      }
+      } // end if(m_dr_on_hold.size())
 
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
     }
 
     // Block that reveives data requests and return fragments from buffer
     try {
-      m_input_queue_dr->pop(input_data_request, m_queueTimeout);
+      m_input_queue_dr->pop(input_data_request, std::chrono::milliseconds(0));
       requested_tpset =
         m_tps_buffer->get_txsets_in_window(input_data_request.window_begin, input_data_request.window_end);
       ++requestedCount;
+
+      TLOG_DEBUG(1) << get_name() << ": Got request number " << input_data_request.request_number << ", trigger number " << input_data_request.trigger_number << " begin/end (" << input_data_request.window_begin << ", "
+                    << input_data_request.window_end << ")";
 
       auto frag_out = convert_to_fragment(requested_tpset, input_data_request);
 
       switch (requested_tpset.ds_outcome) {
         case TPSetBuffer::kEmpty:
-          TLOG() << get_name() << " Requested data (" << input_data_request.window_begin << ", "
+          TLOG() << get_name() << ": Requested data (" << input_data_request.window_begin << ", "
                  << input_data_request.window_end << ") not in buffer, which contains "
                  << m_tps_buffer->get_stored_size() << " TPSets between (" << m_tps_buffer->get_earliest_start_time()
                  << ", " << m_tps_buffer->get_latest_end_time() << "). Returning empty fragment.";
@@ -290,31 +295,31 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
           send_out_fragment(std::move(frag_out), sentCount, running_flag);
           break;
         case TPSetBuffer::kLate:
-          TLOG() << get_name() << " Requested data (" << input_data_request.window_begin << ", "
+          TLOG() << get_name() << ": Requested data (" << input_data_request.window_begin << ", "
                  << input_data_request.window_end << ") has not arrived in buffer, which contains "
                  << m_tps_buffer->get_stored_size() << " TPSets between (" << m_tps_buffer->get_earliest_start_time()
                  << ", " << m_tps_buffer->get_latest_end_time() << "). Holding request until more data arrives.";
           m_dr_on_hold.insert(std::make_pair(input_data_request, requested_tpset.txsets_in_window));
           break; // don't send anything yet. Wait for more data to arrived.
         case TPSetBuffer::kSuccess:
-          TLOG() << get_name() << " Sending requested data (" << input_data_request.window_begin << ", "
+          TLOG() << get_name() << ": Sending requested data (" << input_data_request.window_begin << ", "
                  << input_data_request.window_end << "), containing " << requested_tpset.txsets_in_window.size()
                  << " TPSets.";
 
           send_out_fragment(std::move(frag_out), sentCount, running_flag);
           break;
         default:
-          TLOG() << get_name() << " Data request failed!";
+          TLOG() << get_name() << ": Data request failed!";
       }
 
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       // skip if no data request in the queue
       continue;
     }
-  }
+  } // end while(running_flag.load())
 
-  TLOG() << ": Exiting the do_work() method: received " << addedCount << " TPs and " << requestedCount
-         << " data requests. Sent " << sentCount << " fragments";
+  TLOG() << get_name() << ": Exiting the do_work() method: received " << addedCount << " Sets and " << requestedCount
+         << " data requests. " << addFailedCount << " Sets failed to add. Sent " << sentCount << " fragments";
 
   TLOG() << get_name() << ": Exiting do_work() method";
 }
