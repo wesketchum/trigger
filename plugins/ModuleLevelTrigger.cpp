@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace dunedaq {
@@ -200,7 +201,8 @@ ModuleLevelTrigger::send_trigger_decisions()
       dfmessages::TriggerDecision decision = create_decision(tc);
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
-                    << decision.trigger_timestamp << " number of links " << decision.components.size();
+                    << decision.trigger_timestamp << " number of links " << decision.components.size()
+                    << " based on TC of type " << static_cast<std::underlying_type_t<decltype(tc.type)>>(tc.type);
 
       // Have to notify the token manager of the trigger _before_
       // actually pushing it, otherwise the DF could reply with

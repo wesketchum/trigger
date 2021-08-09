@@ -16,6 +16,7 @@
 #include "../../src/trigger/TPSetBuffer.hpp"
 #include "trigger/TPSet.hpp"
 #include "trigger/tpsetbuffercreator/Structs.hpp"
+#include "trigger/tpsetbuffercreator/Nljs.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -65,6 +66,9 @@ private:
   void do_work(std::atomic<bool>&);
 
   // Configuration
+
+  tpsetbuffercreator::Conf m_conf;
+
   std::chrono::milliseconds m_queueTimeout;
 
   using tps_source_t = dunedaq::appfwk::DAQSource<trigger::TPSet>;
