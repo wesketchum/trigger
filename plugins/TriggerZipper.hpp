@@ -12,11 +12,14 @@
 
 #include "dataformats/GeoID.hpp"
 
+#include "trigger/Issues.hpp"
 #include "trigger/triggerzipper/Nljs.hpp"
 #include "zipper.hpp"
 
 #include <chrono>
 #include <list>
+#include <logging/Logging.hpp>
+#include <sstream>
 
 const char* inqs_name = "inputs";
 const char* outq_name = "output";
@@ -75,6 +78,8 @@ public:
 
   size_t m_n_received{ 0 };
   size_t m_n_sent{ 0 };
+  size_t m_n_tardy{ 0 };
+  std::map<dataformats::GeoID, size_t> m_tardy_counts;
 
   explicit TriggerZipper(const std::string& name)
     : DAQModule(name)
@@ -114,6 +119,8 @@ public:
   {
     m_n_received = 0;
     m_n_sent = 0;
+    m_n_tardy = 0;
+    m_tardy_counts.clear();
     m_running.store(true);
     m_thread = std::thread(&TriggerZipper::worker, this);
   }
@@ -124,7 +131,13 @@ public:
     m_thread.join();
     flush();
     m_zm.clear();
-    TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets.";
+    TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets. " << m_n_tardy << " were tardy";
+    std::stringstream ss;
+    ss << std::endl;
+    for(auto& [id, n]: m_tardy_counts){
+      ss << id << "\t" << n << std::endl;
+    }
+    TLOG_DEBUG(1) << "Tardy counts:" << ss.str();
   }
 
   // thread worker
@@ -152,11 +165,15 @@ public:
       return false;
     }
 
+    if(!m_tardy_counts.count(tset.origin)) m_tardy_counts[tset.origin]=0;
+
     bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
 
     if (!accepted) {
-      // TODO PAR 2021-08-03: We get here if we received a tardy input
-      // set, so we should emit an ers warning
+      ++m_n_tardy;
+      ++m_tardy_counts[tset.origin];
+
+      ers::warning(TardyInputSet(ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
       m_cache.pop_front(); // vestigial
     }
     drain();

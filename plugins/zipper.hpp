@@ -111,6 +111,8 @@ public:
    */
   void set_max_latency(duration_t max_latency) { latency = max_latency; }
 
+  ordering_t get_origin() const { return origin; }
+
   /**
      Clear the zipper merge buffer.
   */
