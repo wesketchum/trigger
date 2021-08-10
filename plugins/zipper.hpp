@@ -118,6 +118,7 @@ public:
   {
     std::vector<node_t> got;
     drain_full(std::back_inserter(got));
+    streams.clear();
     origin = 0;
   }
 
