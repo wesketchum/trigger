@@ -77,6 +77,17 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        ((std::string)algorithm)
                        ((dataformats::timestamp_t)output_time)
                        ((dataformats::timestamp_t)last_sent_time))
+
+ERS_DECLARE_ISSUE_BASE(trigger,
+                       TardyInputSet,
+                       appfwk::GeneralDAQModuleIssue,
+                       "Tardy input set from region " << region << " element " << element
+                       << ". Set start time " << start_time << " but last sent time " << last_sent_time,
+                       ((std::string)name),
+                       ((uint16_t)region)
+                       ((uint32_t)element)
+                       ((dataformats::timestamp_t)start_time)
+                       ((dataformats::timestamp_t)last_sent_time))
 // clang-format on
 
 ERS_DECLARE_ISSUE_BASE(trigger,
