@@ -1,22 +1,16 @@
 # Set moo schema search path
-from appfwk.utils import acmd, mcmd, mspec
-import dunedaq.nwqueueadapters.networkobjectsender as nos
-import dunedaq.nwqueueadapters.queuetonetwork as qton
-import dunedaq.nwqueueadapters.networkobjectreceiver as nor
-import dunedaq.nwqueueadapters.networktoqueue as ntoq
-import dunedaq.appfwk.app as appfwk  # AddressedCmd,
-import dunedaq.rcif.cmd as rccmd  # AddressedCmd,
-import moo.otypes
+from dunedaq.env import get_moo_model_path
+import moo.io
+moo.io.default_load_path = get_moo_model_path()
+
 from os.path import exists, join
 from rich.console import Console
 from copy import deepcopy
 from collections import namedtuple, defaultdict
 import json
 import os
-from dunedaq.env import get_moo_model_path
-import moo.io
-moo.io.default_load_path = get_moo_model_path()
 
+import moo.otypes
 
 moo.otypes.load_types('rcif/cmd.jsonnet')
 moo.otypes.load_types('appfwk/cmd.jsonnet')
@@ -24,6 +18,15 @@ moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('nwqueueadapters/networktoqueue.jsonnet')
 moo.otypes.load_types('nwqueueadapters/queuetonetwork.jsonnet')
+
+from appfwk.utils import acmd, mcmd, mspec
+import dunedaq.nwqueueadapters.networkobjectsender as nos
+import dunedaq.nwqueueadapters.queuetonetwork as qton
+import dunedaq.nwqueueadapters.networkobjectreceiver as nor
+import dunedaq.nwqueueadapters.networktoqueue as ntoq
+import dunedaq.appfwk.app as appfwk  # AddressedCmd,
+import dunedaq.rcif.cmd as rccmd  # AddressedCmd,
+
 
 
 console = Console()

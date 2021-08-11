@@ -1,14 +1,16 @@
 # Set moo schema search path
-from ..util import module
-import dunedaq.trigger.triggerprimitivemaker as tpm
-import moo.otypes
 from dunedaq.env import get_moo_model_path
 import moo.io
 moo.io.default_load_path = get_moo_model_path()
 
+import moo.otypes
 
-moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet')
+from pprint import pprint
+pprint(moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet'))
 
+import dunedaq.trigger.triggerprimitivemaker as tpm
+
+from ..util import module
 
 # ===============================================================================
 
