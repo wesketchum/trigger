@@ -12,11 +12,14 @@
 
 #include "dataformats/GeoID.hpp"
 
+#include "trigger/Issues.hpp"
 #include "trigger/triggerzipper/Nljs.hpp"
 #include "zipper.hpp"
 
 #include <chrono>
 #include <list>
+#include <logging/Logging.hpp>
+#include <sstream>
 
 const char* inqs_name = "inputs";
 const char* outq_name = "output";
@@ -73,6 +76,11 @@ public:
   cache_type m_cache;
   seqno_type m_next_seqno{ 0 };
 
+  size_t m_n_received{ 0 };
+  size_t m_n_sent{ 0 };
+  size_t m_n_tardy{ 0 };
+  std::map<dataformats::GeoID, size_t> m_tardy_counts;
+
   explicit TriggerZipper(const std::string& name)
     : DAQModule(name)
     , m_zm()
@@ -81,8 +89,6 @@ public:
         register_command("conf",   &TriggerZipper<TSET>::do_configure);
         register_command("start",  &TriggerZipper<TSET>::do_start);
         register_command("stop",   &TriggerZipper<TSET>::do_stop);
-        register_command("pause",  &TriggerZipper<TSET>::do_pause);
-        register_command("resume", &TriggerZipper<TSET>::do_resume);
         register_command("scrap",  &TriggerZipper<TSET>::do_scrap);
     // clang-format on
   }
@@ -111,6 +117,10 @@ public:
 
   void do_start(const nlohmann::json& /*startobj*/)
   {
+    m_n_received = 0;
+    m_n_sent = 0;
+    m_n_tardy = 0;
+    m_tardy_counts.clear();
     m_running.store(true);
     m_thread = std::thread(&TriggerZipper::worker, this);
   }
@@ -120,41 +130,54 @@ public:
     m_running.store(false);
     m_thread.join();
     flush();
+    m_zm.clear();
+    TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets. " << m_n_tardy << " were tardy";
+    std::stringstream ss;
+    ss << std::endl;
+    for(auto& [id, n]: m_tardy_counts){
+      ss << id << "\t" << n << std::endl;
+    }
+    TLOG_DEBUG(1) << "Tardy counts:" << ss.str();
   }
-
-  void do_pause(const nlohmann::json& /*pauseobj*/)
-  {
-    // fixme: need a 2nd flag?
-    m_running.store(false);
-  }
-
-  void do_resume(const nlohmann::json& /*resumeobj*/) { m_running.store(true); }
 
   // thread worker
   void worker()
   {
-    while (m_running.load()) {
-      proc_one();
+    while (true) {
+      // Once we've received a stop command, keep reading the input
+      // queue until there's nothing left on it
+      if (!proc_one() && !m_running.load()) {
+        break;
+      }
     }
   }
 
-  void proc_one()
+  bool proc_one()
   {
     m_cache.emplace_front(); // to be filled
     auto& tset = m_cache.front();
     try {
       m_inq->pop(tset, std::chrono::milliseconds(10));
+      ++m_n_received;
     } catch (appfwk::QueueTimeoutExpired&) {
       m_cache.pop_front(); // vestigial
       drain();
-      return;
+      return false;
     }
 
+    if(!m_tardy_counts.count(tset.origin)) m_tardy_counts[tset.origin]=0;
+
     bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
+
     if (!accepted) {
+      ++m_n_tardy;
+      ++m_tardy_counts[tset.origin];
+
+      ers::warning(TardyInputSet(ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
       m_cache.pop_front(); // vestigial
     }
     drain();
+    return true;
   }
 
   void send_out(std::vector<node_type>& got)
@@ -170,6 +193,7 @@ public:
 
       try {
         m_outq->push(tset, std::chrono::milliseconds(10));
+        ++m_n_sent;
       } catch (const dunedaq::appfwk::QueueTimeoutExpired& err) {
         // our output queue is stuffed.  should more be done
         // here than simply complain and drop?
@@ -206,5 +230,5 @@ public:
 
 #endif
 // Local Variables:
-// c-basic-offset: 4
+// c-basic-offset: 2
 // End:
