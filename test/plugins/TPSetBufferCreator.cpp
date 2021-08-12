@@ -117,6 +117,8 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
     }
   }
 
+  m_tps_buffer->clear_buffer(); // emptying buffer
+
   TLOG() << get_name() << ": Exiting do_stop() method : sent " << sentCount << " incomplete fragments";
 }
 

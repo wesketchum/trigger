@@ -35,6 +35,7 @@ public:
   virtual ~BufferManager() {}
 
   void set_buffer_size(long unsigned int size) { m_buffer_max_size = size; }
+  void clear_buffer() { m_txset_buffer.clear(); }
   long unsigned int get_buffer_size() { return m_buffer_max_size; }
   long unsigned int get_stored_size() { return m_txset_buffer.size(); }
 
