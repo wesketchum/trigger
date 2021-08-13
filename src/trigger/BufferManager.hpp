@@ -54,8 +54,7 @@ public:
     {
       auto firstIt = m_txset_buffer.begin();
       m_txset_buffer.erase(firstIt);
-      firstIt++;
-      m_buffer_earliest_start_time = (*firstIt).start_time;
+      m_buffer_earliest_start_time = m_txset_buffer.begin().start_time;
     }
     if ((m_buffer_earliest_start_time == 0) || (txs.start_time < m_buffer_earliest_start_time))
       m_buffer_earliest_start_time = txs.start_time;
