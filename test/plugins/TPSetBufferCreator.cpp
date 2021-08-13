@@ -94,7 +94,7 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
   TLOG() << get_name() << " successfully stopped";
 
   size_t sentCount = 0;
-  TPSetBuffer::data_request_output requested_tpset;
+  TPSetBuffer::DataRequestOutput requested_tpset;
   if (m_dr_on_hold.size()) { // check if there are still data request on hold
     TLOG() << get_name() << ": On hold DRs: " << m_dr_on_hold.size();
     std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>>::iterator it = m_dr_on_hold.begin();
@@ -131,7 +131,7 @@ TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 std::unique_ptr<dataformats::Fragment>
-TPSetBufferCreator::convert_to_fragment(TPSetBuffer::data_request_output /* ds_output */,
+TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_output */,
                                         dfmessages::DataRequest input_data_request)
 {
   auto ret = std::make_unique<dataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
@@ -214,7 +214,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
 
     trigger::TPSet input_tpset;
     dfmessages::DataRequest input_data_request;
-    TPSetBuffer::data_request_output requested_tpset;
+    TPSetBuffer::DataRequestOutput requested_tpset;
 
     // Block that receives TPSets and add them in buffer and check for pending data requests
     try {
@@ -253,7 +253,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
             // TLOG() << "Adding TPSet (sart_time="<<input_tpset.start_time <<" on DR on hold ("<<
             // it->first.window_begin  <<", "<< it->first.window_end  <<"). TPSet count: "<<it->second.size();
           }
-          if (it->first.window_end < input_tpset.start_time) { // If more TPSet aren't expected to arrive then push and remove peding data request
+          if (it->first.window_end < input_tpset.start_time) { // If more TPSet aren't expected to arrive then push and remove pending data request
             requested_tpset.txsets_in_window = it->second;
             std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
             TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
@@ -275,7 +275,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
     }
 
-    // Block that reveives data requests and return fragments from buffer
+    // Block that receives data requests and return fragments from buffer
     try {
       m_input_queue_dr->pop(input_data_request, std::chrono::milliseconds(0));
       requested_tpset =

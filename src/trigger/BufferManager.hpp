@@ -73,7 +73,7 @@ public:
     kSuccess
   };
 
-  struct data_request_output
+  struct DataRequestOutput
   {
     typename std::vector<BSET> txsets_in_window;
     DataRequestOutcome ds_outcome;
@@ -82,9 +82,9 @@ public:
   /**
    * return a vector of all the TxSets in the buffer that overlap with [start_time, end_time]
    */
-  data_request_output get_txsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
+  DataRequestOutput get_txsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
   {
-    BufferManager::data_request_output ds_out;
+    BufferManager::DataRequestOutput ds_out;
     std::vector<BSET> txsets_output;
 
     if (end_time < m_buffer_earliest_start_time) {

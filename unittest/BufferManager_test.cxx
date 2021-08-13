@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(Basics)
   BOOST_CHECK_EQUAL(bm.add(input_tpset), false);
 
   // Generate a data request, but not available in buffer anymore
-  trigger::TPSetBuffer::data_request_output requested_tpset;
+  trigger::TPSetBuffer::DataRequestOutput requested_tpset;
   dfmessages::DataRequest input_data_request;
   input_data_request.window_begin = 100;
   input_data_request.window_end = 120;
