@@ -41,7 +41,9 @@ daq_codegen(
   triggercandidatemaker.jsonnet
   triggerdecisionmaker.jsonnet
   triggerzipper.jsonnet
+  tpsetbuffercreator.jsonnet
   TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 ##############################################################################
 # Plugins
@@ -59,6 +61,7 @@ daq_add_plugin(TPSetSink duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTPCreatorHeartbeatMaker duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(TPSetBufferCreator duneDAQModule LINK_LIBRARIES trigger TEST)
 
 daq_add_plugin(TPZipper duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TAZipper duneDAQModule LINK_LIBRARIES trigger)
@@ -89,6 +92,7 @@ daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRA
 
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 daq_add_unit_test(TxSet_test                     LINK_LIBRARIES trigger)
+daq_add_unit_test(BufferManager_test             LINK_LIBRARIES trigger)
 daq_add_unit_test(TriggerZipper_test LINK_LIBRARIES trigger)
 
 ##############################################################################
