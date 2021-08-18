@@ -13,7 +13,7 @@
 #include "dfmessages/DataRequest.hpp"
 #include "dfmessages/HSIEvent.hpp"
 
-#include "../../src/trigger/TPSetBuffer.hpp"
+#include "trigger/TPSetBuffer.hpp"
 #include "trigger/TPSet.hpp"
 #include "trigger/tpsetbuffercreator/Structs.hpp"
 #include "trigger/tpsetbuffercreator/Nljs.hpp"
