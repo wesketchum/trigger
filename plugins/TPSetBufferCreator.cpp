@@ -235,7 +235,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
         ++addFailedCount;
       }
 
-      if (m_dr_on_hold.size()) { // check if new data is part of data request on hold
+      if (!m_dr_on_hold.empty()) { // check if new data is part of data request on hold
 
         // TLOG() << "On hold DRs: "<<m_dr_on_hold.size();
 
@@ -254,23 +254,22 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
             // it->first.window_begin  <<", "<< it->first.window_end  <<"). TPSet count: "<<it->second.size();
           }
           if (it->first.window_end < input_tpset.start_time) { // If more TPSet aren't expected to arrive then push and remove pending data request
-            requested_tpset.txsets_in_window = it->second;
+            requested_tpset.txsets_in_window = std::move(it->second);
             std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
             TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
                    << (it->first).window_end << "), containing " << requested_tpset.txsets_in_window.size()
                    << " TPSets.";
-            if (!requested_tpset.txsets_in_window.size()) {
+            if (requested_tpset.txsets_in_window.empty()) {
               frag_out->set_error_bit(dataformats::FragmentErrorBits::kDataNotFound, true);
             }
 
             send_out_fragment(std::move(frag_out), sentCount, running_flag);
-            m_dr_on_hold.erase(it);
-            it--;
+            it = m_dr_on_hold.erase(it);
             continue;
           }
           it++;
         }
-      } // end if(m_dr_on_hold.size())
+      } // end if(!m_dr_on_hold.empty())
 
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
     }
