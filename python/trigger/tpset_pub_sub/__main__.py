@@ -21,6 +21,10 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
 
     from .. import util
 
+    ############################################################################
+    #
+    # Step 1: generate the dicts of modules for each app
+    
     console.log("Loading tpset_producer config generator")
     from . import tpset_producer_gen
     console.log("Loading tpset_consumer config generator")
@@ -36,6 +40,11 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
 
     modules_consumer2 = tpset_consumer_gen.generate()
 
+    ############################################################################
+    #
+    # Step 2: Create dict of apps. App consists of
+    # list-of-connected-modules and a host to run on
+
     apps = {"tpset_producer": util.app(modules=modules_producer,
                                        host=producer_host),
             "tpset_consumer1": util.app(modules=modules_consumer1,
@@ -44,6 +53,13 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
                                         host=consumer2_host),
             }
 
+    ############################################################################
+    #
+    # Step 3: Connect outputs of one app to inputs of another. Here we
+    # connect the output `tpset_sink` in the `tpm` module of the
+    # `tpset_producer` app to `tpset_source` in the `tps_sink` module
+    # of each of the `tpset_consumer` apps, via a pub/sub connection
+
     app_connections = {
         "tpset_producer.tpm.tpset_sink": util.publisher(msg_type="dunedaq::trigger::TPSet",
                                                         msg_module_name="TPSetNQ",
@@ -51,6 +67,12 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
                                                                      "tpset_consumer2.tps_sink.tpset_source"])
     }
 
+    ############################################################################
+    #
+    # Step 4: Create the json files for nanorc from the lists of
+    # modules and the connections between modules. The function
+    # assigns ports and creates the necessary N2Q/Q2N pairs for the
+    # connections between apps
     util.make_apps_json(apps, app_connections, json_dir)
 
     console.log(f"config generated in {json_dir}")

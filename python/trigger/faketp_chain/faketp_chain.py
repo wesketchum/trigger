@@ -69,6 +69,12 @@ def generate(
 
         CLOCK_SPEED_HZ: int = 50000000
 ):
+    """Create a dict of name -> `module` object for the modules in this
+    app. For each module, we specify what its output connections (ie,
+    DAQSinks) are connected to. The functions in util.py use the
+    connections to infer the queues that must be created and the
+    start/stop order (based on a topological sort of the module/queue
+    graph)"""
 
     # Derived parameters
     CLOCK_FREQUENCY_HZ = CLOCK_SPEED_HZ / SLOWDOWN_FACTOR
@@ -125,6 +131,10 @@ def generate(
                             conf=mlt.ConfParams(links=[],
                                                 initial_token_count=TOKEN_COUNT))
 
+    # The connection from FakeDataFlow back to the mlt induces a cycle
+    # in the module/queue graph, so we specify the connection with a
+    # preceding "!" to tell util.py to ignore this connection for the
+    # purposes of start/stop command ordering
     modules["fdf"] = module(plugin="FakeDataFlow",
                             connections={
                                 "!trigger_complete_sink": "mlt.token_source"},

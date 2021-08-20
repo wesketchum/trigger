@@ -24,6 +24,13 @@ def generate(
         INPUT_FILES: str,
         SLOWDOWN_FACTOR: float
 ):
+    """Create a dict of name -> `module` object for the modules in this
+    app. For each module, we specify what its output connections (ie,
+    DAQSinks) are connected to. The functions in util.py use the
+    connections to infer the queues that must be created and the
+    start/stop order (based on a topological sort of the module/queue
+    graph)"""
+    
     # Derived parameters
     CLOCK_FREQUENCY_HZ = 50000000 / SLOWDOWN_FACTOR
 
