@@ -42,6 +42,7 @@ daq_codegen(
   triggerdecisionmaker.jsonnet
   triggerzipper.jsonnet
   tpsetbuffercreator.jsonnet
+  tasetsink.jsonnet
   TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
@@ -58,6 +59,7 @@ daq_add_plugin(ModuleLevelTrigger duneDAQModule LINK_LIBRARIES trigger timinglib
 daq_add_plugin(IntervalTriggerCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
 daq_add_plugin(IntervalTCCreator duneDAQModule LINK_LIBRARIES trigger timinglibs::timinglibs TEST)
 daq_add_plugin(TPSetSink duneDAQModule LINK_LIBRARIES trigger TEST)
+daq_add_plugin(TASetSink duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTPCreatorHeartbeatMaker duneDAQModule LINK_LIBRARIES trigger)
