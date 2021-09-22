@@ -47,7 +47,7 @@ class module:
         self.plugin=plugin
         self.conf=conf
         self.connections=connections
-    
+
 connection = namedtuple("connection", ['to', 'queue_type', 'queue_size', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
 
 class direction(Enum):
@@ -78,13 +78,13 @@ class modulegraph:
 
     def set_from_dict(self, module_dict):
         self.modules=module_dict
-        
+
     def module_names(self):
         return self.modules.keys()
 
     def module_list(self):
         return self.modules.values()
-    
+
     def add_module(self, name, **kwargs):
         mod=module(**kwargs)
         self.modules[name]=mod
@@ -101,7 +101,7 @@ class modulegraph:
         if inout is not None:
             return [ e[0] for e in self.endpoints.items() if e[1].inout==inout ]
         return self.endpoints.keys()
-    
+
 
 app = namedtuple("app", ['modulegraph', 'host'], defaults=({}, "localhost"))
 
@@ -337,12 +337,15 @@ def resolve_endpoint(app, external_name, inout):
 def add_network(app_name, app, app_connections, network_endpoints):
     modules_with_network = deepcopy(app.modulegraph.modules)
 
+    unconnected_endpoints = set(app.modulegraph.endpoints.keys())
+
     for conn_name, conn in app_connections.items():
         from_app, from_endpoint = conn_name.split(".", maxsplit=1)
 
         if from_app == app_name:
+            unconnected_endpoints.remove(from_endpoint)
             from_endpoint = resolve_endpoint(app, from_endpoint, direction.OUT)
-            
+
             # We're a publisher or sender. Make the queue to network
             qton_name = conn_name.replace(".", "_")
             modules_with_network[qton_name] = module(plugin="QueueToNetwork",
@@ -357,8 +360,9 @@ def add_network(app_name, app, app_connections, network_endpoints):
         if hasattr(conn, "subscribers"):
             for to_conn in conn.subscribers:
                 to_app, to_endpoint = to_conn.split(".", maxsplit=1)
-                
+
                 if app_name == to_app:
+                    unconnected_endpoints.remove(to_endpoint)
                     to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
                     ntoq_name = to_conn.replace(".", "_")
                     modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
@@ -375,6 +379,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
             # We're a receiver. Add a NetworkToQueue of receiver type
             #
             # TODO: DRY
+            unconnected_endpoints.remove(to_endpoint)
             to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
             ntoq_name = to_conn.replace(".", "_")
             modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
@@ -386,6 +391,12 @@ def add_network(app_name, app, app_connections, network_endpoints):
                                                                                              address=network_endpoints[conn_name],
                                                                                              subscriptions=["foo"]))
                                                      )
+
+    if unconnected_endpoints:
+        # TODO: Use proper logging
+        print(f"Warning: the following endpoints of {app_name} were not connected to anything: {unconnected_endpoints}")
+
+
     return modules_with_network
 
 
