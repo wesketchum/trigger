@@ -10,7 +10,7 @@ pprint(moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet'))
 
 import dunedaq.trigger.triggerprimitivemaker as tpm
 
-from ..util import module
+from ..util import module, modulegraph, direction
 
 # ===============================================================================
 
@@ -31,4 +31,7 @@ def generate(
                       )
     }
 
-    return modules
+    mgraph = modulegraph(modules)
+    mgraph.add_endpoint("tpsets_out", "tpm.tpset_sink", direction.OUT)
+    
+    return mgraph

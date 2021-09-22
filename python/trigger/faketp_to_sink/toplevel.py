@@ -27,7 +27,7 @@ def cli(slowdown_factor, input_file, json_dir):
         SLOWDOWN_FACTOR=slowdown_factor,
     )
 
-    apps = {"faketp": util.app(modules=modules_faketp,
+    apps = {"faketp": util.app(modulegraph=modules_faketp,
                                host="localhost")
             }
 

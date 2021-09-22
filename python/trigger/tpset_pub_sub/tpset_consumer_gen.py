@@ -6,15 +6,17 @@ moo.io.default_load_path = get_moo_model_path()
 # Load configuration types
 import moo.otypes
 
-from ..util import module
+from ..util import module, modulegraph, direction
 
 # ===============================================================================
 
-def generate(
-):
+def generate():
     modules = {
         "tps_sink": module(plugin="TPSetSink",
                            conf=None,
                            connections={})
     }
-    return modules
+    mgraph = modulegraph(modules)
+    mgraph.add_endpoint("tpsets_in", "tps_sink.tpset_source", direction.IN)
+    
+    return mgraph

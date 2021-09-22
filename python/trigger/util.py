@@ -9,6 +9,7 @@ from copy import deepcopy
 from collections import namedtuple, defaultdict
 import json
 import os
+from enum import Enum
 
 import moo.otypes
 
@@ -27,8 +28,6 @@ import dunedaq.nwqueueadapters.networktoqueue as ntoq
 import dunedaq.appfwk.app as appfwk  # AddressedCmd,
 import dunedaq.rcif.cmd as rccmd  # AddressedCmd,
 
-
-
 console = Console()
 
 ########################################################################
@@ -41,9 +40,70 @@ console = Console()
 # consistent either way
 
 # TODO: Understand whether extra_commands is actually needed. Seems like "resume" is already being sent to everyone?
-module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands'], defaults=([], [], []))
+#module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands'], defaults=(None, [], []))
 
-app = namedtuple("app", ['modules', 'host'], defaults=({}, "localhost"))
+class module:
+    def __init__(self, plugin, conf=None, connections=[]):
+        self.plugin=plugin
+        self.conf=conf
+        self.connections=connections
+    
+connection = namedtuple("connection", ['to', 'queue_type', 'queue_size', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
+
+class direction(Enum):
+    IN = 1
+    OUT = 2
+
+endpoint = namedtuple("endpoint", [ 'external_name', 'internal_name', 'direction' ])
+
+class modulegraph:
+    """A set of modules and connections between them.
+
+    modulegraph holds a dictionary of modules, with each module
+    knowing its (outgoing) connections to other modules in the
+    modulegraph.
+
+    Connections to other modulegraphs (which may be in the same
+    application or a different application) are represented by
+    `endpoints`. The endpoint's `external_name` is the "public" name
+    of the connection, which other modulegraphs should use. The
+    endpoint's `internal_name` specifies the particular module and
+    sink/source name which the endpoint is connected to, which may be
+    changed without affecting other applications.
+
+    """
+    def __init__(self, modules=dict(), endpoints=dict()):
+        self.modules=modules
+        self.endpoints=endpoints
+
+    def set_from_dict(module_dict):
+        self.modules=module_dict
+        
+    def module_names(self):
+        return self.modules.keys()
+
+    def module_list(self):
+        return self.modules.values()
+    
+    def add_module(self, name, **kwargs):
+        mod=module(**kwargs)
+        self.modules[name]=mod
+        return mod
+
+    def add_connection(self, from_endpoint, to_endpoint):
+        from_mod, from_name=from_endpoint.split(".")
+        self.modules[from_mod].connections[from_name]=to_endpoint
+
+    def add_endpoint(self, external_name, internal_name, inout):
+        self.endpoints[external_name]=endpoint(external_name, internal_name, inout)
+
+    def endpoint_names(self, inout=None):
+        if inout is not None:
+            return [ e[0] for e in self.endpoints.items() if e[1].inout==inout ]
+        return self.endpoints.keys()
+    
+
+app = namedtuple("app", ['modulegraph', 'host'], defaults=({}, "localhost"))
 
 publisher = namedtuple(
     "publisher", ['msg_type', 'msg_module_name', 'subscribers'])
@@ -264,13 +324,25 @@ def assign_network_endpoints(apps, app_connections):
     return endpoints
 
 
+def resolve_endpoint(app, external_name, inout):
+    if external_name in app.modulegraph.endpoints:
+        e=app.modulegraph.endpoints[external_name]
+        if e.direction==inout:
+            return e.internal_name
+        else:
+            raise KeyError(f"Endpoint {external_name} has direction {e.direction}, but requested direction was {inout}")
+    else:
+        raise KeyError(f"Endpoint {external_name} not found")
+
 def add_network(app_name, app, app_connections, network_endpoints):
-    modules_with_network = deepcopy(app.modules)
+    modules_with_network = deepcopy(app.modulegraph.modules)
 
     for conn_name, conn in app_connections.items():
         from_app, from_endpoint = conn_name.split(".", maxsplit=1)
 
         if from_app == app_name:
+            from_endpoint = resolve_endpoint(app, from_endpoint, direction.OUT)
+            
             # We're a publisher or sender. Make the queue to network
             qton_name = conn_name.replace(".", "_")
             modules_with_network[qton_name] = module(plugin="QueueToNetwork",
@@ -285,7 +357,9 @@ def add_network(app_name, app, app_connections, network_endpoints):
         if hasattr(conn, "subscribers"):
             for to_conn in conn.subscribers:
                 to_app, to_endpoint = to_conn.split(".", maxsplit=1)
+                
                 if app_name == to_app:
+                    to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
                     ntoq_name = to_conn.replace(".", "_")
                     modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                              connections={
@@ -301,6 +375,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
             # We're a receiver. Add a NetworkToQueue of receiver type
             #
             # TODO: DRY
+            to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
             ntoq_name = to_conn.replace(".", "_")
             modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                      connections={
@@ -338,7 +413,7 @@ def generate_boot(apps: list) -> dict:
                 "DUNEDAQ_SHARE_PATH": "getenv",
                 "LD_LIBRARY_PATH": "getenv",
                 "PATH": "getenv",
-                "DUNEDAQ_ERS_DEBUG_LEVEL": "getenv"
+                "DUNEDAQ_ERS_DEBUG_LEVEL": "getenv:-1"
             },
             "cmd": [
                 "CMD_FAC=rest://localhost:${APP_PORT}",

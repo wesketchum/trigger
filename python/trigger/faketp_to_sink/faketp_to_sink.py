@@ -1,13 +1,11 @@
 # Set moo schema search path
-from ..util import module
-import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
-import dunedaq.trigger.triggerzipper as tzip
-import dunedaq.trigger.triggerprimitivemaker as tpm
+from ..util import module, modulegraph
 import moo.otypes
 from pprint import pprint
 from dunedaq.env import get_moo_model_path
 import moo.io
 moo.io.default_load_path = get_moo_model_path()
+
 
 # Load configuration types
 
@@ -15,7 +13,9 @@ moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet')
 moo.otypes.load_types('trigger/triggerzipper.jsonnet')
 moo.otypes.load_types('trigger/faketpcreatorheartbeatmaker.jsonnet')
 
-# Import new types
+import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
+import dunedaq.trigger.triggerzipper as tzip
+import dunedaq.trigger.triggerprimitivemaker as tpm
 
 
 # ===============================================================================
@@ -66,4 +66,5 @@ def generate(
                          conf=None)
     })
 
-    return modules
+    mgraph = modulegraph(modules)
+    return mgraph
