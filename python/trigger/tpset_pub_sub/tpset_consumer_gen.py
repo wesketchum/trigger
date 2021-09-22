@@ -7,7 +7,7 @@ moo.io.default_load_path = get_moo_model_path()
 import moo.otypes
 
 from ..util import module, modulegraph, direction
-
+from ..util import connection as conn
 # ===============================================================================
 
 def generate():

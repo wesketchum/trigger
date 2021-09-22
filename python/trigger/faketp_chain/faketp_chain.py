@@ -87,13 +87,13 @@ def generate(
     import temptypes
 
     from ..util import module, modulegraph, direction
-
+    from ..util import connection as conn
     modules = {}
 
     for i, input_file in enumerate(INPUT_FILES):
         modules[f"tpm{i}"] = module(plugin="TriggerPrimitiveMaker",
                                     connections={
-                                        "tpset_sink": f"ftpchm{i}.tpset_source"},
+                                        "tpset_sink": conn(f"ftpchm{i}.tpset_source")},
                                     conf=tpm.ConfParams(filename=input_file,
                                                         number_of_loops=-1,  # Infinite
                                                         tpset_time_offset=0,
@@ -103,18 +103,18 @@ def generate(
                                                         region_id=0,
                                                         element_id=i))
         modules[f"ftpchm{i}"] = module(plugin="FakeTPCreatorHeartbeatMaker",
-                                       connections={"tpset_sink": "zip.input"},
+                                       connections={"tpset_sink": conn("zip.input")},
                                        conf=ftpchm.Conf(heartbeat_interval=50000))
 
     modules["zip"] = module(plugin="TPZipper",
-                            connections={"output": "tam.input"},
+                            connections={"output": conn("tam.input")},
                             conf=tzip.ConfParams(cardinality=len(INPUT_FILES),
                                                  max_latency_ms=1000,
                                                  region_id=0,
                                                  element_id=0))
 
     modules["tam"] = module(plugin="TriggerActivityMaker",
-                            connections={"output": "tcm.input"},
+                            connections={"output": conn("tcm.input")},
                             conf=tam.Conf(activity_maker=ACTIVITY_PLUGIN,
                                           geoid_region=0,  # Fake placeholder
                                           geoid_element=0,  # Fake placeholder
@@ -124,13 +124,13 @@ def generate(
 
     modules["tcm"] = module(plugin="TriggerCandidateMaker",
                             connections={
-                                "output": "mlt.trigger_candidate_source"},
+                                "output": conn("mlt.trigger_candidate_source")},
                             conf=tcm.Conf(candidate_maker=CANDIDATE_PLUGIN,
                                           candidate_maker_config=temptypes.CandidateConf(**CANDIDATE_CONFIG)))
 
     modules["mlt"] = module(plugin="ModuleLevelTrigger",
                             connections={
-                                "trigger_decision_sink": "fdf.trigger_decision_source"},
+                                "trigger_decision_sink": conn("fdf.trigger_decision_source")},
                             conf=mlt.ConfParams(links=[],
                                                 initial_token_count=TOKEN_COUNT))
 
@@ -140,7 +140,7 @@ def generate(
     # purposes of start/stop command ordering
     modules["fdf"] = module(plugin="FakeDataFlow",
                             connections={
-                                "!trigger_complete_sink": "mlt.token_source"},
+                                "trigger_complete_sink": conn("mlt.token_source", toposort=False)},
                             conf=fdf.ConfParams(hold_max_size=HOLD_MAX_SIZE,
                                                 hold_min_size=HOLD_MIN_SIZE,
                                                 hold_min_ms=HOLD_MIN_MS,

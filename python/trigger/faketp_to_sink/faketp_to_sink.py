@@ -1,5 +1,6 @@
 # Set moo schema search path
 from ..util import module, modulegraph
+from ..util import connection as conn
 import moo.otypes
 from pprint import pprint
 from dunedaq.env import get_moo_model_path
@@ -39,7 +40,7 @@ def generate(
     for i, input_file in enumerate(INPUT_FILES):
         modules[f"tpm{i}"] = module(plugin="TriggerPrimitiveMaker",
                                     connections={
-                                        "tpset_sink": f"ftpchm{i}.tpset_source"},
+                                        "tpset_sink": conn(f"ftpchm{i}.tpset_source")},
                                     conf=tpm.ConfParams(filename=input_file,
                                                         number_of_loops=-1,  # Infinite
                                                         tpset_time_offset=0,
@@ -49,12 +50,12 @@ def generate(
                                                         region_id=0,
                                                         element_id=i))
         modules[f"ftpchm{i}"] = module(plugin="FakeTPCreatorHeartbeatMaker",
-                                       connections={"tpset_sink": "zip.input"},
+                                       connections={"tpset_sink": conn("zip.input", queue_capacity=10000)},
                                        conf=ftpchm.Conf(heartbeat_interval=50000))
 
     modules.update({
         "zip": module(plugin="TPZipper",
-                      connections={"output": "tpsink.tpset_source"},
+                      connections={"output": conn("tpsink.tpset_source")},
                       conf=tzip.ConfParams(cardinality=len(INPUT_FILES),
                                            max_latency_ms=1000,
                                            region_id=0,

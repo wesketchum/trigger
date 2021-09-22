@@ -48,7 +48,7 @@ class module:
         self.conf=conf
         self.connections=connections
 
-connection = namedtuple("connection", ['to', 'queue_type', 'queue_size', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
+connection = namedtuple("connection", ['to', 'queue_kind', 'queue_capacity', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
 
 class direction(Enum):
     IN = 1
@@ -92,7 +92,7 @@ class modulegraph:
 
     def add_connection(self, from_endpoint, to_endpoint):
         from_mod, from_name=from_endpoint.split(".")
-        self.modules[from_mod].connections[from_name]=to_endpoint
+        self.modules[from_mod].connections[from_name]=connection(to_endpoint)
 
     def add_endpoint(self, external_name, internal_name, inout):
         self.endpoints[external_name]=endpoint(external_name, internal_name, inout)
@@ -131,12 +131,9 @@ def make_module_deps(module_dict):
     deps = {}
     for name, mod in module_dict.items():
         deps[name] = []
-        for upstream_name, downstream_endpoint in mod.connections.items():
-            # name beginning with "!" indicates that this connection
-            # should not be considered a dependency in the data flow
-            # graph. This allows us to break apparent cycles in the DAG
-            if upstream_name[0] != "!":
-                other_mod = downstream_endpoint.split(".")[0]
+        for upstream_name, downstream_connection in mod.connections.items():
+            if downstream_connection.toposort:
+                other_mod = downstream_connection.to.split(".")[0]
                 deps[name].append(other_mod)
     return deps
 
@@ -234,10 +231,11 @@ def make_command_data(modules):
 
     # Terminology: an "endpoint" is "module.name"
     for name, mod in modules.items():
-        for from_name, to_endpoint in mod.connections.items():
+        for from_name, downstream_connection in mod.connections.items():
             # The name might be prefixed with a "!" to indicate that it doesn't participate in dependencies. Remove that here because "!" is illegal in actual queue names
             from_name = from_name.replace("!", "")
             from_endpoint = ".".join([name, from_name])
+            to_endpoint=downstream_connection.to
             to_mod, to_name = to_endpoint.split(".")
             queue_inst = f"{from_endpoint}_to_{to_endpoint}".replace(".", "")
             # Is there already a queue connecting either endpoint? If so, we reuse it
@@ -260,7 +258,7 @@ def make_command_data(modules):
             if not (found_from or found_to):
                 print("Creating queue with name", queue_inst)
                 queue_specs.append(appfwk.QueueSpec(
-                    inst=queue_inst, kind='FollyMPMCQueue', capacity=1000))
+                    inst=queue_inst, kind=downstream_connection.queue_kind, capacity=downstream_connection.queue_capacity))
 
             if not found_from:
                 app_qinfos[name].append(appfwk.QueueInfo(
@@ -350,7 +348,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
             qton_name = conn_name.replace(".", "_")
             modules_with_network[qton_name] = module(plugin="QueueToNetwork",
                                                      connections={
-                                                         "input": from_endpoint},
+                                                         "input": connection(from_endpoint)},
                                                      conf=qton.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
                                                                     sender_config=nos.Conf(ipm_plugin_type="ZmqPublisher" if type(conn) == publisher else "ZmqSender",
@@ -367,7 +365,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
                     ntoq_name = to_conn.replace(".", "_")
                     modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                              connections={
-                                                                 "output": to_endpoint},
+                                                                 "output": connection(to_endpoint)},
                                                              conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                             msg_module_name=conn.msg_module_name,
                                                                             receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
@@ -384,7 +382,7 @@ def add_network(app_name, app, app_connections, network_endpoints):
             ntoq_name = to_conn.replace(".", "_")
             modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                      connections={
-                                                         "output": to_endpoint},
+                                                         "output": connection(to_endpoint)},
                                                      conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
                                                                     receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
