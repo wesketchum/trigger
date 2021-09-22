@@ -39,7 +39,7 @@ def cli(slowdown_factor, input_file,
     )
 
     apps = {
-        "faketp": util.app(modules=modules_faketp,
+        "faketp": util.app(modulegraph=modules_faketp,
                            host="localhost")
     }
 

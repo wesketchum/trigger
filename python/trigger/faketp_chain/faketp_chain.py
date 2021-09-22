@@ -1,12 +1,4 @@
 # Set moo schema search path
-import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
-import dunedaq.trigger.triggerzipper as tzip
-import dunedaq.trigger.fakedataflow as fdf
-import dunedaq.trigger.moduleleveltrigger as mlt
-import dunedaq.trigger.triggercandidatemaker as tcm
-import dunedaq.trigger.triggeractivitymaker as tam
-import dunedaq.trigger.triggerprimitivemaker as tpm
-import moo.otypes
 from dunedaq.env import get_moo_model_path
 import moo.io
 moo.io.default_load_path = get_moo_model_path()
@@ -23,6 +15,14 @@ moo.otypes.load_types('trigger/faketpcreatorheartbeatmaker.jsonnet')
 
 # Import new types
 
+import dunedaq.trigger.faketpcreatorheartbeatmaker as ftpchm
+import dunedaq.trigger.triggerzipper as tzip
+import dunedaq.trigger.fakedataflow as fdf
+import dunedaq.trigger.moduleleveltrigger as mlt
+import dunedaq.trigger.triggercandidatemaker as tcm
+import dunedaq.trigger.triggeractivitymaker as tam
+import dunedaq.trigger.triggerprimitivemaker as tpm
+import moo.otypes
 
 # FIXME maybe one day, triggeralgs will define schemas... for now allow a dictionary of 4byte int, 4byte floats, and strings
 moo.otypes.make_type(schema='number', dtype='i4',
@@ -76,6 +76,9 @@ def generate(
     start/stop order (based on a topological sort of the module/queue
     graph)"""
 
+    if not INPUT_FILES:
+        raise ValueError("Empty list of input files")
+    
     # Derived parameters
     CLOCK_FREQUENCY_HZ = CLOCK_SPEED_HZ / SLOWDOWN_FACTOR
 
@@ -83,7 +86,7 @@ def generate(
     make_moo_record(CANDIDATE_CONFIG, 'CandidateConf', 'temptypes')
     import temptypes
 
-    from ..util import module
+    from ..util import module, modulegraph, direction
 
     modules = {}
 
@@ -144,4 +147,5 @@ def generate(
                                                 release_randomly_prob=RELEASE_RANDOMLY_PROB,
                                                 forget_decision_prob=FORGET_DECISION_PROB,
                                                 hold_decision_prob=HOLD_DECISION_PROB))
-    return modules
+    mgraph = modulegraph(modules)
+    return mgraph
