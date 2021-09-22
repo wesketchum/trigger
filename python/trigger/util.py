@@ -72,11 +72,11 @@ class modulegraph:
     changed without affecting other applications.
 
     """
-    def __init__(self, modules=dict(), endpoints=dict()):
-        self.modules=modules
-        self.endpoints=endpoints
+    def __init__(self, modules=None, endpoints=None):
+        self.modules=modules if modules else dict()
+        self.endpoints=endpoints if endpoints else dict()
 
-    def set_from_dict(module_dict):
+    def set_from_dict(self, module_dict):
         self.modules=module_dict
         
     def module_names(self):
