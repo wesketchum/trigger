@@ -48,6 +48,9 @@ class module:
         self.conf=conf
         self.connections=connections
 
+    def __repr__(self):
+        return f"module(plugin={self.plugin}, conf={self.conf}, connections={self.connections})"
+
 connection = namedtuple("connection", ['to', 'queue_kind', 'queue_capacity', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
 
 class direction(Enum):
@@ -75,6 +78,9 @@ class modulegraph:
     def __init__(self, modules=None, endpoints=None):
         self.modules=modules if modules else dict()
         self.endpoints=endpoints if endpoints else dict()
+
+    def __repr__(self):
+        return f"modulegraph(modules={self.modules}, endpoints={self.endpoints})"
 
     def set_from_dict(self, module_dict):
         self.modules=module_dict
