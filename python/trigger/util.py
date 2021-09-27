@@ -513,7 +513,7 @@ def make_app_json(app_name, app_command_data, data_dir, verbose=False):
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
-def make_system_command_datas(apps, app_start_order):
+def make_system_command_datas(apps, app_start_order, verbose=False):
     system_command_datas=dict()
     
     for c in cmd_set:
@@ -527,6 +527,10 @@ def make_system_command_datas(apps, app_start_order):
             cfg['order'] = app_start_order[::-1]
             
         system_command_datas[c]=cfg
+        
+        if verbose:
+            console.log(cfg)
+
 
     return system_command_datas
 
