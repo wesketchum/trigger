@@ -513,57 +513,78 @@ def make_app_json(app_name, app_command_data, data_dir, verbose=False):
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
+def make_system_command_datas(apps, app_start_order):
+    system_command_datas=dict()
+    
+    for c in cmd_set:
+        console.log(f"Generating system {c} command")
+        cfg = {
+            "apps": {app_name: f'data/{app_name}_{c}' for app_name in apps.keys()}
+        }
+        if c == 'start':
+            cfg['order'] = app_start_order
+        elif c == 'stop':
+            cfg['order'] = app_start_order[::-1]
+            
+        system_command_datas[c]=cfg
+
+    return system_command_datas
+
 def make_apps_json(apps, app_connections, json_dir, verbose=False):
     """Make the json files for all of the applications"""
-
-    if exists(json_dir):
-        raise RuntimeError(f"Directory {json_dir} already exists")
-
-    data_dir = join(json_dir, 'data')
-    os.makedirs(data_dir)
 
     if verbose:
         console.log(f"Input applications:")
         console.log(apps)
 
-
+    # ==================================================================
     # Application-level generation
 
     endpoints = assign_network_endpoints(apps, app_connections, verbose)
-
+    app_command_datas = dict()
+    
     for app_name, app in apps.items():
         console.rule(f"Application generation for {app_name}")
         # Add the NetworkToQueue/QueueToNetwork modules that are needed
         modules_plus_network = add_network(
             app_name, app, app_connections, endpoints, verbose)
 
-        command_data = make_command_data(modules_plus_network, verbose)
+        app_command_datas[app_name] = make_command_data(modules_plus_network, verbose)
         if verbose:
-            console.log(command_data)
-        make_app_json(app_name, command_data, data_dir, verbose)
+            console.log(app_command_datas[app_name])
 
+    # ==================================================================
     # System-level generation
     console.rule("Starting system generation")
 
     app_deps = make_app_deps(apps, app_connections, verbose)
     start_order = toposort(app_deps)
-    stop_order = start_order[::-1]
 
-    for c in cmd_set:
-        console.log(f"Generating system {c} command")
-        with open(join(json_dir, f'{c}.json'), 'w') as f:
-            cfg = {
-                "apps": {app_name: f'data/{app_name}_{c}' for app_name in apps.keys()}
-            }
-            if c == 'start':
-                cfg['order'] = start_order
-            elif c == 'stop':
-                cfg['order'] = stop_order
+    system_command_datas=make_system_command_datas(apps, start_order)
+    
+    console.log(f"Generating boot json file")
+    boot = generate_boot(apps, verbose)
 
+    # ==================================================================
+    # JSON file creation
+    
+    if exists(json_dir):
+        raise RuntimeError(f"Directory {json_dir} already exists")
+
+    data_dir = join(json_dir, 'data')
+    os.makedirs(data_dir)
+
+    # Apps
+    for app_name, command_data in app_command_datas.items():
+        make_app_json(app_name, command_data, data_dir, verbose)
+
+    # System commands
+    for cmd, cfg in system_command_datas.items():
+        with open(join(json_dir, f'{cmd}.json'), 'w') as f:
             json.dump(cfg, f, indent=4, sort_keys=True)
 
-    console.log(f"Generating boot json file")
+    # boot.json
     with open(join(json_dir, 'boot.json'), 'w') as f:
-        cfg = generate_boot(apps, verbose)
-        json.dump(cfg, f, indent=4, sort_keys=True)
+        json.dump(boot, f, indent=4, sort_keys=True)
+
     console.log(f"MDAapp config generated in {json_dir}")
