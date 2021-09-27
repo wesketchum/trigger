@@ -497,8 +497,10 @@ def generate_boot(apps: list, verbose=False) -> dict:
         "exec": daq_app_specs
     }
 
-    # console.log("Boot data")
-    # console.log(boot)
+    if verbose:
+        console.log("Boot data")
+        console.log(boot)
+
     return boot
 
 
@@ -530,17 +532,18 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
     endpoints = assign_network_endpoints(apps, app_connections, verbose)
 
     for app_name, app in apps.items():
-        console.log(f"Application generation for {app_name}")
+        console.rule(f"Application generation for {app_name}")
         # Add the NetworkToQueue/QueueToNetwork modules that are needed
         modules_plus_network = add_network(
             app_name, app, app_connections, endpoints, verbose)
 
         command_data = make_command_data(modules_plus_network, verbose)
-
+        if verbose:
+            console.log(command_data)
         make_app_json(app_name, command_data, data_dir, verbose)
 
     # System-level generation
-    console.log("Starting system generation")
+    console.rule("Starting system generation")
 
     app_deps = make_app_deps(apps, app_connections, verbose)
     start_order = toposort(app_deps)
