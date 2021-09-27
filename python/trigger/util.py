@@ -566,7 +566,7 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
     app_deps = make_app_deps(apps, app_connections, verbose)
     start_order = toposort(app_deps)
 
-    system_command_datas=make_system_command_datas(apps, start_order)
+    system_command_datas=make_system_command_datas(apps, start_order, verbose)
     
     # ==================================================================
     # JSON file creation
