@@ -536,6 +536,27 @@ def make_system_command_datas(apps, app_start_order, verbose=False):
 
     return system_command_datas
 
+def write_json_files(app_command_datas, system_command_datas, json_dir, verbose=False):
+    console.rule("Creating JSON files")
+    
+    if exists(json_dir):
+        raise RuntimeError(f"Directory {json_dir} already exists")
+
+    data_dir = join(json_dir, 'data')
+    os.makedirs(data_dir)
+
+    # Apps
+    for app_name, command_data in app_command_datas.items():
+        make_app_json(app_name, command_data, data_dir, verbose)
+
+    # System commands
+    for cmd, cfg in system_command_datas.items():
+        with open(join(json_dir, f'{cmd}.json'), 'w') as f:
+            json.dump(cfg, f, indent=4, sort_keys=True)
+
+    console.log(f"System configuration generated in directory '{json_dir}'")
+
+
 def make_apps_json(apps, app_connections, json_dir, verbose=False):
     """Make the json files for all of the applications"""
 
@@ -561,6 +582,7 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
 
     # ==================================================================
     # System-level generation
+
     console.rule("Starting system generation")
 
     app_deps = make_app_deps(apps, app_connections, verbose)
@@ -570,24 +592,5 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
     
     # ==================================================================
     # JSON file creation
-    
-    if exists(json_dir):
-        raise RuntimeError(f"Directory {json_dir} already exists")
 
-    data_dir = join(json_dir, 'data')
-    os.makedirs(data_dir)
-
-    # Apps
-    for app_name, command_data in app_command_datas.items():
-        make_app_json(app_name, command_data, data_dir, verbose)
-
-    # System commands
-    for cmd, cfg in system_command_datas.items():
-        with open(join(json_dir, f'{cmd}.json'), 'w') as f:
-            json.dump(cfg, f, indent=4, sort_keys=True)
-
-    # boot.json
-    with open(join(json_dir, 'boot.json'), 'w') as f:
-        json.dump(boot, f, indent=4, sort_keys=True)
-
-    console.log(f"MDAapp config generated in {json_dir}")
+    write_json_files(app_command_datas, system_command_datas, json_dir, verbose)
