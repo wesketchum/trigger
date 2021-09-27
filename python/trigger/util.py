@@ -531,6 +531,8 @@ def make_system_command_datas(apps, app_start_order, verbose=False):
         if verbose:
             console.log(cfg)
 
+    console.log(f"Generating boot json file")
+    system_command_datas['boot'] = generate_boot(apps, verbose)
 
     return system_command_datas
 
@@ -566,9 +568,6 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
 
     system_command_datas=make_system_command_datas(apps, start_order)
     
-    console.log(f"Generating boot json file")
-    boot = generate_boot(apps, verbose)
-
     # ==================================================================
     # JSON file creation
     
