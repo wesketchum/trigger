@@ -153,7 +153,7 @@ def make_module_deps(module_dict):
     return deps
 
 
-def make_app_deps(apps, app_connections):
+def make_app_deps(apps, app_connections, verbose=False):
     """Produce a dictionary giving
     the dependencies between a set of applications, given their connections.
 
@@ -203,18 +203,18 @@ def toposort(deps_orig):
     deps = deepcopy(deps_orig)
     L = []
     S = set([name for name, d in deps.items() if d == []])
-    # print("Initial nodes with no incoming edges:")
-    # print(S)
+    # console.log("Initial nodes with no incoming edges:")
+    # console.log(S)
 
     while S:
         n = S.pop()
-        # print(f"Popped item {n} from S")
+        # console.log(f"Popped item {n} from S")
         L.append(n)
-        # print(f"List so far is {L}")
+        # console.log(f"List so far is {L}")
         tmp = [name for name, d in deps.items() if n in d]
-        # print(f"Nodes with edge from n: {tmp}")
+        # console.log(f"Nodes with edge from n: {tmp}")
         for m in tmp:
-            # print(f"Removing {n} from deps[{m}]")
+            # console.log(f"Removing {n} from deps[{m}]")
             deps[m].remove(n)
             if deps[m] == []:
                 S.add(m)
@@ -227,14 +227,22 @@ def toposort(deps_orig):
     return L
 
 
-def make_command_data(modules):
+def make_command_data(modules, verbose=False):
     """Convert a dictionary of `module`s into 'command data' suitable for
     feeding to nanorc. The needed queues are inferred from from
     connections between modules, as are the start and stop order of the
     modules"""
 
-    start_order = toposort(make_module_deps(modules))
+    module_deps = make_module_deps(modules)
+    if verbose:
+        console.log(f"inter-module dependencies are: {module_deps}")
+
+    start_order = toposort(module_deps)
     stop_order = start_order[::-1]
+
+    if verbose:
+        console.log(f"Inferred module start order is {start_order}")
+        console.log(f"Inferred module stop order is {stop_order}")
 
     command_data = {}
 
@@ -271,14 +279,19 @@ def make_command_data(modules):
                         queue_inst = qi.inst
 
             if not (found_from or found_to):
-                print("Creating queue with name", queue_inst)
+                if verbose:
+                    console.log(f"Creating {downstream_connection.queue_kind}({downstream_connection.queue_capacity}) queue with name {queue_inst} connecting {from_endpoint} to {to_endpoint}")
                 queue_specs.append(appfwk.QueueSpec(
                     inst=queue_inst, kind=downstream_connection.queue_kind, capacity=downstream_connection.queue_capacity))
 
             if not found_from:
+                if verbose:
+                    console.log(f"Adding output queue to module {name}: inst={queue_inst}, name={from_name}")
                 app_qinfos[name].append(appfwk.QueueInfo(
                     name=from_name, inst=queue_inst, dir="output"))
             if not found_to:
+                if verbose:
+                    console.log(f"Adding input queue to module {to_mod}: inst={queue_inst}, name={to_name}")
                 app_qinfos[to_mod].append(appfwk.QueueInfo(
                     name=to_name, inst=queue_inst, dir="input"))
 
@@ -311,7 +324,7 @@ def make_command_data(modules):
     return command_data
 
 
-def assign_network_endpoints(apps, app_connections):
+def assign_network_endpoints(apps, app_connections, verbose=False):
     """Given a set of applications and connections between them, come up
     with a list of suitable zeromq endpoints. Return value is a mapping
     from name of upstream end of connection to endpoint name.
@@ -333,21 +346,24 @@ def assign_network_endpoints(apps, app_connections):
         port = first_port + host_ports[host]
         host_ports[host] += 1
         endpoints[conn] = f"tcp://{host}:{port}"
-
+        if verbose:
+            console.log(f"Assigned endpoint {endpoints[conn]} for connection {conn}")
     return endpoints
 
 
-def resolve_endpoint(app, external_name, inout):
+def resolve_endpoint(app, external_name, inout, verbose=False):
     if external_name in app.modulegraph.endpoints:
         e=app.modulegraph.endpoints[external_name]
         if e.direction==inout:
+            if verbose:
+                console.log(f"Endpoint {external_name} resolves to {e.internal_name}")
             return e.internal_name
         else:
             raise KeyError(f"Endpoint {external_name} has direction {e.direction}, but requested direction was {inout}")
     else:
         raise KeyError(f"Endpoint {external_name} not found")
 
-def add_network(app_name, app, app_connections, network_endpoints):
+def add_network(app_name, app, app_connections, network_endpoints, verbose=False):
     modules_with_network = deepcopy(app.modulegraph.modules)
 
     unconnected_endpoints = set(app.modulegraph.endpoints.keys())
@@ -361,6 +377,8 @@ def add_network(app_name, app, app_connections, network_endpoints):
 
             # We're a publisher or sender. Make the queue to network
             qton_name = conn_name.replace(".", "_")
+            if verbose:
+                console.log(f"Adding QueueToNetwork named {qton_name} connected to {from_endpoint} in app {app_name}")
             modules_with_network[qton_name] = module(plugin="QueueToNetwork",
                                                      connections={
                                                          "input": connection(from_endpoint)},
@@ -378,6 +396,9 @@ def add_network(app_name, app, app_connections, network_endpoints):
                     unconnected_endpoints.remove(to_endpoint)
                     to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
                     ntoq_name = to_conn.replace(".", "_")
+                    if verbose:
+                        console.log(f"Adding NetworkToQueue named {ntoq_name} connected to {to_endpoint} in app {app_name}")
+
                     modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                              connections={
                                                                  "output": connection(to_endpoint)},
@@ -395,6 +416,8 @@ def add_network(app_name, app, app_connections, network_endpoints):
             unconnected_endpoints.remove(to_endpoint)
             to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
             ntoq_name = to_conn.replace(".", "_")
+            if verbose:
+                console.log(f"Adding NetworkToQueue named {ntoq_name} connected to {to_endpoint} in app {app_name}")
             modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
                                                      connections={
                                                          "output": connection(to_endpoint)},
@@ -407,13 +430,12 @@ def add_network(app_name, app, app_connections, network_endpoints):
 
     if unconnected_endpoints:
         # TODO: Use proper logging
-        print(f"Warning: the following endpoints of {app_name} were not connected to anything: {unconnected_endpoints}")
-
+        console.log(f"Warning: the following endpoints of {app_name} were not connected to anything: {unconnected_endpoints}")
 
     return modules_with_network
 
 
-def generate_boot(apps: list) -> dict:
+def generate_boot(apps: list, verbose=False) -> dict:
     daq_app_specs = {
         "daq_application_ups": {
             "comment": "Application profile based on a full dbt runtime environment",
@@ -483,14 +505,13 @@ def generate_boot(apps: list) -> dict:
 cmd_set = ["init", "conf", "start", "stop", "pause", "resume", "scrap"]
 
 
-def make_app_json(app_name, app_command_data, data_dir):
+def make_app_json(app_name, app_command_data, data_dir, verbose=False):
     """Make the json files for a single application"""
     for c in cmd_set:
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
-
-def make_apps_json(apps, app_connections, json_dir):
+def make_apps_json(apps, app_connections, json_dir, verbose=False):
     """Make the json files for all of the applications"""
 
     if exists(json_dir):
@@ -499,18 +520,18 @@ def make_apps_json(apps, app_connections, json_dir):
     data_dir = join(json_dir, 'data')
     os.makedirs(data_dir)
 
-    endpoints = assign_network_endpoints(apps, app_connections)
+    endpoints = assign_network_endpoints(apps, app_connections, verbose)
 
     for app_name, app in apps.items():
         # Add the NetworkToQueue/QueueToNetwork modules that are needed
         modules_plus_network = add_network(
-            app_name, app, app_connections, endpoints)
+            app_name, app, app_connections, endpoints, verbose)
 
-        command_data = make_command_data(modules_plus_network)
+        command_data = make_command_data(modules_plus_network, verbose)
 
-        make_app_json(app_name, command_data, data_dir)
+        make_app_json(app_name, command_data, data_dir, verbose)
 
-    app_deps = make_app_deps(apps, app_connections)
+    app_deps = make_app_deps(apps, app_connections, verbose)
     start_order = toposort(app_deps)
     stop_order = start_order[::-1]
 
@@ -528,6 +549,6 @@ def make_apps_json(apps, app_connections, json_dir):
 
     console.log(f"Generating boot json file")
     with open(join(json_dir, 'boot.json'), 'w') as f:
-        cfg = generate_boot(apps)
+        cfg = generate_boot(apps, verbose)
         json.dump(cfg, f, indent=4, sort_keys=True)
     console.log(f"MDAapp config generated in {json_dir}")
