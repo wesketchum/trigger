@@ -227,12 +227,14 @@ def toposort(deps_orig):
     return L
 
 
-def make_app_command_data(modules, verbose=False):
+def make_app_command_data(app, verbose=False):
     """Convert a dictionary of `module`s into 'command data' suitable for
     feeding to nanorc. The needed queues are inferred from from
     connections between modules, as are the start and stop order of the
     modules"""
 
+    modules = app.modulegraph.modules
+    
     module_deps = make_module_deps(modules)
     if verbose:
         console.log(f"inter-module dependencies are: {module_deps}")
@@ -432,7 +434,7 @@ def add_network(app_name, app, app_connections, network_endpoints, verbose=False
         # TODO: Use proper logging
         console.log(f"Warning: the following endpoints of {app_name} were not connected to anything: {unconnected_endpoints}")
 
-    return modules_with_network
+    app.modulegraph.modules = modules_with_network
 
 
 def generate_boot(apps: list, verbose=False) -> dict:
@@ -572,11 +574,12 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
     
     for app_name, app in apps.items():
         console.rule(f"Application generation for {app_name}")
-        # Add the NetworkToQueue/QueueToNetwork modules that are needed
-        modules_plus_network = add_network(
-            app_name, app, app_connections, endpoints, verbose)
+        # Add the NetworkToQueue/QueueToNetwork modules that are needed.
+        #
+        # NB: modifies app's modulegraph in-place
+        add_network(app_name, app, app_connections, endpoints, verbose)
 
-        app_command_datas[app_name] = make_app_command_data(modules_plus_network, verbose)
+        app_command_datas[app_name] = make_app_command_data(app, verbose)
         if verbose:
             console.log(app_command_datas[app_name])
 
