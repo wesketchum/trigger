@@ -227,7 +227,7 @@ def toposort(deps_orig):
     return L
 
 
-def make_command_data(modules, verbose=False):
+def make_app_command_data(modules, verbose=False):
     """Convert a dictionary of `module`s into 'command data' suitable for
     feeding to nanorc. The needed queues are inferred from from
     connections between modules, as are the start and stop order of the
@@ -549,7 +549,7 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
         modules_plus_network = add_network(
             app_name, app, app_connections, endpoints, verbose)
 
-        app_command_datas[app_name] = make_command_data(modules_plus_network, verbose)
+        app_command_datas[app_name] = make_app_command_data(modules_plus_network, verbose)
         if verbose:
             console.log(app_command_datas[app_name])
 
