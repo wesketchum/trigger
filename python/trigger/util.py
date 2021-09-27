@@ -520,9 +520,17 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
     data_dir = join(json_dir, 'data')
     os.makedirs(data_dir)
 
+    if verbose:
+        console.log(f"Input applications:")
+        console.log(apps)
+
+
+    # Application-level generation
+
     endpoints = assign_network_endpoints(apps, app_connections, verbose)
 
     for app_name, app in apps.items():
+        console.log(f"Application generation for {app_name}")
         # Add the NetworkToQueue/QueueToNetwork modules that are needed
         modules_plus_network = add_network(
             app_name, app, app_connections, endpoints, verbose)
@@ -531,11 +539,15 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
 
         make_app_json(app_name, command_data, data_dir, verbose)
 
+    # System-level generation
+    console.log("Starting system generation")
+
     app_deps = make_app_deps(apps, app_connections, verbose)
     start_order = toposort(app_deps)
     stop_order = start_order[::-1]
 
     for c in cmd_set:
+        console.log(f"Generating system {c} command")
         with open(join(json_dir, f'{c}.json'), 'w') as f:
             cfg = {
                 "apps": {app_name: f'data/{app_name}_{c}' for app_name in apps.keys()}
