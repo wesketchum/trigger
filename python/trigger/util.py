@@ -43,6 +43,11 @@ console = Console()
 #module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands'], defaults=(None, [], []))
 
 class module:
+    """An individual DAQModule within an application, along with its
+       configuration object and list of outgoing connections to other
+       modules
+    """
+    
     def __init__(self, plugin, conf=None, connections=[]):
         self.plugin=plugin
         self.conf=conf
@@ -126,6 +131,20 @@ publisher = namedtuple(
 sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
 
 class system:
+    """A full DAQ system consisting of multiple applications and the
+    connections between them. The `apps` member is a dictionary from
+    application name to app object, and the app_connections member is
+    a dictionary from upstream endpoint to publisher or sender object
+    representing the downstream endpoint(s). Endpoints are specified
+    as strings like app_name.endpoint_name.
+
+    An explicit mapping from upstream endpoint name to zeromq
+    connection string may be specified, but typical usage is to not
+    specify this, and leave the mapping to be automatically generated.
+
+    The same is true for application start order.
+
+    """
     def __init__(self, apps=None, app_connections=None, network_endpoints=None, app_start_order=None):
         self.apps=apps if apps else dict()
         self.app_connections=app_connections if app_connections else dict()
