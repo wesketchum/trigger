@@ -122,3 +122,10 @@ Where possible, the functions in `util` try to provide sensible defaults, so tha
 
 * The `util.connection` class constructor takes optional `queue_type`, `queue_capacity` and `toposort` arguments. Passing `toposort=True` removes this connection from the topological sort that is used to determine the order in which start and stop commands are sent. This is useful for breaking cycles in the connection graph.
 * The `util.system` class constructor takes optional `network_endpoints` and `app_start_order` arguments that can be used to override the automatically-assigned set of ports and application start order respectively.
+
+## Complete examples
+
+Some complete examples can be found in subdirectories of this one:
+
+* [faketp_to_sink](faketp_to_sink/) demonstrates a single-application system
+* [tpset_pub_sub](tpset_pub_sub/) demonstrates how to connect multiple applications together
