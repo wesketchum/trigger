@@ -126,9 +126,10 @@ publisher = namedtuple(
 sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
 
 class system:
-    def __init__(self, apps=None, app_connections=None):
+    def __init__(self, apps=None, app_connections=None, network_endpoints=None):
         self.apps=apps if apps else dict()
         self.app_connections=app_connections if app_connections else dict()
+        self.network_endpoints=network_endpoints
 
 ########################################################################
 #
@@ -370,7 +371,11 @@ def resolve_endpoint(app, external_name, inout, verbose=False):
     else:
         raise KeyError(f"Endpoint {external_name} not found")
 
-def add_network(app_name, the_system, network_endpoints, verbose=False):
+def add_network(app_name, the_system, verbose=False):
+
+    if the_system.network_endpoints is None:
+        the_system.network_endpoints=assign_network_endpoints(the_system)
+
     app = the_system.apps[app_name]
 
     modules_with_network = deepcopy(app.modulegraph.modules)
@@ -394,7 +399,7 @@ def add_network(app_name, the_system, network_endpoints, verbose=False):
                                                      conf=qton.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
                                                                     sender_config=nos.Conf(ipm_plugin_type="ZmqPublisher" if type(conn) == publisher else "ZmqSender",
-                                                                                           address=network_endpoints[conn_name],
+                                                                                           address=the_system.network_endpoints[conn_name],
                                                                                            topic="foo",
                                                                                            stype="msgpack")))
         if hasattr(conn, "subscribers"):
@@ -414,7 +419,7 @@ def add_network(app_name, the_system, network_endpoints, verbose=False):
                                                              conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                             msg_module_name=conn.msg_module_name,
                                                                             receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
-                                                                                                     address=network_endpoints[
+                                                                                                     address=the_system.network_endpoints[
                                                                                                          conn_name],
                                                                                                      subscriptions=["foo"])))
 
@@ -433,7 +438,7 @@ def add_network(app_name, the_system, network_endpoints, verbose=False):
                                                      conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
                                                                     receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
-                                                                                             address=network_endpoints[conn_name],
+                                                                                             address=the_system.network_endpoints[conn_name],
                                                                                              subscriptions=["foo"]))
                                                      )
 
@@ -576,7 +581,6 @@ def make_apps_json(the_system, json_dir, verbose=False):
     # ==================================================================
     # Application-level generation
 
-    endpoints = assign_network_endpoints(the_system, verbose)
     app_command_datas = dict()
 
     for app_name, app in the_system.apps.items():
@@ -584,7 +588,7 @@ def make_apps_json(the_system, json_dir, verbose=False):
         # Add the NetworkToQueue/QueueToNetwork modules that are needed.
         #
         # NB: modifies app's modulegraph in-place
-        add_network(app_name, the_system, endpoints, verbose)
+        add_network(app_name, the_system, verbose)
 
         app_command_datas[app_name] = make_app_command_data(app, verbose)
         if verbose:
