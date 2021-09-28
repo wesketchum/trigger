@@ -151,6 +151,12 @@ class system:
         self.network_endpoints=network_endpoints
         self.app_start_order=app_start_order
 
+    def __rich_repr__(self):
+        yield "apps", self.apps
+        yield "app_connections", self.app_connections
+        yield "network_endpoints", self.network_endpoints
+        yield "app_start_order", self.app_start_order
+
 ########################################################################
 #
 # Functions
