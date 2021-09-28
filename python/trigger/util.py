@@ -126,10 +126,11 @@ publisher = namedtuple(
 sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
 
 class system:
-    def __init__(self, apps=None, app_connections=None, network_endpoints=None):
+    def __init__(self, apps=None, app_connections=None, network_endpoints=None, app_start_order=None):
         self.apps=apps if apps else dict()
         self.app_connections=app_connections if app_connections else dict()
         self.network_endpoints=network_endpoints
+        self.app_start_order=app_start_order
 
 ########################################################################
 #
@@ -527,7 +528,12 @@ def make_app_json(app_name, app_command_data, data_dir, verbose=False):
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
-def make_system_command_datas(the_system, app_start_order, verbose=False):
+def make_system_command_datas(the_system, verbose=False):
+
+    if the_system.app_start_order is None:
+        app_deps = make_app_deps(the_system, verbose)
+        the_system.app_start_order = toposort(app_deps)
+
     system_command_datas=dict()
 
     for c in cmd_set:
@@ -536,9 +542,9 @@ def make_system_command_datas(the_system, app_start_order, verbose=False):
             "apps": {app_name: f'data/{app_name}_{c}' for app_name in the_system.apps.keys()}
         }
         if c == 'start':
-            cfg['order'] = app_start_order
+            cfg['order'] = the_system.app_start_order
         elif c == 'stop':
-            cfg['order'] = app_start_order[::-1]
+            cfg['order'] = the_system.app_start_order[::-1]
 
         system_command_datas[c]=cfg
 
@@ -551,7 +557,7 @@ def make_system_command_datas(the_system, app_start_order, verbose=False):
     return system_command_datas
 
 def write_json_files(app_command_datas, system_command_datas, json_dir, verbose=False):
-    console.rule("Creating JSON files")
+    console.rule("JSON file creation")
 
     if exists(json_dir):
         raise RuntimeError(f"Directory {json_dir} already exists")
@@ -597,12 +603,9 @@ def make_apps_json(the_system, json_dir, verbose=False):
     # ==================================================================
     # System-level generation
 
-    console.rule("Starting system generation")
+    console.rule("System generation")
 
-    app_deps = make_app_deps(the_system, verbose)
-    start_order = toposort(app_deps)
-
-    system_command_datas=make_system_command_datas(the_system, start_order, verbose)
+    system_command_datas=make_system_command_datas(the_system, verbose)
 
     # ==================================================================
     # JSON file creation
