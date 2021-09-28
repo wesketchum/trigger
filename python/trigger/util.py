@@ -125,6 +125,11 @@ publisher = namedtuple(
 
 sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
 
+class system:
+    def __init__(self, apps=None, app_connections=None):
+        self.apps=apps if apps else dict()
+        self.app_connections=app_connections if app_connections else dict()
+
 ########################################################################
 #
 # Functions
@@ -153,7 +158,7 @@ def make_module_deps(module_dict):
     return deps
 
 
-def make_app_deps(apps, app_connections, verbose=False):
+def make_app_deps(the_system, verbose=False):
     """Produce a dictionary giving
     the dependencies between a set of applications, given their connections.
 
@@ -165,10 +170,10 @@ def make_app_deps(apps, app_connections, verbose=False):
     """
 
     deps = {}
-    for app in apps.keys():
+    for app in the_system.apps.keys():
         deps[app] = []
 
-    for from_endpoint, conn in app_connections.items():
+    for from_endpoint, conn in the_system.app_connections.items():
         from_app = from_endpoint.split(".")[0]
         if hasattr(conn, "subscribers"):
             deps[from_app] += [ds.split(".")[0] for ds in conn.subscribers]
@@ -234,7 +239,7 @@ def make_app_command_data(app, verbose=False):
     modules"""
 
     modules = app.modulegraph.modules
-    
+
     module_deps = make_module_deps(modules)
     if verbose:
         console.log(f"inter-module dependencies are: {module_deps}")
@@ -326,7 +331,7 @@ def make_app_command_data(app, verbose=False):
     return command_data
 
 
-def assign_network_endpoints(apps, app_connections, verbose=False):
+def assign_network_endpoints(the_system, verbose=False):
     """Given a set of applications and connections between them, come up
     with a list of suitable zeromq endpoints. Return value is a mapping
     from name of upstream end of connection to endpoint name.
@@ -340,9 +345,9 @@ def assign_network_endpoints(apps, app_connections, verbose=False):
     endpoints = {}
     host_ports = defaultdict(int)
     first_port = 12345
-    for conn in app_connections.keys():
+    for conn in the_system.app_connections.keys():
         app = conn.split(".")[0]
-        host = apps[app].host
+        host = the_system.apps[app].host
         if host == "localhost":
             host = "127.0.0.1"
         port = first_port + host_ports[host]
@@ -365,12 +370,14 @@ def resolve_endpoint(app, external_name, inout, verbose=False):
     else:
         raise KeyError(f"Endpoint {external_name} not found")
 
-def add_network(app_name, app, app_connections, network_endpoints, verbose=False):
+def add_network(app_name, the_system, network_endpoints, verbose=False):
+    app = the_system.apps[app_name]
+
     modules_with_network = deepcopy(app.modulegraph.modules)
 
     unconnected_endpoints = set(app.modulegraph.endpoints.keys())
 
-    for conn_name, conn in app_connections.items():
+    for conn_name, conn in the_system.app_connections.items():
         from_app, from_endpoint = conn_name.split(".", maxsplit=1)
 
         if from_app == app_name:
@@ -515,32 +522,32 @@ def make_app_json(app_name, app_command_data, data_dir, verbose=False):
         with open(f'{join(data_dir, app_name)}_{c}.json', 'w') as f:
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
-def make_system_command_datas(apps, app_start_order, verbose=False):
+def make_system_command_datas(the_system, app_start_order, verbose=False):
     system_command_datas=dict()
-    
+
     for c in cmd_set:
         console.log(f"Generating system {c} command")
         cfg = {
-            "apps": {app_name: f'data/{app_name}_{c}' for app_name in apps.keys()}
+            "apps": {app_name: f'data/{app_name}_{c}' for app_name in the_system.apps.keys()}
         }
         if c == 'start':
             cfg['order'] = app_start_order
         elif c == 'stop':
             cfg['order'] = app_start_order[::-1]
-            
+
         system_command_datas[c]=cfg
-        
+
         if verbose:
             console.log(cfg)
 
     console.log(f"Generating boot json file")
-    system_command_datas['boot'] = generate_boot(apps, verbose)
+    system_command_datas['boot'] = generate_boot(the_system.apps, verbose)
 
     return system_command_datas
 
 def write_json_files(app_command_datas, system_command_datas, json_dir, verbose=False):
     console.rule("Creating JSON files")
-    
+
     if exists(json_dir):
         raise RuntimeError(f"Directory {json_dir} already exists")
 
@@ -559,25 +566,25 @@ def write_json_files(app_command_datas, system_command_datas, json_dir, verbose=
     console.log(f"System configuration generated in directory '{json_dir}'")
 
 
-def make_apps_json(apps, app_connections, json_dir, verbose=False):
+def make_apps_json(the_system, json_dir, verbose=False):
     """Make the json files for all of the applications"""
 
     if verbose:
         console.log(f"Input applications:")
-        console.log(apps)
+        console.log(the_system.apps)
 
     # ==================================================================
     # Application-level generation
 
-    endpoints = assign_network_endpoints(apps, app_connections, verbose)
+    endpoints = assign_network_endpoints(the_system, verbose)
     app_command_datas = dict()
-    
-    for app_name, app in apps.items():
+
+    for app_name, app in the_system.apps.items():
         console.rule(f"Application generation for {app_name}")
         # Add the NetworkToQueue/QueueToNetwork modules that are needed.
         #
         # NB: modifies app's modulegraph in-place
-        add_network(app_name, app, app_connections, endpoints, verbose)
+        add_network(app_name, the_system, endpoints, verbose)
 
         app_command_datas[app_name] = make_app_command_data(app, verbose)
         if verbose:
@@ -588,11 +595,11 @@ def make_apps_json(apps, app_connections, json_dir, verbose=False):
 
     console.rule("Starting system generation")
 
-    app_deps = make_app_deps(apps, app_connections, verbose)
+    app_deps = make_app_deps(the_system, verbose)
     start_order = toposort(app_deps)
 
-    system_command_datas=make_system_command_datas(apps, start_order, verbose)
-    
+    system_command_datas=make_system_command_datas(the_system, start_order, verbose)
+
     # ==================================================================
     # JSON file creation
 

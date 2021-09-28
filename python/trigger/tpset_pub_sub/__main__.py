@@ -73,7 +73,7 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
     # modules and the connections between modules. The function
     # assigns ports and creates the necessary N2Q/Q2N pairs for the
     # connections between apps
-    util.make_apps_json(apps, app_connections, json_dir)
+    util.make_apps_json(util.system(apps, app_connections), json_dir, verbose=True)
 
     console.log(f"config generated in {json_dir}")
 

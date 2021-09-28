@@ -38,6 +38,8 @@ def cli(slowdown_factor, input_file,
         ACTIVITY_CONFIG=eval(activity_config)
     )
 
+    print(modules_faketp)
+    
     apps = {
         "faketp": util.app(modulegraph=modules_faketp,
                            host="localhost")
@@ -45,7 +47,7 @@ def cli(slowdown_factor, input_file,
 
     app_connections = {}
 
-    util.make_apps_json(apps, app_connections, json_dir)
+    util.make_apps_json(util.system(apps, app_connections), json_dir)
 
 
 if __name__ == '__main__':
