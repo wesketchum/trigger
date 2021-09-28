@@ -386,6 +386,8 @@ def assign_network_endpoints(the_system, verbose=False):
 
 
 def resolve_endpoint(app, external_name, inout, verbose=False):
+    """Resolve an `external` endpoint name to the corresponding internal "module.sinksource"
+    """
     if external_name in app.modulegraph.endpoints:
         e=app.modulegraph.endpoints[external_name]
         if e.direction==inout:
@@ -398,7 +400,11 @@ def resolve_endpoint(app, external_name, inout, verbose=False):
         raise KeyError(f"Endpoint {external_name} not found")
 
 def add_network(app_name, the_system, verbose=False):
-
+    """Add the necessary QueueToNetwork and NetworkToQueue objects to the
+       application named `app_name`, based on the inter-application
+       connections specified in `the_system`. NB `the_system` is modified
+       in-place."""
+    
     if the_system.network_endpoints is None:
         the_system.network_endpoints=assign_network_endpoints(the_system)
 
@@ -476,6 +482,8 @@ def add_network(app_name, the_system, verbose=False):
 
 
 def generate_boot(apps: list, verbose=False) -> dict:
+    """Generate the dictionary that will become the boot.json file"""
+    
     daq_app_specs = {
         "daq_application_ups": {
             "comment": "Application profile based on a full dbt runtime environment",
@@ -554,7 +562,8 @@ def make_app_json(app_name, app_command_data, data_dir, verbose=False):
             json.dump(app_command_data[c].pod(), f, indent=4, sort_keys=True)
 
 def make_system_command_datas(the_system, verbose=False):
-
+    """Generate the dictionary of commands and their data for the entire system"""
+    
     if the_system.app_start_order is None:
         app_deps = make_app_deps(the_system, verbose)
         the_system.app_start_order = toposort(app_deps)
@@ -582,6 +591,9 @@ def make_system_command_datas(the_system, verbose=False):
     return system_command_datas
 
 def write_json_files(app_command_datas, system_command_datas, json_dir, verbose=False):
+    """Write the per-application and whole-system command data as json files in `json_dir`
+    """
+    
     console.rule("JSON file creation")
 
     if exists(json_dir):
