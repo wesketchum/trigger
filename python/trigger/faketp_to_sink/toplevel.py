@@ -28,11 +28,11 @@ def cli(slowdown_factor, input_file, json_dir):
     )
 
     
-    apps = {"faketp": util.app(modulegraph=modules_faketp,
+    apps = {"faketp": util.App(modulegraph=modules_faketp,
                                host="localhost")
             }
 
-    util.make_apps_json(util.system(apps, {}), json_dir, verbose=True)
+    util.make_apps_json(util.System(apps, {}), json_dir, verbose=True)
 
 
 if __name__ == '__main__':

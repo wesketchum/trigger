@@ -12,59 +12,60 @@ We build up a DAQ `system` from applications and the connections between them. A
 
 ### Modules
 
-Starting at the bottom, a `DAQModule` is described by the `util.module` class, which has a plugin name, a suitable configuration object, and a set of _outgoing_ connections to other modules. For example:
+Starting at the bottom, a `DAQModule` is described by the `util.Module` class, which has a plugin name, a suitable configuration object, and a set of _outgoing_ connections to other modules. For example:
 
 ```python
 # Load moo type for configuration
 moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet')
 import dunedaq.trigger.triggerprimitivemaker as tpm
 
-from util import connection as conn
+import util
+from util import Connection as Conn
 
-tpm_module = util.module(plugin="TriggerPrimitiveMaker",
+tpm_module = util.Module(plugin="TriggerPrimitiveMaker",
                          conf=tpm.ConfParams(number_of_loops=-1,
                                              tpset_time_offset=0),
-                         connections={"tpset_sink": util.conn("ftpchm.tpset_source")})
+                         connections={"tpset_sink": Conn("ftpchm.tpset_source")})
 
 ```
 
 This creates a `DAQModule` using the `TriggerPrimitiveMaker` plugin, whose configuration is the given `tpm.ConfParams` object. The `connections` argument creates a connection from the `tpset_sink` `DAQSink` in this module to the `tpset_source` `DAQSource` in another module named `ftpchm`. When we generate the full application configuration, the tools in this package will automatically create the necessary queue objects and settings to connect this `DAQSink`/`DAQSource` pair.
 
-Modules are grouped together in a `modulegraph`, which holds a dictionary mapping module names to module objects, along with a dictionary of "endpoints" which are the "public" names for the modulegraph's inputs and outputs. Having a list of endpoints allows other applications to make connections to this application without having to know about the internal details of modules and sink/source names. Extending our example from above:
+Modules are grouped together in a `ModuleGraph`, which holds a dictionary mapping module names to Module objects, along with a dictionary of "endpoints" which are the "public" names for the `ModuleGraph`'s inputs and outputs. Having a list of endpoints allows other applications to make connections to this application without having to know about the internal details of modules and sink/source names. Extending our example from above:
 
 ```python
 # ... imports, etc, omitted
 
 modules = {}
 
-modules["tpm"] = util.module(plugin="TriggerPrimitiveMaker",
+modules["tpm"] = util.Module(plugin="TriggerPrimitiveMaker",
                              conf=tpm.ConfParams(number_of_loops=-1,
                                                  tpset_time_offset=0),
-                             connections={"tpset_sink": util.conn("ftpchm.tpset_source")})
+                             connections={"tpset_sink": Conn("ftpchm.tpset_source")})
 
-modules["ftpchm"] = util.module(plugin="FakeTPCreatorHeartbeatMaker",
+modules["ftpchm"] = util.Module(plugin="FakeTPCreatorHeartbeatMaker",
                                 # No outgoing connections specified here
                                 conf=ftpchm.Conf(heartbeat_interval=50000))
 
 
-the_modulegraph = modulegraph(modules)
+the_modulegraph = ModuleGraph(modules)
 # Create an outgoing public endpoint named "tpsets_out", which refers to the "tpset_sink" DAQSink in the "ftpchm" module
-the_modulegraph.add_endpoint("tpsets_out", "ftpchm.tpset_sink", direction.OUT)
+the_modulegraph.add_endpoint("tpsets_out", "ftpchm.tpset_sink", util.Direction.OUT)
 ```
 
 ### Applications
 
-An application (represented by the `util.app` class), represents an instance of a `daq_application` running on a particular host. It consists of a `modulegraph` and a hostname on which to run. We collect apps into a dicionary keyed on application name, like we did with modules:
+An application (represented by the `util.App` class), represents an instance of a `daq_application` running on a particular host. It consists of a `ModuleGraph` and a hostname on which to run. We collect apps into a dicionary keyed on application name, like we did with modules:
 
 ```python
-apps = { "myapp": util.app(modulegraph=the_modulegraph, host="localhost") }
+apps = { "myapp": util.App(modulegraph=the_modulegraph, host="localhost") }
 ```
 
 Connections between applications are specified in a dictionary whose keys are the upstream endpoints, and whose values are objects specifying details of the connection and the downstream endpoint(s) to be connected. For example:
 
 ```python
 app_connections = {
-    "myapp.tpsets_out": util.publisher(msg_type="dunedaq::trigger::TPSet",
+    "myapp.tpsets_out": util.Publisher(msg_type="dunedaq::trigger::TPSet",
                                        msg_module_name="TPSetNQ",
                                        subscribers=["tpset_consumer1.tpsets_in",
                                                     "tpset_consumer2.tpsets_in"])
@@ -75,24 +76,24 @@ This creates a pub/sub connection from the `tpsets_out` endpoint of `myapp` to t
 
 ### System
 
-The `util.system` class groups applications and their connections together in a single object:
+The `util.System` class groups applications and their connections together in a single object:
 
 ```python
-the_system = util.system(apps, app_connections)
+the_system = util.System(apps, app_connections)
 ```
 
-A `util.system` object contains all of the information needed to generate a full set of JSON files that can be read by `nanorc`.
+A `util.System` object contains all of the information needed to generate a full set of JSON files that can be read by `nanorc`.
 
 ## Generating JSON files
 
-To get from a `util.system` object to a full set of JSON files involves four steps:
+To get from a `util.System` object to a full set of JSON files involves four steps:
 
 1. Add networking modules (ie, `NetworkToQueue`/`QueueToNetwork`) to applications
 2. For each application, create the python data structures for each DAQ command that the application will respond to
 3. Create the python data structures for each DAQ command that the _system_ will respond to
 4. Convert the python data structures to JSON and dump to the appropriate files
 
-As part of step 1, ports for all of the inter-application connections are assigned and saved in the `util.system` object, and applications' lists of modules are updated if necessary to add N2Q/Q2N modules.
+As part of step 1, ports for all of the inter-application connections are assigned and saved in the `util.Dystem` object, and applications' lists of modules are updated if necessary to add N2Q/Q2N modules.
 
 As part of step 2, the necessary queue objects are created to apply the connections between modules, and the order to send start and stop commands to the modules is inferred based on the inter-module connections.
 
@@ -120,8 +121,8 @@ write_json_files(app_command_datas, system_command_datas, json_dir)
 
 Where possible, the functions in `util` try to provide sensible defaults, so that the minimum amount of information has to be provided in the common case. But there are cases where you may need to override the defaults. Some examples:
 
-* The `util.connection` class constructor takes optional `queue_type`, `queue_capacity` and `toposort` arguments. Passing `toposort=True` removes this connection from the topological sort that is used to determine the order in which start and stop commands are sent. This is useful for breaking cycles in the connection graph.
-* The `util.system` class constructor takes optional `network_endpoints` and `app_start_order` arguments that can be used to override the automatically-assigned set of ports and application start order respectively.
+* The `util.Connection` class constructor takes optional `queue_type`, `queue_capacity` and `toposort` arguments. Passing `toposort=True` removes this connection from the topological sort that is used to determine the order in which start and stop commands are sent. This is useful for breaking cycles in the connection graph.
+* The `util.System` class constructor takes optional `network_endpoints` and `app_start_order` arguments that can be used to override the automatically-assigned set of ports and application start order respectively.
 
 ## Complete examples
 

@@ -45,11 +45,11 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
     # Step 2: Create dict of apps. App consists of
     # list-of-connected-modules and a host to run on
 
-    apps = {"tpset_producer": util.app(modulegraph=modules_producer,
+    apps = {"tpset_producer": util.App(modulegraph=modules_producer,
                                        host=producer_host),
-            "tpset_consumer1": util.app(modulegraph=modules_consumer1,
+            "tpset_consumer1": util.App(modulegraph=modules_consumer1,
                                         host=consumer1_host),
-            "tpset_consumer2": util.app(modulegraph=modules_consumer2,
+            "tpset_consumer2": util.App(modulegraph=modules_consumer2,
                                         host=consumer2_host),
             }
 
@@ -61,7 +61,7 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
     # of each of the `tpset_consumer` apps, via a pub/sub connection
 
     app_connections = {
-        "tpset_producer.tpsets_out": util.publisher(msg_type="dunedaq::trigger::TPSet",
+        "tpset_producer.tpsets_out": util.Publisher(msg_type="dunedaq::trigger::TPSet",
                                                 msg_module_name="TPSetNQ",
                                                 subscribers=["tpset_consumer1.tpsets_in",
                                                              "tpset_consumer2.tpsets_in"])
@@ -73,7 +73,7 @@ def cli(slowdown_factor, input_file, producer_host, consumer1_host, consumer2_ho
     # modules and the connections between modules. The function
     # assigns ports and creates the necessary N2Q/Q2N pairs for the
     # connections between apps
-    util.make_apps_json(util.system(apps, app_connections), json_dir, verbose=True)
+    util.make_apps_json(util.System(apps, app_connections), json_dir, verbose=True)
 
     console.log(f"config generated in {json_dir}")
 

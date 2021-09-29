@@ -10,7 +10,7 @@ pprint(moo.otypes.load_types('trigger/triggerprimitivemaker.jsonnet'))
 
 import dunedaq.trigger.triggerprimitivemaker as tpm
 
-from ..util import module, modulegraph, direction
+from ..util import Module, ModuleGraph, Direction
 
 # ===============================================================================
 
@@ -21,7 +21,7 @@ def generate(
     CLOCK_FREQUENCY_HZ = 50000000 / SLOWDOWN_FACTOR
 
     modules = {
-        "tpm": module(plugin="TriggerPrimitiveMaker",
+        "tpm": Module(plugin="TriggerPrimitiveMaker",
                       connections={},
                       conf=tpm.ConfParams(filename=INPUT_FILE,
                                           number_of_loops=-1,  # Infinite
@@ -31,7 +31,7 @@ def generate(
                       )
     }
 
-    mgraph = modulegraph(modules)
-    mgraph.add_endpoint("tpsets_out", "tpm.tpset_sink", direction.OUT)
+    mgraph = ModuleGraph(modules)
+    mgraph.add_endpoint("tpsets_out", "tpm.tpset_sink", Direction.OUT)
     
     return mgraph

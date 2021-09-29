@@ -42,7 +42,7 @@ console = Console()
 # TODO: Understand whether extra_commands is actually needed. Seems like "resume" is already being sent to everyone?
 #module = namedtuple("module", ['plugin', 'conf', 'connections', 'extra_commands'], defaults=(None, [], []))
 
-class module:
+class Module:
     """An individual DAQModule within an application, along with its
        configuration object and list of outgoing connections to other
        modules
@@ -61,15 +61,15 @@ class module:
         yield "conf", self.conf
         yield "connections", self.connections
 
-connection = namedtuple("connection", ['to', 'queue_kind', 'queue_capacity', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
+Connection = namedtuple("Connection", ['to', 'queue_kind', 'queue_capacity', 'toposort'], defaults=("FollyMPMCQueue", 1000, True))
 
-class direction(Enum):
+class Direction(Enum):
     IN = 1
     OUT = 2
 
-endpoint = namedtuple("endpoint", [ 'external_name', 'internal_name', 'direction' ])
+Endpoint = namedtuple("Endpoint", [ 'external_name', 'internal_name', 'direction' ])
 
-class modulegraph:
+class ModuleGraph:
     """A set of modules and connections between them.
 
     modulegraph holds a dictionary of modules, with each module
@@ -112,10 +112,10 @@ class modulegraph:
 
     def add_connection(self, from_endpoint, to_endpoint):
         from_mod, from_name=from_endpoint.split(".")
-        self.modules[from_mod].connections[from_name]=connection(to_endpoint)
+        self.modules[from_mod].connections[from_name]=Connection(to_endpoint)
 
     def add_endpoint(self, external_name, internal_name, inout):
-        self.endpoints[external_name]=endpoint(external_name, internal_name, inout)
+        self.endpoints[external_name]=Endpoint(external_name, internal_name, inout)
 
     def endpoint_names(self, inout=None):
         if inout is not None:
@@ -123,14 +123,14 @@ class modulegraph:
         return self.endpoints.keys()
 
 
-app = namedtuple("app", ['modulegraph', 'host'], defaults=({}, "localhost"))
+App = namedtuple("App", ['modulegraph', 'host'], defaults=({}, "localhost"))
 
-publisher = namedtuple(
-    "publisher", ['msg_type', 'msg_module_name', 'subscribers'])
+Publisher = namedtuple(
+    "Publisher", ['msg_type', 'msg_module_name', 'subscribers'])
 
-sender = namedtuple("sender", ['msg_type', 'msg_module_name', 'receiver'])
+Sender = namedtuple("Sender", ['msg_type', 'msg_module_name', 'receiver'])
 
-class system:
+class System:
     """A full DAQ system consisting of multiple applications and the
     connections between them. The `apps` member is a dictionary from
     application name to app object, and the app_connections member is
@@ -419,18 +419,18 @@ def add_network(app_name, the_system, verbose=False):
 
         if from_app == app_name:
             unconnected_endpoints.remove(from_endpoint)
-            from_endpoint = resolve_endpoint(app, from_endpoint, direction.OUT)
+            from_endpoint = resolve_endpoint(app, from_endpoint, Direction.OUT)
 
             # We're a publisher or sender. Make the queue to network
             qton_name = conn_name.replace(".", "_")
             if verbose:
                 console.log(f"Adding QueueToNetwork named {qton_name} connected to {from_endpoint} in app {app_name}")
-            modules_with_network[qton_name] = module(plugin="QueueToNetwork",
+            modules_with_network[qton_name] = Module(plugin="QueueToNetwork",
                                                      connections={
-                                                         "input": connection(from_endpoint)},
+                                                         "input": Connection(from_endpoint)},
                                                      conf=qton.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
-                                                                    sender_config=nos.Conf(ipm_plugin_type="ZmqPublisher" if type(conn) == publisher else "ZmqSender",
+                                                                    sender_config=nos.Conf(ipm_plugin_type="ZmqPublisher" if type(conn) == Publisher else "ZmqSender",
                                                                                            address=the_system.network_endpoints[conn_name],
                                                                                            topic="foo",
                                                                                            stype="msgpack")))
@@ -440,14 +440,14 @@ def add_network(app_name, the_system, verbose=False):
 
                 if app_name == to_app:
                     unconnected_endpoints.remove(to_endpoint)
-                    to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
+                    to_endpoint = resolve_endpoint(app, to_endpoint, Direction.IN)
                     ntoq_name = to_conn.replace(".", "_")
                     if verbose:
                         console.log(f"Adding NetworkToQueue named {ntoq_name} connected to {to_endpoint} in app {app_name}")
 
-                    modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
+                    modules_with_network[ntoq_name] = Module(plugin="NetworkToQueue",
                                                              connections={
-                                                                 "output": connection(to_endpoint)},
+                                                                 "output": Connection(to_endpoint)},
                                                              conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                             msg_module_name=conn.msg_module_name,
                                                                             receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",
@@ -460,13 +460,13 @@ def add_network(app_name, the_system, verbose=False):
             #
             # TODO: DRY
             unconnected_endpoints.remove(to_endpoint)
-            to_endpoint = resolve_endpoint(app, to_endpoint, direction.IN)
+            to_endpoint = resolve_endpoint(app, to_endpoint, Direction.IN)
             ntoq_name = to_conn.replace(".", "_")
             if verbose:
                 console.log(f"Adding NetworkToQueue named {ntoq_name} connected to {to_endpoint} in app {app_name}")
-            modules_with_network[ntoq_name] = module(plugin="NetworkToQueue",
+            modules_with_network[ntoq_name] = Module(plugin="NetworkToQueue",
                                                      connections={
-                                                         "output": connection(to_endpoint)},
+                                                         "output": Connection(to_endpoint)},
                                                      conf=ntoq.Conf(msg_type=conn.msg_type,
                                                                     msg_module_name=conn.msg_module_name,
                                                                     receiver_config=nor.Conf(ipm_plugin_type="ZmqSubscriber",

@@ -86,14 +86,14 @@ def generate(
     make_moo_record(CANDIDATE_CONFIG, 'CandidateConf', 'temptypes')
     import temptypes
 
-    from ..util import module, modulegraph, direction
-    from ..util import connection as conn
+    from ..util import Module, ModuleGraph
+    from ..util import Connection as Conn
     modules = {}
 
     for i, input_file in enumerate(INPUT_FILES):
-        modules[f"tpm{i}"] = module(plugin="TriggerPrimitiveMaker",
+        modules[f"tpm{i}"] = Module(plugin="TriggerPrimitiveMaker",
                                     connections={
-                                        "tpset_sink": conn(f"ftpchm{i}.tpset_source")},
+                                        "tpset_sink": Conn(f"ftpchm{i}.tpset_source")},
                                     conf=tpm.ConfParams(filename=input_file,
                                                         number_of_loops=-1,  # Infinite
                                                         tpset_time_offset=0,
@@ -102,19 +102,19 @@ def generate(
                                                         maximum_wait_time_us=1000,
                                                         region_id=0,
                                                         element_id=i))
-        modules[f"ftpchm{i}"] = module(plugin="FakeTPCreatorHeartbeatMaker",
-                                       connections={"tpset_sink": conn("zip.input")},
+        modules[f"ftpchm{i}"] = Module(plugin="FakeTPCreatorHeartbeatMaker",
+                                       connections={"tpset_sink": Conn("zip.input")},
                                        conf=ftpchm.Conf(heartbeat_interval=50000))
 
-    modules["zip"] = module(plugin="TPZipper",
-                            connections={"output": conn("tam.input")},
+    modules["zip"] = Module(plugin="TPZipper",
+                            connections={"output": Conn("tam.input")},
                             conf=tzip.ConfParams(cardinality=len(INPUT_FILES),
                                                  max_latency_ms=1000,
                                                  region_id=0,
                                                  element_id=0))
 
-    modules["tam"] = module(plugin="TriggerActivityMaker",
-                            connections={"output": conn("tcm.input")},
+    modules["tam"] = Module(plugin="TriggerActivityMaker",
+                            connections={"output": Conn("tcm.input")},
                             conf=tam.Conf(activity_maker=ACTIVITY_PLUGIN,
                                           geoid_region=0,  # Fake placeholder
                                           geoid_element=0,  # Fake placeholder
@@ -122,15 +122,15 @@ def generate(
                                           buffer_time=625000,  # 10ms in 62.5 MHz ticks
                                           activity_maker_config=temptypes.ActivityConf(**ACTIVITY_CONFIG)))
 
-    modules["tcm"] = module(plugin="TriggerCandidateMaker",
+    modules["tcm"] = Module(plugin="TriggerCandidateMaker",
                             connections={
-                                "output": conn("mlt.trigger_candidate_source")},
+                                "output": Conn("mlt.trigger_candidate_source")},
                             conf=tcm.Conf(candidate_maker=CANDIDATE_PLUGIN,
                                           candidate_maker_config=temptypes.CandidateConf(**CANDIDATE_CONFIG)))
 
-    modules["mlt"] = module(plugin="ModuleLevelTrigger",
+    modules["mlt"] = Module(plugin="ModuleLevelTrigger",
                             connections={
-                                "trigger_decision_sink": conn("fdf.trigger_decision_source")},
+                                "trigger_decision_sink": Conn("fdf.trigger_decision_source")},
                             conf=mlt.ConfParams(links=[],
                                                 initial_token_count=TOKEN_COUNT))
 
@@ -138,14 +138,14 @@ def generate(
     # in the module/queue graph, so we specify the connection with a
     # preceding "!" to tell util.py to ignore this connection for the
     # purposes of start/stop command ordering
-    modules["fdf"] = module(plugin="FakeDataFlow",
+    modules["fdf"] = Module(plugin="FakeDataFlow",
                             connections={
-                                "trigger_complete_sink": conn("mlt.token_source", toposort=False)},
+                                "trigger_complete_sink": Conn("mlt.token_source", toposort=False)},
                             conf=fdf.ConfParams(hold_max_size=HOLD_MAX_SIZE,
                                                 hold_min_size=HOLD_MIN_SIZE,
                                                 hold_min_ms=HOLD_MIN_MS,
                                                 release_randomly_prob=RELEASE_RANDOMLY_PROB,
                                                 forget_decision_prob=FORGET_DECISION_PROB,
                                                 hold_decision_prob=HOLD_DECISION_PROB))
-    mgraph = modulegraph(modules)
+    mgraph = ModuleGraph(modules)
     return mgraph

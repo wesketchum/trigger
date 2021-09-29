@@ -1,6 +1,6 @@
 # Set moo schema search path
-from ..util import module, modulegraph
-from ..util import connection as conn
+from ..util import Module, ModuleGraph
+from ..util import Connection as Conn
 import moo.otypes
 from pprint import pprint
 from dunedaq.env import get_moo_model_path
@@ -38,9 +38,9 @@ def generate(
     modules = {}
 
     for i, input_file in enumerate(INPUT_FILES):
-        modules[f"tpm{i}"] = module(plugin="TriggerPrimitiveMaker",
+        modules[f"tpm{i}"] = Module(plugin="TriggerPrimitiveMaker",
                                     connections={
-                                        "tpset_sink": conn(f"ftpchm{i}.tpset_source")},
+                                        "tpset_sink": Conn(f"ftpchm{i}.tpset_source")},
                                     conf=tpm.ConfParams(filename=input_file,
                                                         number_of_loops=-1,  # Infinite
                                                         tpset_time_offset=0,
@@ -49,23 +49,23 @@ def generate(
                                                         maximum_wait_time_us=1000,
                                                         region_id=0,
                                                         element_id=i))
-        modules[f"ftpchm{i}"] = module(plugin="FakeTPCreatorHeartbeatMaker",
-                                       connections={"tpset_sink": conn("zip.input", queue_capacity=10000)},
+        modules[f"ftpchm{i}"] = Module(plugin="FakeTPCreatorHeartbeatMaker",
+                                       connections={"tpset_sink": Conn("zip.input", queue_capacity=10000)},
                                        conf=ftpchm.Conf(heartbeat_interval=50000))
 
     modules.update({
-        "zip": module(plugin="TPZipper",
-                      connections={"output": conn("tpsink.tpset_source")},
+        "zip": Module(plugin="TPZipper",
+                      connections={"output": Conn("tpsink.tpset_source")},
                       conf=tzip.ConfParams(cardinality=len(INPUT_FILES),
                                            max_latency_ms=1000,
                                            region_id=0,
                                            element_id=0)
                       ),
 
-        "tpsink": module(plugin="TPSetSink",
+        "tpsink": Module(plugin="TPSetSink",
                          connections={},
                          conf=None)
     })
 
-    mgraph = modulegraph(modules)
+    mgraph = ModuleGraph(modules)
     return mgraph
