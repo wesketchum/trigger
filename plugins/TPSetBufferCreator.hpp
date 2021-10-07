@@ -13,10 +13,10 @@
 #include "dfmessages/DataRequest.hpp"
 #include "dfmessages/HSIEvent.hpp"
 
-#include "trigger/TPSetBuffer.hpp"
 #include "trigger/TPSet.hpp"
-#include "trigger/tpsetbuffercreator/Structs.hpp"
+#include "trigger/TPSetBuffer.hpp"
 #include "trigger/tpsetbuffercreator/Nljs.hpp"
+#include "trigger/tpsetbuffercreator/Structs.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -88,7 +88,7 @@ private:
   {
     bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const
     {
-      return left.window_begin < right.window_end;
+      return left.request_information.window_begin < right.request_information.window_end;
     }
   };
 
