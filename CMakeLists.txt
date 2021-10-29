@@ -16,6 +16,7 @@ find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
 find_package(dataformats REQUIRED)
 find_package(toolbox REQUIRED)
+find_package(networkmanager REQUIRED)
 
 ##############################################################################
 # Main library
