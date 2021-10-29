@@ -24,7 +24,10 @@ local types = {
       doc="Number of trigger tokens to start the run with"),
 
     s.field("td_connection_name", self.connection_name, 
-      doc="Connection name to be used to send trigger decisions")
+      doc="Connection name to be used to send trigger decisions"),
+
+    s.field("token_connection_name", self.connection_name, 
+      doc="Connection name to be used to tokens from dataflow")
 
   ], doc="ModuleLevelTrigger configuration parameters"),
   
