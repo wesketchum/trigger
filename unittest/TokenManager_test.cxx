@@ -56,11 +56,6 @@ BOOST_AUTO_TEST_CASE(Basics)
 {
   using namespace std::chrono_literals;
 
-  using sink_t = appfwk::DAQSink<dfmessages::TriggerDecisionToken>;
-  using source_t = appfwk::DAQSource<dfmessages::TriggerDecisionToken>;
-  auto sink = std::make_unique<sink_t>("dummy");
-  auto source = std::make_unique<source_t>("dummy");
-
   int initial_tokens = 10;
   dataformats::run_number_t run_number = 1;
   trigger::TokenManager tm( "foo", initial_tokens, run_number);

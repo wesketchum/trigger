@@ -8,6 +8,8 @@
 
 #include "trigger/TokenManager.hpp"
 
+#include "networkmanager/NetworkManager.hpp"
+
 #include <memory>
 
 namespace dunedaq::trigger {
@@ -26,7 +28,7 @@ namespace dunedaq::trigger {
     networkmanager::NetworkManager::get().start_listening(m_connection_name);
     
     networkmanager::NetworkManager::get().register_callback( m_connection_name, 
-							     std::bind(&TokenManager::update_tokens, this, 
+							     std::bind(&TokenManager::receive_token, this, 
 								       std::placeholders::_1));
 
   }
@@ -41,7 +43,7 @@ TokenManager::~TokenManager()
   if (!m_open_trigger_decisions.empty()) {
     
     auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - open_trigger_time) >
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_open_trigger_time) >
         std::chrono::milliseconds(3000)) {
       std::ostringstream o;
       o << "Open Trigger Decisions: [";
@@ -91,7 +93,7 @@ TokenManager::receive_token(ipm::Receiver::Response message)
     if (token.trigger_number != dfmessages::TypeDefaults::s_invalid_trigger_number) {
       if (m_open_trigger_decisions.count(token.trigger_number)) {
 	std::lock_guard<std::mutex> lk(m_open_trigger_decisions_mutex);
-	m_open_trigger_decisions.erase(tdt.trigger_number);
+	m_open_trigger_decisions.erase(token.trigger_number);
 	TLOG_DEBUG(1) << "Token indicates that trigger decision " << token.trigger_number
 		      << " has been completed. There are now " << m_open_trigger_decisions.size()
 		      << " triggers in flight";
@@ -99,26 +101,6 @@ TokenManager::receive_token(ipm::Receiver::Response message)
 	// ERS warning: received token for trigger number I don't recognize
       }
     }
-  }
-
-
-
-  auto open_trigger_report_time = std::chrono::steady_clock::now();
-  while (true) {
-
-    dfmessages::TriggerDecisionToken tdt;
-    try {
-      m_token_source->pop(tdt, std::chrono::milliseconds(100));
-    } catch (appfwk::QueueTimeoutExpired&) {
-      // The condition to exit the loop is that we've been stopped and
-      // there's nothing left on the input queue
-      if (!m_running_flag.load()) {
-        break;
-      } else {
-        continue;
-      }
-    }
-
   }
 }
 

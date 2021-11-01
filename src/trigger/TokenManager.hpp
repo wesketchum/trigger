@@ -15,7 +15,10 @@
 #include "dfmessages/TriggerDecisionToken.hpp"
 #include "dfmessages/Types.hpp"
 
+#include "ipm/Receiver.hpp"
+
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <set>
 #include <thread>
@@ -37,7 +40,7 @@ namespace trigger {
 class TokenManager
 {
 public:
-  TokenManager(std::string connection_name,
+  TokenManager(const std::string & connection_name,
                int initial_tokens,
                dataformats::run_number_t run_number);
 
@@ -85,7 +88,7 @@ private:
   dataformats::run_number_t m_run_number;
   
   // open strigger report time
-  std::chrono::time_point m_open_trigger_time;
+  std::chrono::time_point<std::chrono::steady_clock> m_open_trigger_time;
 };
 
 } // namespace trigger
