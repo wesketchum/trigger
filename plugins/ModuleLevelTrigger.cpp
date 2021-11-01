@@ -17,6 +17,8 @@
 #include "dfmessages/Types.hpp"
 #include "logging/Logging.hpp"
 
+#include "networkmanager/NetworkManager.hpp" 
+
 #include "trigger/Issues.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
 
@@ -39,7 +41,6 @@ namespace trigger {
 ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
   : DAQModule(name)
   , m_token_source(nullptr)
-  , m_trigger_decision_sink(nullptr)
   , m_last_trigger_number(0)
   , m_run_number(0)
 {
@@ -56,8 +57,6 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
-  m_trigger_decision_sink.reset(
-    new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
   m_token_source.reset(
     new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj, "token_source")));
   m_candidate_source.reset(
@@ -85,6 +84,8 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   auto params = confobj.get<moduleleveltrigger::ConfParams>();
 
   m_initial_tokens = params.initial_token_count;
+
+  m_trigger_decision_connection = params.td_connection_name;
 
   m_links.clear();
   for (auto const& link : params.links) {
@@ -211,11 +212,23 @@ ModuleLevelTrigger::send_trigger_decisions()
       // token it doesn't know about, and ignores it
       m_token_manager->trigger_sent(decision.trigger_number);
       try {
-        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+
+	auto serialised_decision = 
+	  dunedaq::serialization::serialize(decision, 
+					    dunedaq::serialization::kMsgPack);
+	
+	networkmanager::NetworkManager::get().send_to( m_trigger_decision_connection, 
+						       static_cast<const void*>( serialised_decision.data() ), 
+						       serialised_decision.size(), 
+						       std::chrono::milliseconds(10) ) ;
         m_td_sent_count++;
-      } catch (appfwk::QueueTimeoutExpired& e) {
+      } catch( const ers::Issue& e) {
         m_td_queue_timeout_expired_err_count++;
-        ers::error(e);
+	std::ostringstream oss_err;
+	oss_err << "Send to connection \"" << m_trigger_decision_connection << "\" failed";
+	ers::error( networkmanager::OperationFailed( ERS_HERE, 
+						     oss_err.str(), 
+						     e ) );
       }
 
       decision.trigger_number++;
