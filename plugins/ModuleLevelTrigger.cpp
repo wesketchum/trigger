@@ -40,7 +40,6 @@ namespace trigger {
 
 ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
   : DAQModule(name)
-  , m_token_source(nullptr)
   , m_last_trigger_number(0)
   , m_run_number(0)
 {
@@ -57,8 +56,6 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
-  m_token_source.reset(
-    new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj, "token_source")));
   m_candidate_source.reset(
     new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_source")));
 }
@@ -86,6 +83,7 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   m_initial_tokens = params.initial_token_count;
 
   m_trigger_decision_connection = params.td_connection_name;
+  m_trigger_token_connection = params.token_connection_name;
 
   m_links.clear();
   for (auto const& link : params.links) {
@@ -104,7 +102,7 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
   m_paused.store(true);
   m_running_flag.store(true);
 
-  m_token_manager.reset(new TokenManager(m_token_source, m_initial_tokens, m_run_number));
+  m_token_manager.reset(new TokenManager(m_trigger_token_connection, m_initial_tokens, m_run_number));
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");

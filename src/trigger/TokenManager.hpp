@@ -15,7 +15,10 @@
 #include "dfmessages/TriggerDecisionToken.hpp"
 #include "dfmessages/Types.hpp"
 
+#include "ipm/Receiver.hpp"
+
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <set>
 #include <thread>
@@ -37,7 +40,7 @@ namespace trigger {
 class TokenManager
 {
 public:
-  TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
+  TokenManager(const std::string & connection_name,
                int initial_tokens,
                dataformats::run_number_t run_number);
 
@@ -70,8 +73,7 @@ public:
 
 private:
   // The main thread
-  void read_token_queue();
-  std::thread m_read_queue_thread;
+  void receive_token(ipm::Receiver::Response message);
 
   // Are we running?
   std::atomic<bool> m_running_flag;
@@ -82,8 +84,11 @@ private:
   std::set<dfmessages::trigger_number_t> m_open_trigger_decisions;
   std::mutex m_open_trigger_decisions_mutex;
 
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& m_token_source;
+  std::string m_connection_name;
   dataformats::run_number_t m_run_number;
+  
+  // open strigger report time
+  std::chrono::time_point<std::chrono::steady_clock> m_open_trigger_time;
 };
 
 } // namespace trigger

@@ -81,11 +81,11 @@ private:
   dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 
   // Queue sources and sinks
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
 
   // Connection names
   std::string m_trigger_decision_connection;
+  std::string m_trigger_token_connection;
 
   std::vector<dfmessages::GeoID> m_links;
 
