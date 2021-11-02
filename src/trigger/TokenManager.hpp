@@ -39,7 +39,7 @@ class TokenManager
 public:
   TokenManager(std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& token_source,
                int initial_tokens,
-               dataformats::run_number_t run_number);
+               daqdataformats::run_number_t run_number);
 
   virtual ~TokenManager();
 
@@ -83,7 +83,7 @@ private:
   std::mutex m_open_trigger_decisions_mutex;
 
   std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& m_token_source;
-  dataformats::run_number_t m_run_number;
+  daqdataformats::run_number_t m_run_number;
 };
 
 } // namespace trigger

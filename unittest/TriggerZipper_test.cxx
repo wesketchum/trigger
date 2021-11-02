@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
 BOOST_AUTO_TEST_CASE(TPSet_GeoID_Init_System_Type_Is_DataSelection)
 {
   trigger::TPSet tpset;
-  BOOST_CHECK_EQUAL(tpset.origin.system_type, dataformats::GeoID::SystemType::kDataSelection);
+  BOOST_CHECK_EQUAL(tpset.origin.system_type, daqdataformats::GeoID::SystemType::kDataSelection);
 }
 
 BOOST_AUTO_TEST_CASE(ZipperStreamIDFromGeoID)
@@ -61,7 +61,7 @@ using tpset_queue_ptr = std::shared_ptr<tpset_queue_t>;
 struct TPSetSrc
 {
   uint32_t element_id{ 0 };
-  using timestamp_t = dataformats::timestamp_t;
+  using timestamp_t = daqdataformats::timestamp_t;
   timestamp_t dt{ 10 };
 
   trigger::TPSet tpset{};

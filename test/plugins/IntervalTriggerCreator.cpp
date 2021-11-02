@@ -9,7 +9,7 @@
 
 #include "IntervalTriggerCreator.hpp"
 
-#include "dataformats/ComponentRequest.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
 
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -85,7 +85,7 @@ IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)
   for (auto const& link : params.links) {
     // For the future: Set APA properly
     m_links.push_back(
-      dfmessages::GeoID{ dataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
+      dfmessages::GeoID{ daqdataformats::GeoID::SystemType::kTPC, 0, static_cast<uint32_t>(link) }); // NOLINT
   }
 
   // Sanity-check the values
@@ -99,7 +99,7 @@ IntervalTriggerCreator::do_configure(const nlohmann::json& confobj)
 void
 IntervalTriggerCreator::do_start(const nlohmann::json& startobj)
 {
-  m_run_number = startobj.value<dunedaq::dataformats::run_number_t>("run", 0);
+  m_run_number = startobj.value<dunedaq::daqdataformats::run_number_t>("run", 0);
 
   m_running_flag.store(true);
 
