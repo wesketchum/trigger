@@ -11,6 +11,7 @@
 
 #include "appfwk/DAQModule.hpp"
 #include "dataformats/Types.hpp"
+#include "dataformats/GeoID.hpp"
 #include "ers/Issue.hpp"
 #include "triggeralgs/Types.hpp"
 
@@ -31,6 +32,9 @@ ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t)runno))
 ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t)runno))
+
+ERS_DECLARE_ISSUE(trigger, UnknownGeoID, "Unknown GeoID: " << geo_id, ((dataformats::GeoID)geo_id))
+ERS_DECLARE_ISSUE(trigger, InvalidSystemType, "Unknown system type " << type, ((std::string)type))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
