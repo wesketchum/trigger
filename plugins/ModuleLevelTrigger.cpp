@@ -9,7 +9,7 @@
 
 #include "ModuleLevelTrigger.hpp"
 
-#include "dataformats/ComponentRequest.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
 
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace dunedaq {
@@ -88,7 +89,7 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
   m_links.clear();
   for (auto const& link : params.links) {
     m_links.push_back(
-        dfmessages::GeoID{ dataformats::GeoID::string_to_system_type(link.system), link.region, link.element });
+      dfmessages::GeoID{ daqdataformats::GeoID::string_to_system_type(link.system), link.region, link.element });
   }
 
   m_configured_flag.store(true);
@@ -97,7 +98,7 @@ ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
 void
 ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
 {
-  m_run_number = startobj.value<dunedaq::dataformats::run_number_t>("run", 0);
+  m_run_number = startobj.value<dunedaq::daqdataformats::run_number_t>("run", 0);
 
   m_paused.store(true);
   m_running_flag.store(true);
@@ -106,6 +107,7 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
 
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");
+  ers::info(TriggerStartOfRun(ERS_HERE, m_run_number));
 }
 
 void
@@ -114,6 +116,7 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
   m_running_flag.store(false);
   m_send_trigger_decisions_thread.join();
   m_token_manager.reset(nullptr); // Calls TokenManager dtor
+  ers::info(TriggerEndOfRun(ERS_HERE, m_run_number));
 }
 
 void
@@ -121,11 +124,13 @@ ModuleLevelTrigger::do_pause(const nlohmann::json& /*pauseobj*/)
 {
   m_paused.store(true);
   TLOG() << "******* Triggers PAUSED! *********";
+  ers::info(TriggerPaused(ERS_HERE));
 }
 
 void
 ModuleLevelTrigger::do_resume(const nlohmann::json& /*resumeobj*/)
 {
+  ers::info(TriggerActive(ERS_HERE));
   TLOG() << "******* Triggers RESUMED! *********";
   m_paused.store(false);
 }
@@ -150,9 +155,8 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
     request.component = link;
-    // TODO: set these from some config map
-    request.window_begin = tc.time_candidate;
-    request.window_end = tc.time_candidate + 1000;
+    request.window_begin = tc.time_start;
+    request.window_end = tc.time_end;
 
     decision.components.push_back(request);
   }
@@ -197,7 +201,8 @@ ModuleLevelTrigger::send_trigger_decisions()
       dfmessages::TriggerDecision decision = create_decision(tc);
 
       TLOG_DEBUG(1) << "Pushing a decision with triggernumber " << decision.trigger_number << " timestamp "
-                    << decision.trigger_timestamp << " number of links " << decision.components.size();
+                    << decision.trigger_timestamp << " number of links " << decision.components.size()
+                    << " based on TC of type " << static_cast<std::underlying_type_t<decltype(tc.type)>>(tc.type);
 
       // Have to notify the token manager of the trigger _before_
       // actually pushing it, otherwise the DF could reply with
@@ -216,6 +221,7 @@ ModuleLevelTrigger::send_trigger_decisions()
       decision.trigger_number++;
       m_last_trigger_number++;
     } else if (!tokens_allow_triggers) {
+      ers::warning(TriggerInhibited(ERS_HERE));
       TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
       m_td_inhibited_count++;

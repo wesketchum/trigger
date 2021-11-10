@@ -23,8 +23,6 @@
 #include "dfmessages/HSIEvent.hpp"
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
-#include "triggeralgs/TriggerCandidateType.hpp"
-#include "triggeralgs/TriggerPrimitive.hpp"
 
 #include <chrono>
 #include <map>
@@ -66,7 +64,8 @@ private:
 
   std::chrono::milliseconds m_queue_timeout;
 
-  std::map<uint32_t, std::pair<int64_t, int64_t>> m_detid_offsets_map; // NOLINT(build/unsigned)
+  std::map<uint32_t, std::pair<triggeralgs::timestamp_t, triggeralgs::timestamp_t>>
+    m_detid_offsets_map; // NOLINT(build/unsigned)
 
   // Opmon variables
   using metric_counter_type = decltype(timingtriggercandidatemakerinfo::Info::tsd_received_count);

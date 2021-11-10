@@ -159,10 +159,9 @@ FakeTimeStampedDataGenerator::do_work(std::atomic<bool>& running_flag)
   auto end_time = std::chrono::steady_clock::now();
   using doublesec = std::chrono::duration<double, std::ratio<1>>;
   double khz = 1e-3 * generatedCount / doublesec(end_time - start_time).count();
-  std::ostringstream oss_summ;
-  oss_summ << ": Exiting the do_work() method, generated " << generatedCount << " TSD set and successfully sent "
-           << sentCount << " copies. " << khz << "kHz";
-  ers::info(dunedaq::dunetrigger::ProgressUpdate(ERS_HERE, get_name(), oss_summ.str()));
+
+  TLOG() << ": Exiting the do_work() method, generated " << generatedCount << " TSD set and successfully sent "
+         << sentCount << " copies. " << khz << "kHz";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 
