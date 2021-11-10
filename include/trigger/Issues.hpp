@@ -10,8 +10,7 @@
 #define TRIGGER_INCLUDE_TRIGGER_ISSUES_HPP_
 
 #include "appfwk/DAQModule.hpp"
-#include "dataformats/Types.hpp"
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/Types.hpp"
 #include "ers/Issue.hpp"
 #include "triggeralgs/Types.hpp"
 
@@ -79,8 +78,8 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        << " Output's time is " << output_time << ", last sent time is " << last_sent_time,
                        ((std::string)name),
                        ((std::string)algorithm)
-                       ((dataformats::timestamp_t)output_time)
-                       ((dataformats::timestamp_t)last_sent_time))
+                       ((daqdataformats::timestamp_t)output_time)
+                       ((daqdataformats::timestamp_t)last_sent_time))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        TardyInputSet,
@@ -90,8 +89,8 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        ((std::string)name),
                        ((uint16_t)region)
                        ((uint32_t)element)
-                       ((dataformats::timestamp_t)start_time)
-                       ((dataformats::timestamp_t)last_sent_time))
+                       ((daqdataformats::timestamp_t)start_time)
+                       ((daqdataformats::timestamp_t)last_sent_time))
 // clang-format on
 
 ERS_DECLARE_ISSUE_BASE(trigger,

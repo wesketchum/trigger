@@ -36,8 +36,8 @@ public:
   // Returns whether the previous slice was complete (and time_slice etc was filled)
   bool buffer(Set<T> in,
               std::vector<T>& time_slice,
-              dataformats::timestamp_t& start_time,
-              dataformats::timestamp_t& end_time)
+              daqdataformats::timestamp_t& start_time,
+              daqdataformats::timestamp_t& end_time)
   {
     if (m_buffer.size() == 0 || m_buffer.back().start_time == in.start_time) {
       // if `in` is the current time slice
@@ -52,7 +52,7 @@ public:
   }
   // Fill time_slice with the sorted buffer, clear the buffer, and return true
   // Returns false and does nothing if the buffer is empty
-  bool flush(std::vector<T>& time_slice, dataformats::timestamp_t& start_time, dataformats::timestamp_t& end_time)
+  bool flush(std::vector<T>& time_slice, daqdataformats::timestamp_t& start_time, daqdataformats::timestamp_t& end_time)
   {
     if (m_buffer.size() == 0) {
       return false;

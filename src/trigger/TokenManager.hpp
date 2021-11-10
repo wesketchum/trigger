@@ -42,7 +42,7 @@ class TokenManager
 public:
   TokenManager(const std::string & connection_name,
                int initial_tokens,
-               dataformats::run_number_t run_number);
+               daqdataformats::run_number_t run_number);
 
   virtual ~TokenManager();
 
@@ -84,11 +84,16 @@ private:
   std::set<dfmessages::trigger_number_t> m_open_trigger_decisions;
   std::mutex m_open_trigger_decisions_mutex;
 
+<<<<<<< HEAD
   std::string m_connection_name;
   dataformats::run_number_t m_run_number;
   
   // open strigger report time
   std::chrono::time_point<std::chrono::steady_clock> m_open_trigger_time;
+=======
+  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>>& m_token_source;
+  daqdataformats::run_number_t m_run_number;
+>>>>>>> origin/patch/2.8.2
 };
 
 } // namespace trigger

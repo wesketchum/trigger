@@ -16,7 +16,7 @@ namespace dunedaq::trigger {
 
   TokenManager::TokenManager(const std::string & connection_name,
 			     int initial_tokens,
-			     dataformats::run_number_t run_number)
+                           daqdataformats::run_number_t run_number)
   : m_n_tokens(initial_tokens)
   , m_connection_name(connection_name)
   , m_run_number(run_number)
