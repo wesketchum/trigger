@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(Basics)
   auto source = std::make_unique<source_t>("dummy");
 
   int initial_tokens = 10;
-  dataformats::run_number_t run_number = 1;
+  daqdataformats::run_number_t run_number = 1;
   trigger::TokenManager tm(source, initial_tokens, run_number);
 
   BOOST_CHECK_EQUAL(tm.get_n_tokens(), initial_tokens);

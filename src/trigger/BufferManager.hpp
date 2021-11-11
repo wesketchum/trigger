@@ -9,10 +9,11 @@
 #ifndef TRIGGER_SRC_TRIGGER_BUFFERMANAGER_HPP_
 #define TRIGGER_SRC_TRIGGER_BUFFERMANAGER_HPP_
 
-#include "dataformats/Types.hpp"
+#include "daqdataformats/Types.hpp"
 
 #include <atomic>
 #include <set>
+#include <vector>
 
 namespace dunedaq {
 namespace trigger {
@@ -81,7 +82,7 @@ public:
   /**
    * return a vector of all the TxSets in the buffer that overlap with [start_time, end_time]
    */
-  DataRequestOutput get_txsets_in_window(dataformats::timestamp_t start_time, dataformats::timestamp_t end_time)
+  DataRequestOutput get_txsets_in_window(daqdataformats::timestamp_t start_time, daqdataformats::timestamp_t end_time)
   {
     BufferManager::DataRequestOutput ds_out;
     std::vector<BSET> txsets_output;
@@ -129,8 +130,8 @@ public:
     return ds_out;
   }
 
-  dataformats::timestamp_t get_earliest_start_time() const { return m_buffer_earliest_start_time; }
-  dataformats::timestamp_t get_latest_end_time() const { return m_buffer_latest_end_time; }
+  daqdataformats::timestamp_t get_earliest_start_time() const { return m_buffer_earliest_start_time; }
+  daqdataformats::timestamp_t get_latest_end_time() const { return m_buffer_latest_end_time; }
 
 private:
   // Buffer contains TxSet ordered by start_time
@@ -138,8 +139,8 @@ private:
   {
     bool operator()(const BSET& ltps, const BSET& rtps) const
     {
-      dataformats::timestamp_t const LTPS = ltps.start_time;
-      dataformats::timestamp_t const RTPS = rtps.start_time;
+      daqdataformats::timestamp_t const LTPS = ltps.start_time;
+      daqdataformats::timestamp_t const RTPS = rtps.start_time;
       return LTPS < RTPS;
     }
   };
@@ -151,10 +152,10 @@ private:
   std::atomic<long unsigned int> m_buffer_max_size;
 
   // Earliest start time stored in the buffer
-  dataformats::timestamp_t m_buffer_earliest_start_time;
+  daqdataformats::timestamp_t m_buffer_earliest_start_time;
 
   // Latest end time stored in the buffer
-  dataformats::timestamp_t m_buffer_latest_end_time;
+  daqdataformats::timestamp_t m_buffer_latest_end_time;
 };
 
 } // namespace trigger

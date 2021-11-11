@@ -13,7 +13,7 @@
 
 #include "triggeralgs/TriggerCandidate.hpp"
 
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerDecisionToken.hpp"

@@ -20,7 +20,7 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/GeoID.hpp"
 
 #include "logging/Logging.hpp"
 #include "triggeralgs/Types.hpp"
@@ -54,8 +54,8 @@ public:
     , m_output_queue(nullptr)
     , m_queue_timeout(100)
     , m_algorithm_name("[uninitialized]")
-    , m_geoid_region_id(dunedaq::dataformats::GeoID::s_invalid_region_id)
-    , m_geoid_element_id(dunedaq::dataformats::GeoID::s_invalid_element_id)
+    , m_geoid_region_id(dunedaq::daqdataformats::GeoID::s_invalid_region_id)
+    , m_geoid_element_id(dunedaq::daqdataformats::GeoID::s_invalid_element_id)
     , m_buffer_time(0)
     , m_window_time(625000)
     , worker(*this) // should be last; may use other members
@@ -89,7 +89,7 @@ protected:
   }
 
   // Only applies to makers that output Set<B>
-  void set_windowing(dataformats::timestamp_t window_time, dataformats::timestamp_t buffer_time)
+  void set_windowing(daqdataformats::timestamp_t window_time, daqdataformats::timestamp_t buffer_time)
   {
     m_window_time = window_time;
     m_buffer_time = buffer_time;
@@ -114,8 +114,8 @@ private:
   uint16_t m_geoid_region_id;
   uint32_t m_geoid_element_id;
 
-  dataformats::timestamp_t m_buffer_time;
-  dataformats::timestamp_t m_window_time;
+  daqdataformats::timestamp_t m_buffer_time;
+  daqdataformats::timestamp_t m_window_time;
 
   std::shared_ptr<MAKER> m_maker;
 
@@ -245,7 +245,7 @@ public:
   TimeSliceInputBuffer<A> m_in_buffer;
   TimeSliceOutputBuffer<B> m_out_buffer;
 
-  dataformats::timestamp_t m_prev_start_time = 0;
+  daqdataformats::timestamp_t m_prev_start_time = 0;
 
   void reconfigure()
   {
@@ -283,7 +283,7 @@ public:
         }
         m_prev_start_time = in.start_time;
         std::vector<A> time_slice;
-        dataformats::timestamp_t start_time, end_time;
+        daqdataformats::timestamp_t start_time, end_time;
         if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
           return; // no complete time slice yet (`in` was part of buffered slice)
         }
@@ -296,8 +296,8 @@ public:
         heartbeat.type = Set<B>::Type::kHeartbeat;
         heartbeat.start_time = in.start_time;
         heartbeat.end_time = in.end_time;
-        heartbeat.origin = dataformats::GeoID(
-          dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
+        heartbeat.origin = daqdataformats::GeoID(
+          daqdataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
         if (!m_parent.send(heartbeat)) {
           ers::error(AlgorithmFailedToHeartbeat(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
           // heartbeat is dropped
@@ -330,8 +330,8 @@ public:
       if (out.objects.size() != 0) {
         out.seqno = m_parent.m_sent_count;
         out.type = Set<B>::Type::kPayload;
-        out.origin = dataformats::GeoID(
-          dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
+        out.origin = daqdataformats::GeoID(
+          daqdataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
         TLOG_DEBUG(2) << "Output set window ready with start time " << out.start_time << " end time " << out.end_time
                       << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
@@ -347,7 +347,7 @@ public:
     // First, send anything in the input buffer to the algorithm, and add any
     // results to output buffer
     std::vector<A> time_slice;
-    dataformats::timestamp_t start_time, end_time;
+    daqdataformats::timestamp_t start_time, end_time;
     if (m_in_buffer.flush(time_slice, start_time, end_time)) {
       std::vector<B> elems;
       process_slice(time_slice, elems);
@@ -364,8 +364,8 @@ public:
       if (out.objects.size() != 0) {
         out.seqno = m_parent.m_sent_count;
         out.type = Set<B>::Type::kPayload;
-        out.origin = dataformats::GeoID(
-          dataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
+        out.origin = daqdataformats::GeoID(
+          daqdataformats::GeoID::SystemType::kDataSelection, m_parent.m_geoid_region_id, m_parent.m_geoid_element_id);
         TLOG_DEBUG(2) << "Output set window drained with start time " << out.start_time << " end time " << out.end_time
                       << " and " << out.objects.size() << " members";
         if (!m_parent.send(out)) {
@@ -416,7 +416,7 @@ public:
     switch (in.type) {
       case Set<A>::Type::kPayload: {
         std::vector<A> time_slice;
-        dataformats::timestamp_t start_time, end_time;
+        daqdataformats::timestamp_t start_time, end_time;
         if (!m_in_buffer.buffer(in, time_slice, start_time, end_time)) {
           return; // no complete time slice yet (`in` was part of buffered slice)
         }
@@ -450,7 +450,7 @@ public:
     // Send anything in the input buffer to the algorithm, and put any results
     // on the output queue
     std::vector<A> time_slice;
-    dataformats::timestamp_t start_time, end_time;
+    daqdataformats::timestamp_t start_time, end_time;
     if (m_in_buffer.flush(time_slice, start_time, end_time)) {
       std::vector<OUT> out_vec;
       process_slice(time_slice, out_vec);
