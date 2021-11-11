@@ -86,13 +86,13 @@ TPSetReceiver::do_conf(const data_t& payload)
 
   for (auto const& entry : parsed_conf.map) {
 
-    dataformats::GeoID::SystemType type = dataformats::GeoID::string_to_system_type(entry.system);
+    daqdataformats::GeoID::SystemType type = daqdataformats::GeoID::string_to_system_type(entry.system);
 
-    if (type == dataformats::GeoID::SystemType::kInvalid) {
+    if (type == daqdataformats::GeoID::SystemType::kInvalid) {
       throw InvalidSystemType(ERS_HERE, entry.system);
     }
 
-    dataformats::GeoID key;
+    daqdataformats::GeoID key;
     key.system_type = type;
     key.region_id = entry.region;
     key.element_id = entry.element;

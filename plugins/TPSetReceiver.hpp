@@ -58,7 +58,7 @@ private:
 
   // Queue(s)
   using tpsetsink_t = dunedaq::appfwk::DAQSink<trigger::TPSet>;
-  std::map<dataformats::GeoID, std::unique_ptr<tpsetsink_t>> m_tpset_output_queues;
+  std::map<daqdataformats::GeoID, std::unique_ptr<tpsetsink_t>> m_tpset_output_queues;
 
   std::atomic<uint64_t> m_received_tpsets{ 0 }; // NOLINT (build/unsigned)
 };
