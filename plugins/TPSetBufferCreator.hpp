@@ -95,7 +95,8 @@ private:
   std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>
     m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
-  std::unique_ptr<daqdataformats::Fragment> convert_to_fragment(TPSetBuffer::DataRequestOutput, dfmessages::DataRequest);
+  std::unique_ptr<daqdataformats::Fragment> convert_to_fragment(TPSetBuffer::DataRequestOutput,
+                                                                dfmessages::DataRequest);
 
   void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, size_t&, std::atomic<bool>&);
   void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>);

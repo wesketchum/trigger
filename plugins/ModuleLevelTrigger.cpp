@@ -17,7 +17,7 @@
 #include "dfmessages/Types.hpp"
 #include "logging/Logging.hpp"
 
-#include "networkmanager/NetworkManager.hpp" 
+#include "networkmanager/NetworkManager.hpp"
 
 #include "trigger/Issues.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
@@ -211,22 +211,18 @@ ModuleLevelTrigger::send_trigger_decisions()
       m_token_manager->trigger_sent(decision.trigger_number);
       try {
 
-	auto serialised_decision = 
-	  dunedaq::serialization::serialize(decision, 
-					    dunedaq::serialization::kMsgPack);
-	
-	networkmanager::NetworkManager::get().send_to( m_trigger_decision_connection, 
-						       static_cast<const void*>( serialised_decision.data() ), 
-						       serialised_decision.size(), 
-						       std::chrono::milliseconds(10) ) ;
+        auto serialised_decision = dunedaq::serialization::serialize(decision, dunedaq::serialization::kMsgPack);
+
+        networkmanager::NetworkManager::get().send_to(m_trigger_decision_connection,
+                                                      static_cast<const void*>(serialised_decision.data()),
+                                                      serialised_decision.size(),
+                                                      std::chrono::milliseconds(10));
         m_td_sent_count++;
-      } catch( const ers::Issue& e) {
+      } catch (const ers::Issue& e) {
         m_td_queue_timeout_expired_err_count++;
-	std::ostringstream oss_err;
-	oss_err << "Send to connection \"" << m_trigger_decision_connection << "\" failed";
-	ers::error( networkmanager::OperationFailed( ERS_HERE, 
-						     oss_err.str(), 
-						     e ) );
+        std::ostringstream oss_err;
+        oss_err << "Send to connection \"" << m_trigger_decision_connection << "\" failed";
+        ers::error(networkmanager::OperationFailed(ERS_HERE, oss_err.str(), e));
       }
 
       decision.trigger_number++;

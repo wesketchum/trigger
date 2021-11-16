@@ -134,7 +134,7 @@ public:
     TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets. " << m_n_tardy << " were tardy";
     std::stringstream ss;
     ss << std::endl;
-    for(auto& [id, n]: m_tardy_counts){
+    for (auto& [id, n] : m_tardy_counts) {
       ss << id << "\t" << n << std::endl;
     }
     TLOG_DEBUG(1) << "Tardy counts:" << ss.str();
@@ -165,7 +165,8 @@ public:
       return false;
     }
 
-    if(!m_tardy_counts.count(tset.origin)) m_tardy_counts[tset.origin]=0;
+    if (!m_tardy_counts.count(tset.origin))
+      m_tardy_counts[tset.origin] = 0;
 
     bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
 
@@ -173,7 +174,8 @@ public:
       ++m_n_tardy;
       ++m_tardy_counts[tset.origin];
 
-      ers::warning(TardyInputSet(ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
+      ers::warning(TardyInputSet(
+        ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
       m_cache.pop_front(); // vestigial
     }
     drain();

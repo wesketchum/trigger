@@ -43,8 +43,8 @@ public:
 
   // Identify the instance creator/stream/source of this set.
   origin_t origin{ daqdataformats::GeoID(daqdataformats::GeoID::SystemType::kDataSelection,
-                                      daqdataformats::GeoID::s_invalid_region_id,
-                                      daqdataformats::GeoID::s_invalid_element_id) };
+                                         daqdataformats::GeoID::s_invalid_region_id,
+                                         daqdataformats::GeoID::s_invalid_element_id) };
 
   // Whether this Set is a regular bag-of-objects or a heartbeat
   Type type{ kUnknown };

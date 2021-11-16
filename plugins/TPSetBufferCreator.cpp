@@ -310,10 +310,8 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
           break; // don't send anything yet. Wait for more data to arrived.
         case TPSetBuffer::kSuccess:
           TLOG() << get_name() << ": Sending requested data (" << input_data_request.request_information.window_begin
-                 << ", "
-                 << input_data_request.request_information.window_end << "), containing "
-                 << requested_tpset.txsets_in_window.size()
-                 << " TPSets.";
+                 << ", " << input_data_request.request_information.window_end << "), containing "
+                 << requested_tpset.txsets_in_window.size() << " TPSets.";
 
           send_out_fragment(std::move(frag_out), sentCount, running_flag);
           break;

@@ -10,12 +10,12 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
+#include "logging/Logging.hpp"
+#include "networkmanager/NetworkManager.hpp"
+#include "trigger/Issues.hpp"
 #include "trigger/tpsetreceiver/Nljs.hpp"
 #include "trigger/tpsetreceiver/Structs.hpp"
 #include "trigger/tpsetreceiverinfo/InfoNljs.hpp"
-#include "trigger/Issues.hpp"
-#include "logging/Logging.hpp"
-#include "networkmanager/NetworkManager.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -101,7 +101,7 @@ TPSetReceiver::do_conf(const data_t& payload)
 
   m_queue_timeout = std::chrono::milliseconds(parsed_conf.general_queue_timeout);
   m_topic = parsed_conf.topic;
-  std::cout << "Topic name is " << m_topic << std::endl; 
+  std::cout << "Topic name is " << m_topic << std::endl;
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_conf() method";
 }
@@ -138,11 +138,9 @@ TPSetReceiver::do_scrap(const data_t& /*args*/)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_scrap() method";
 
-
   TLOG() << get_name() << " successfully stopped";
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_scrap() method";
 }
-
 
 void
 TPSetReceiver::get_info(opmonlib::InfoCollector& ci, int /*level*/)
@@ -156,7 +154,8 @@ void
 TPSetReceiver::dispatch_tpset(ipm::Receiver::Response message)
 {
   auto tpset = serialization::deserialize<trigger::TPSet>(message.data);
-  TLOG_DEBUG(10) << get_name() << "Received tpset: " << tpset.seqno << ", ts=" << tpset.start_time << "-" << tpset.end_time;
+  TLOG_DEBUG(10) << get_name() << "Received tpset: " << tpset.seqno << ", ts=" << tpset.start_time << "-"
+                 << tpset.end_time;
 
   auto component = tpset.origin;
   if (m_tpset_output_queues.count(component)) {
