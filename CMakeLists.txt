@@ -14,14 +14,14 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
-find_package(toolbox REQUIRED)
+find_package(utilities REQUIRED)
 find_package(networkmanager REQUIRED)
 find_package(daqdataformats REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs toolbox::toolbox)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs utilities::utilities)
 
 ##############################################################################
 # Codegen
