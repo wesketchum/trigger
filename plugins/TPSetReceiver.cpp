@@ -107,7 +107,7 @@ TPSetReceiver::do_conf(const data_t& payload)
 }
 
 void
-TPSetReceiver::do_start(const data_t& payload)
+TPSetReceiver::do_start(const data_t&)
 {
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
 
