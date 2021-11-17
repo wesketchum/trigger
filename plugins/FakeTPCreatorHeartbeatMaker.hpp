@@ -13,7 +13,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "toolbox/ThreadHelper.hpp"
+#include "appfwk/ThreadHelper.hpp"
 
 #include "trigger/Issues.hpp"
 #include "trigger/TPSet.hpp"
@@ -54,7 +54,7 @@ private:
                              bool const& is_first_tpset_received);
   void get_heartbeat(TPSet& tpset_heartbeat, daqdataformats::timestamp_t const& current_tpset_start_time);
 
-  dunedaq::toolbox::ThreadHelper m_thread;
+  dunedaq::appfwk::ThreadHelper m_thread;
 
   using source_t = dunedaq::appfwk::DAQSource<TPSet>;
   std::unique_ptr<source_t> m_input_queue;

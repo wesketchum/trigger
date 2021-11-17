@@ -21,7 +21,7 @@
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "toolbox/ThreadHelper.hpp"
+#include "appfwk/ThreadHelper.hpp"
 
 #include <ers/Issue.hpp>
 
@@ -62,7 +62,7 @@ private:
   void do_scrap(const nlohmann::json& obj);
 
   // Threading
-  dunedaq::toolbox::ThreadHelper m_thread;
+  dunedaq::appfwk::ThreadHelper m_thread;
   void do_work(std::atomic<bool>&);
 
   // Configuration

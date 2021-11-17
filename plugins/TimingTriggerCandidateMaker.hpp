@@ -13,7 +13,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "toolbox/ThreadHelper.hpp"
+#include "appfwk/ThreadHelper.hpp"
 
 #include "trigger/Issues.hpp"
 
@@ -51,7 +51,7 @@ private:
   void do_stop(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
-  dunedaq::toolbox::ThreadHelper m_thread;
+  dunedaq::appfwk::ThreadHelper m_thread;
 
   triggeralgs::TriggerCandidate HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data);
   void do_work(std::atomic<bool>&);
