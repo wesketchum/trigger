@@ -18,6 +18,7 @@
 #include "appfwk/DAQSource.hpp"
 
 #include <memory>
+#include <string>
 
 namespace dunedaq {
 

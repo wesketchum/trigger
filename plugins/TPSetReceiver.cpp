@@ -101,7 +101,7 @@ TPSetReceiver::do_conf(const data_t& payload)
 
   m_queue_timeout = std::chrono::milliseconds(parsed_conf.general_queue_timeout);
   m_topic = parsed_conf.topic;
-  std::cout << "Topic name is " << m_topic << std::endl;
+  TLOG_DEBUG(TLVL_CONFIG) << "Topic name is " << m_topic;
 
   TLOG_DEBUG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_conf() method";
 }
@@ -167,7 +167,7 @@ TPSetReceiver::dispatch_tpset(ipm::Receiver::Response message)
   m_received_tpsets++;
 }
 
-} // namespace dfmodules
 } // namespace trigger
+} // namespace dunedaq
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TPSetReceiver)

@@ -82,7 +82,7 @@ protected:
   void set_algorithm_name(const std::string& name) { m_algorithm_name = name; }
 
   // Only applies to makers that output Set<B>
-  void set_geoid(uint16_t region_id, uint32_t element_id)
+  void set_geoid(uint16_t region_id, uint32_t element_id) // NOLINT(build/unsigned)
   {
     m_geoid_region_id = region_id;
     m_geoid_element_id = element_id;
@@ -111,8 +111,8 @@ private:
 
   std::string m_algorithm_name;
 
-  uint16_t m_geoid_region_id;
-  uint32_t m_geoid_element_id;
+  uint16_t m_geoid_region_id;  // NOLINT(build/unsigned)
+  uint32_t m_geoid_element_id; // NOLINT(build/unsigned)
 
   daqdataformats::timestamp_t m_buffer_time;
   daqdataformats::timestamp_t m_window_time;
@@ -211,7 +211,8 @@ public:
     std::vector<OUT> out_vec; // one input -> many outputs
     try {
       m_parent.m_maker->operator()(in, out_vec);
-    } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+    } catch (...) { // NOLINT TODO Benjamin Land <BenLand100@github.com> May 28-2021 can we restrict the possible
+                    // exceptions triggeralgs might raise?
       ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
       return;
     }
@@ -233,7 +234,7 @@ public:
 template<class A, class B, class MAKER>
 class TriggerGenericWorker<Set<A>, Set<B>, MAKER>
 {
-public:
+public: // NOLINT
   explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, Set<B>, MAKER>& parent)
     : m_parent(parent)
     , m_in_buffer(parent.get_name(), parent.m_algorithm_name)
@@ -266,7 +267,8 @@ public:
     for (const A& x : time_slice) {
       try {
         m_parent.m_maker->operator()(x, out_vec);
-      } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+      } catch (...) { // NOLINT TODO Benjamin Land <BenLand100@github.com> May 28-2021 can we restrict the possible
+                      // exceptions triggeralgs might raise?
         ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
         return;
       }
@@ -305,9 +307,11 @@ public:
 
         // flush the maker
         try {
-          // TODO BJL July 14-2021 flushed events go into the buffer... until a window is ready?
+          // TODO Benjamin Land <BenLand100@github.com> July-14-2021 flushed events go into the buffer... until a window
+          // is ready?
           m_parent.m_maker->flush(in.end_time, elems);
-        } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+        } catch (...) { // NOLINT TODO Benjamin Land <BenLand100@github.com> May-28-2021 can we restrict the possible
+                        // exceptions triggeralgs might raise?
           ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
           return;
         }
@@ -382,7 +386,7 @@ public:
 template<class A, class OUT, class MAKER>
 class TriggerGenericWorker<Set<A>, OUT, MAKER>
 {
-public:
+public: // NOLINT
   explicit TriggerGenericWorker(TriggerGenericMaker<Set<A>, OUT, MAKER>& parent)
     : m_parent(parent)
     , m_in_buffer(parent.get_name(), parent.m_algorithm_name)
@@ -403,7 +407,8 @@ public:
     for (const A& x : time_slice) {
       try {
         m_parent.m_maker->operator()(x, out_vec);
-      } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+      } catch (...) { // NOLINT TODO Benjamin Land <BenLand100@github.com> May 28-2021 can we restrict the possible
+                      // exceptions triggeralgs might raise?
         ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
         return;
       }
@@ -423,10 +428,12 @@ public:
         process_slice(time_slice, out_vec);
       } break;
       case Set<A>::Type::kHeartbeat:
-        // TODO BJL May-28-2021 should anything happen with the heartbeat when OUT is not a Set<T>?
+        // TODO Benjamin Land <BenLand100@github.com> May-28-2021 should anything happen with the heartbeat when OUT is
+        // not a Set<T>?
         try {
           m_parent.m_maker->flush(in.end_time, out_vec);
-        } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
+        } catch (...) { // NOLINT TODO Benjamin Land <BenLand100@github.com> May 28-2021 can we restrict the possible
+                        // exceptions triggeralgs might raise?
           ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
           return;
         }

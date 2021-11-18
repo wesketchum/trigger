@@ -1,25 +1,33 @@
-/** TriggerZipper is an appfwk::module that runs zipper::merge
+/**
+ * @file TriggerZipper.hpp TriggerZipper is an appfwk::DAQModule that runs zipper::merge
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
  */
 
 #ifndef TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
 #define TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
+
+#include "trigger/Issues.hpp"
+#include "trigger/triggerzipper/Nljs.hpp"
+#include "zipper.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
-
 #include "daqdataformats/GeoID.hpp"
-
-#include "trigger/Issues.hpp"
-#include "trigger/triggerzipper/Nljs.hpp"
-#include "zipper.hpp"
+#include <logging/Logging.hpp>
 
 #include <chrono>
 #include <list>
-#include <logging/Logging.hpp>
+#include <map>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 const char* inqs_name = "inputs";
 const char* outq_name = "output";
@@ -92,7 +100,6 @@ public:
         register_command("scrap",  &TriggerZipper<TSET>::do_scrap);
     // clang-format on
   }
-  virtual ~TriggerZipper() {}
 
   void init(const nlohmann::json& ini)
   {
@@ -191,7 +198,8 @@ public:
       // tell consumer "where" the set was produced
       tset.origin.region_id = m_cfg.region_id;
       tset.origin.element_id = m_cfg.element_id;
-      tset.seqno = m_next_seqno++;
+      tset.seqno = m_next_seqno;
+      ++m_next_seqno;
 
       try {
         m_outq->push(tset, std::chrono::milliseconds(10));
@@ -225,12 +233,12 @@ public:
     send_out(got);
   }
 };
-}
+} // namespace dunedaq::trigger
 
 /// Need one of these in a .cpp for each concrete TSET type
 // DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TriggerZipper<TSET>)
 
-#endif
+#endif // TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
 // Local Variables:
 // c-basic-offset: 2
 // End:

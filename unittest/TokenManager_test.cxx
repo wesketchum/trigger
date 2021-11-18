@@ -46,6 +46,11 @@ struct NetworkManagerTestFixture
     networkmanager::NetworkManager::get().configure(testConfig);
   }
   ~NetworkManagerTestFixture() { networkmanager::NetworkManager::get().reset(); }
+
+  NetworkManagerTestFixture(NetworkManagerTestFixture const&) = default;
+  NetworkManagerTestFixture(NetworkManagerTestFixture&&) = default;
+  NetworkManagerTestFixture& operator=(NetworkManagerTestFixture const&) = default;
+  NetworkManagerTestFixture& operator=(NetworkManagerTestFixture&&) = default;
 };
 
 BOOST_TEST_GLOBAL_FIXTURE(NetworkManagerTestFixture);

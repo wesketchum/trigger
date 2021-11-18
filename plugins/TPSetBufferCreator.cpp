@@ -21,9 +21,11 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace dunedaq {
@@ -150,9 +152,8 @@ TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_out
 
   frag.set_header_fields(frag_h);
 
-  /*  >>> need to fill the fragment with
-      the contents of the TPSet vector here
-   */
+  // TODO Trigger Team <dune-daq@github.com> July-7-2021: need to fill the fragment with the contents of the TPSet
+  // vector here
 
   return ret;
 }
@@ -329,7 +330,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
          << " data requests. " << addFailedCount << " Sets failed to add. Sent " << sentCount << " fragments";
 
   TLOG() << get_name() << ": Exiting do_work() method";
-}
+} // NOLINT Function length
 
 } // namespace trigger
 } // namespace dunedaq

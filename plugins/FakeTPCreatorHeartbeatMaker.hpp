@@ -74,4 +74,4 @@ private:
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_PLUGINS_TIMINGTRIGGERCANDIDATEMAKER_HPP_
+#endif // TRIGGER_PLUGINS_FAKETPCREATORHEARTBEATMAKER_HPP_

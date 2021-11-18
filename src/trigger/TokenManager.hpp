@@ -21,6 +21,7 @@
 #include <chrono>
 #include <memory>
 #include <set>
+#include <string>
 #include <thread>
 
 namespace dunedaq {

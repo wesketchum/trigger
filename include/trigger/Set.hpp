@@ -38,7 +38,7 @@ public:
 
   // An incremental count of how many Sets have been produced by this source
   // At TPSet rates seen in one protodune felix link, 32bits overflows in a week.
-  using seqno_t = uint64_t;
+  using seqno_t = uint64_t; // NOLINT(build/unsigned)
   seqno_t seqno{ 0 };
 
   // Identify the instance creator/stream/source of this set.

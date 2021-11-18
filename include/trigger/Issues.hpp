@@ -88,8 +88,8 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "Tardy input set from region " << region << " element " << element
                        << ". Set start time " << start_time << " but last sent time " << last_sent_time,
                        ((std::string)name),
-                       ((uint16_t)region)
-                       ((uint32_t)element)
+                       ((uint16_t)region) // NOLINT(build/unsigned)
+                       ((uint32_t)element) // NOLINT(build/unsigned)
                        ((daqdataformats::timestamp_t)start_time)
                        ((daqdataformats::timestamp_t)last_sent_time))
 // clang-format on

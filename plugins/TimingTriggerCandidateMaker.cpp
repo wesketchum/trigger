@@ -31,7 +31,7 @@ triggeralgs::TriggerCandidate
 TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data)
 {
   triggeralgs::TriggerCandidate candidate;
-  // TODO the signal field ia now a signal bit map, rather than unique value -> change logic of below?
+  // TODO Trigger Team <dune-daq@github.com> Nov-18-2021: the signal field ia now a signal bit map, rather than unique value -> change logic of below?
   if (m_detid_offsets_map.count(data.signal_map)) {
     // clang-format off
     candidate.time_start = data.timestamp - m_detid_offsets_map[data.signal_map].first;  // time_start

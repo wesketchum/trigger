@@ -11,6 +11,7 @@
 #include "networkmanager/NetworkManager.hpp"
 
 #include <memory>
+#include <string>
 
 namespace dunedaq::trigger {
 

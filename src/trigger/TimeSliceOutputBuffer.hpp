@@ -7,7 +7,7 @@
  */
 
 #ifndef TRIGGER_SRC_TRIGGER_TIMESLICEOUTPUTBUFFER_HPP_
-#define TRIGGER_SRC_TRIGGER_TIMESLICEOUTPUTBUFFERR_HPP_
+#define TRIGGER_SRC_TRIGGER_TIMESLICEOUTPUTBUFFER_HPP_
 
 #include "trigger/Issues.hpp"
 #include "trigger/Set.hpp"
@@ -15,12 +15,12 @@
 #include "logging/Logging.hpp"
 
 #include <queue>
+#include <string>
 #include <vector>
 
 namespace dunedaq::trigger {
 
-// TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc)
-// included a natural ordering with operator<()
+// TODO Benjamin Land <BenLand100@github.com> June-01-2021: would be nice if the T (TriggerPrimative, etc) included a natural ordering with operator<()
 template<class T>
 struct time_start_greater_t
 {
@@ -126,4 +126,4 @@ private:
 
 } // namespace dunedaq::trigger
 
-#endif // TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#endif // TRIGGER_SRC_TRIGGER_TIMESLICEOUTPUTBUFFER_HPP_

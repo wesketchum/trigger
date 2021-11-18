@@ -4,8 +4,8 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
+#ifndef TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
+#define TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
 #include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/Types.hpp"
@@ -82,7 +82,7 @@ private:
 
   std::unique_ptr<trigger::TPSetBuffer> m_tps_buffer;
 
-  uint64_t m_tps_buffer_size;
+  uint64_t m_tps_buffer_size; // NOLINT(build/unsigned)
 
   struct DataRequestComp
   {
@@ -104,7 +104,7 @@ private:
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
+#endif // TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
 // Local Variables:
 // c-basic-offset: 2

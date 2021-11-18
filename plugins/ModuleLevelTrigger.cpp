@@ -147,7 +147,7 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_number = m_last_trigger_number + 1;
   decision.run_number = m_run_number;
   decision.trigger_timestamp = tc.time_candidate;
-  // TODO: work out what to set this to
+  // TODO Philip Rodregues <philiprodregues@github.com> Apr-07-2021: work out what to set this to
   decision.trigger_type = 1; // m_trigger_type;
   decision.readout_type = dfmessages::ReadoutType::kLocalized;
 

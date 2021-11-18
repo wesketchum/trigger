@@ -6,21 +6,20 @@
  * received with this code.
  */
 
-#include "../src/trigger/TPSetBuffer.hpp"
+#include "../src/trigger/TPSetBuffer.hpp" // NOLINT
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
 
 #include "dfmessages/DataRequest.hpp"
 
-#include <random>
-
 /**
  * @brief Name of this test module
  */
-
 #define BOOST_TEST_MODULE BufferManager_test // NOLINT
 
 #include "boost/test/unit_test.hpp"
+
+#include <random>
 
 using namespace dunedaq;
 
@@ -28,7 +27,7 @@ BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
 
 BOOST_AUTO_TEST_CASE(Basics)
 {
-  long unsigned int buffer_size = 10;
+  size_t buffer_size = 10;
   trigger::TPSetBuffer bm(buffer_size);
   trigger::TPSet input_tpset;
 
