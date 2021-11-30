@@ -13,8 +13,10 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
 #include "triggeralgs/Types.hpp"
+
 #include <chrono>
 #include <sstream>
+#include <string>
 
 namespace dunedaq {
 namespace trigger {
@@ -59,7 +61,7 @@ TPSetSink::do_work()
   triggeralgs::timestamp_t first_timestamp = 0;
   triggeralgs::timestamp_t last_timestamp = 0;
 
-  uint32_t last_seqno = 0;
+  uint32_t last_seqno = 0; // NOLINT(build/unsigned)
 
   while (true) {
     TPSet tpset;

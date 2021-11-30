@@ -1,3 +1,13 @@
+/**
+ * @file AlgorithmPlugins.hpp
+ *
+ * This file contains the macro definitions for creating Trigger plugins
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
 #ifndef TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_
 
@@ -14,12 +24,13 @@
  * @brief Declare the function that will be called by the plugin loader
  * @param klass Class to be defined as a DUNE TAMaker module
  */
+// NOLINTNEXTLINE(build/define_used)
 #define DEFINE_DUNE_TA_MAKER(klass)                                                                                    \
   extern "C"                                                                                                           \
   {                                                                                                                    \
     std::shared_ptr<triggeralgs::TriggerActivityMaker> make()                                                          \
     {                                                                                                                  \
-      return std::shared_ptr<triggeralgs::TriggerActivityMaker>(new klass);                                            \
+      return std::shared_ptr<triggeralgs::TriggerActivityMaker>(new klass());                                            \
     }                                                                                                                  \
   }
 
@@ -35,22 +46,23 @@ make_ta_maker(std::string const& plugin_name)
 {
   static cet::BasicPluginFactory bpf("duneTAMaker", "make");
 
-  // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
+  // TODO Philip Rodrigues <philiprodrigues@github.com> Apr-04-2021: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerActivityMaker>>(plugin_name);
 }
 
-}
+} // namespace dunedaq::trigger
 
 /**
  * @brief Declare the function that will be called by the plugin loader
  * @param klass Class to be defined as a DUNE TCMaker module
  */
+// NOLINTNEXTLINE(build/define_used)
 #define DEFINE_DUNE_TC_MAKER(klass)                                                                                    \
   extern "C"                                                                                                           \
   {                                                                                                                    \
     std::shared_ptr<triggeralgs::TriggerCandidateMaker> make()                                                         \
     {                                                                                                                  \
-      return std::shared_ptr<triggeralgs::TriggerCandidateMaker>(new klass);                                           \
+      return std::shared_ptr<triggeralgs::TriggerCandidateMaker>(new klass());                                           \
     }                                                                                                                  \
   }
 
@@ -66,22 +78,23 @@ make_tc_maker(std::string const& plugin_name)
 {
   static cet::BasicPluginFactory bpf("duneTCMaker", "make");
 
-  // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
+  // TODO Philip Rodrigues <philiprodrigues@github.com> Apr-04-2021: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerCandidateMaker>>(plugin_name);
 }
 
-}
+} // namespace dunedaq::trigger
 
 /**
  * @brief Declare the function that will be called by the plugin loader
  * @param klass Class to be defined as a DUNE TDMaker module
  */
+// NOLINTNEXTLINE(build/define_used)
 #define DEFINE_DUNE_TD_MAKER(klass)                                                                                    \
   extern "C"                                                                                                           \
   {                                                                                                                    \
     std::shared_ptr<triggeralgs::TriggerDecisionMaker> make()                                                          \
     {                                                                                                                  \
-      return std::shared_ptr<triggeralgs::TriggerDecisionMaker>(new klass);                                            \
+      return std::shared_ptr<triggeralgs::TriggerDecisionMaker>(new klass());                                            \
     }                                                                                                                  \
   }
 
@@ -97,10 +110,10 @@ make_td_maker(std::string const& plugin_name)
 {
   static cet::BasicPluginFactory bpf("duneTDMaker", "make");
 
-  // TODO PAR 2021-04-06: Rethrow any cetlib exception as an ERS issue
+  // TODO Philip Rodrigues <philiprodrigues@github.com> Apr-04-2021: Rethrow any cetlib exception as an ERS issue
   return bpf.makePlugin<std::shared_ptr<triggeralgs::TriggerDecisionMaker>>(plugin_name);
 }
 
-}
+} // namespace dunedaq::trigger
 
 #endif // TRIGGER_INCLUDE_TRIGGER_ALGORITHMPLUGINS_HPP_

@@ -14,12 +14,14 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
+find_package(utilities REQUIRED)
+find_package(networkmanager REQUIRED)
 find_package(daqdataformats REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs utilities::utilities)
 
 ##############################################################################
 # Codegen
@@ -42,6 +44,7 @@ daq_codegen(
   triggerdecisionmaker.jsonnet
   triggerzipper.jsonnet
   tpsetbuffercreator.jsonnet
+  tpsetreceiver.jsonnet
   TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
@@ -79,6 +82,7 @@ daq_add_plugin(TriggerDecisionMakerSupernovaPlugin duneTDMaker LINK_LIBRARIES tr
 
 # nwqueueadapters plugins
 daq_add_plugin(TPSetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
+daq_add_plugin(TPSetReceiver duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TASetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
 
 ##############################################################################

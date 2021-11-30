@@ -1,11 +1,19 @@
-#ifndef ZIPPER_HPP
-#define ZIPPER_HPP
+/**
+ * @file zipper.hpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
+#ifndef TRIGGER_PLUGINS_ZIPPER_HPP_
+#define TRIGGER_PLUGINS_ZIPPER_HPP_
 
 #include <chrono>
 #include <queue>
+#include <vector>
+#include <functional>
 #include <unordered_map>
-
-#include <iostream> // temp debug
 
 namespace zipper {
 
@@ -183,7 +191,8 @@ public:
   OutputIterator drain_full(OutputIterator result)
   {
     while (!this->empty()) {
-      *result++ = next(); // hey, dev: do not forget back_inserter
+      *result = next(); // hey, dev: do not forget back_inserter
+      ++result;
     }
     return result;
   }
@@ -201,7 +210,8 @@ public:
   OutputIterator drain_prompt(OutputIterator result, const timepoint_t& now = clock_t::now())
   {
     while (complete(now)) {
-      *result++ = next(); // hey, dev: do not forget back_inserter
+      *result = next(); // hey, dev: do not forget back_inserter
+      ++result;
     }
     return result;
   }
@@ -216,7 +226,8 @@ public:
   OutputIterator drain_waiting(OutputIterator result)
   {
     while (complete()) {
-      *result++ = next(); // hey, dev: do not forget back_inserter
+      *result = next(); // hey, dev: do not forget back_inserter
+      ++result;
     }
     return result;
   }
@@ -312,5 +323,5 @@ private:
   std::unordered_map<identity_t, Stream> streams;
 };
 
-}
-#endif
+} // namespace zipper
+#endif // TRIGGER_PLUGINS_ZIPPER_HPP_
