@@ -5,6 +5,7 @@ local s = moo.oschema.schema(ns);
 local types = {
 	time_t : s.number("time_t", "i8", doc="Time"),
 	signal_type_t : s.number("signal_type_t", "u4", doc="Signal type"),
+	connection_name : s.string("connection_name"),
 	map_t : s.record("map_t", [
 			s.field("signal_type",
 				self.signal_type_t,
@@ -44,6 +45,9 @@ local types = {
 				time_after: 2000000
 			},
 			doc="Example 2"),
+		s.field("hsievent_connection_name", 
+			self.connection_name, 
+			doc="Connection name to be used to send hsievent to")
 	], doc="Configuration of the different readout time maps"),
 
 };
