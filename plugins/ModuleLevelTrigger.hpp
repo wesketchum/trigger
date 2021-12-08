@@ -105,6 +105,7 @@ private:
   std::atomic<metric_counter_type> m_td_inhibited_count{ 0 };
   std::atomic<metric_counter_type> m_td_paused_count{ 0 };
   std::atomic<metric_counter_type> m_td_total_count{ 0 };
+  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq

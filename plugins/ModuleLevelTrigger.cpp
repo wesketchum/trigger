@@ -185,7 +185,9 @@ ModuleLevelTrigger::send_trigger_decisions()
       }
     }
 
-    if (!m_paused.load()) {
+    bool tokens_allow_triggers = m_trigger_decision_sink->can_push();
+
+    if (!m_paused.load() && tokens_allow_triggers ) {
 
       dfmessages::TriggerDecision decision = create_decision(tc);
 
@@ -194,17 +196,22 @@ ModuleLevelTrigger::send_trigger_decisions()
                     << " based on TC of type " << static_cast<std::underlying_type_t<decltype(tc.type)>>(tc.type);
 
       try {
-        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(1));
         m_td_sent_count++;
         m_last_trigger_number++;
       } catch (appfwk::QueueTimeoutExpired& e) {
-        ers::warning(TriggerInhibited(ERS_HERE));
-        TLOG_DEBUG(1) << "The DFO is not ready. Not sending a TriggerDecision for candidate timestamp "
+	ers::error(e);
+        TLOG_DEBUG(1) << "The queue is misbehaving: it accepted TD but the push failed for "
                       << tc.time_candidate;
-        m_td_inhibited_count++;
+        m_td_queue_timeout_expired_err_count++;
       }
 
-    } else {
+    } else if (!tokens_allow_triggers) {
+      ers::warning(TriggerInhibited(ERS_HERE));
+      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
+                    << tc.time_candidate;
+      m_td_inhibited_count++;
+    }else {
       ++m_td_paused_count;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
