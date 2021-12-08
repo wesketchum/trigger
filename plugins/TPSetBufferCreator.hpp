@@ -77,7 +77,7 @@ private:
   using dr_source_t = dunedaq::appfwk::DAQSource<dfmessages::DataRequest>;
   std::unique_ptr<dr_source_t> m_input_queue_dr;
 
-  using fragment_sink_t = dunedaq::appfwk::DAQSink<std::unique_ptr<daqdataformats::Fragment>>;
+  using fragment_sink_t = dunedaq::appfwk::DAQSink<std::pair<std::unique_ptr<daqdataformats::Fragment>, std::string>>;
   std::unique_ptr<fragment_sink_t> m_output_queue_frag;
 
   std::unique_ptr<trigger::TPSetBuffer> m_tps_buffer;
@@ -98,8 +98,8 @@ private:
   std::unique_ptr<daqdataformats::Fragment> convert_to_fragment(TPSetBuffer::DataRequestOutput,
                                                                 dfmessages::DataRequest);
 
-  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, size_t&, std::atomic<bool>&);
-  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>);
+  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, std::string, size_t&, std::atomic<bool>&);
+  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, std::string);
 };
 } // namespace trigger
 } // namespace dunedaq
