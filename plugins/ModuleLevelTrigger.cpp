@@ -17,8 +17,6 @@
 #include "dfmessages/Types.hpp"
 #include "logging/Logging.hpp"
 
-#include "networkmanager/NetworkManager.hpp"
-
 #include "trigger/Issues.hpp"
 #include "trigger/moduleleveltrigger/Nljs.hpp"
 
@@ -40,6 +38,7 @@ namespace trigger {
 
 ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
   : DAQModule(name)
+  , m_trigger_decision_sink(nullptr)
   , m_last_trigger_number(0)
   , m_run_number(0)
 {
@@ -56,6 +55,8 @@ ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
 void
 ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
+  m_trigger_decision_sink.reset(
+    new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
   m_candidate_source.reset(
     new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_source")));
 }
@@ -67,7 +68,6 @@ ModuleLevelTrigger::get_info(opmonlib::InfoCollector& ci, int /*level*/)
 
   i.tc_received_count = m_tc_received_count.load();
   i.td_sent_count = m_td_sent_count.load();
-  i.td_queue_timeout_expired_err_count = m_td_queue_timeout_expired_err_count.load();
   i.td_inhibited_count = m_td_inhibited_count.load();
   i.td_paused_count = m_td_paused_count.load();
   i.td_total_count = m_td_total_count.load();
@@ -79,8 +79,6 @@ void
 ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
 {
   auto params = confobj.get<moduleleveltrigger::ConfParams>();
-
-  m_trigger_decision_connection = params.td_connection_name;
 
   m_links.clear();
   for (auto const& link : params.links) {
@@ -142,7 +140,7 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_number = m_last_trigger_number + 1;
   decision.run_number = m_run_number;
   decision.trigger_timestamp = tc.time_candidate;
-  // TODO Philip Rodregues <philiprodregues@github.com> Apr-07-2021: work out what to set this to
+  // TODO: work out what to set this to
   decision.trigger_type = 1; // m_trigger_type;
   decision.readout_type = dfmessages::ReadoutType::kLocalized;
 
@@ -168,7 +166,6 @@ ModuleLevelTrigger::send_trigger_decisions()
   // OpMon.
   m_tc_received_count.store(0);
   m_td_sent_count.store(0);
-  m_td_queue_timeout_expired_err_count.store(0);
   m_td_inhibited_count.store(0);
   m_td_paused_count.store(0);
   m_td_total_count.store(0);
@@ -188,7 +185,9 @@ ModuleLevelTrigger::send_trigger_decisions()
       }
     }
 
-    if (!m_paused.load()) {
+    bool tokens_allow_triggers = m_trigger_decision_sink->can_push();
+
+    if (!m_paused.load() && tokens_allow_triggers ) {
 
       dfmessages::TriggerDecision decision = create_decision(tc);
 
@@ -197,28 +196,22 @@ ModuleLevelTrigger::send_trigger_decisions()
                     << " based on TC of type " << static_cast<std::underlying_type_t<decltype(tc.type)>>(tc.type);
 
       try {
-
-        auto serialised_decision = dunedaq::serialization::serialize(decision, dunedaq::serialization::kMsgPack);
-
-        networkmanager::NetworkManager::get().send_to(m_trigger_decision_connection,
-                                                      static_cast<const void*>(serialised_decision.data()),
-                                                      serialised_decision.size(),
-                                                      std::chrono::milliseconds(10));
+        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(1));
         m_td_sent_count++;
-      } catch (const ipm::SendTimeoutExpired& e) {
-        ers::warning(TriggerInhibited(ERS_HERE));
-        TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
+        m_last_trigger_number++;
+      } catch (appfwk::QueueTimeoutExpired& e) {
+	ers::error(e);
+        TLOG_DEBUG(1) << "The queue is misbehaving: it accepted TD but the push failed for "
                       << tc.time_candidate;
-        m_td_inhibited_count++;
-      } catch (const ers::Issue& e) {
         m_td_queue_timeout_expired_err_count++;
-        std::ostringstream oss_err;
-        oss_err << "Send to connection \"" << m_trigger_decision_connection << "\" failed";
-        ers::error(networkmanager::OperationFailed(ERS_HERE, oss_err.str(), e));
       }
 
-      m_last_trigger_number++;
-    } else {
+    } else if (!tokens_allow_triggers) {
+      ers::warning(TriggerInhibited(ERS_HERE));
+      TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
+                    << tc.time_candidate;
+      m_td_inhibited_count++;
+    }else {
       ++m_td_paused_count;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }

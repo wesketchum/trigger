@@ -79,10 +79,8 @@ private:
   dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 
   // Queue sources and sinks
+  std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
-
-  // Connection names
-  std::string m_trigger_decision_connection;
 
   std::vector<dfmessages::GeoID> m_links;
 
@@ -104,10 +102,10 @@ private:
   using metric_counter_type = decltype(moduleleveltriggerinfo::Info::tc_received_count);
   std::atomic<metric_counter_type> m_tc_received_count{ 0 };
   std::atomic<metric_counter_type> m_td_sent_count{ 0 };
-  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
   std::atomic<metric_counter_type> m_td_inhibited_count{ 0 };
   std::atomic<metric_counter_type> m_td_paused_count{ 0 };
   std::atomic<metric_counter_type> m_td_total_count{ 0 };
+  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq
