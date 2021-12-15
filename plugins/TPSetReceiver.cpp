@@ -160,7 +160,13 @@ TPSetReceiver::dispatch_tpset(ipm::Receiver::Response message)
   auto component = tpset.origin;
   if (m_tpset_output_queues.count(component)) {
     TLOG_DEBUG(10) << get_name() << "Dispatch tpset to queue " << m_tpset_output_queues.at(component)->get_name();
-    m_tpset_output_queues.at(component)->push(tpset, m_queue_timeout);
+    try {
+      m_tpset_output_queues.at(component)->push(tpset, m_queue_timeout);
+    } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
+      std::ostringstream oss_warn;
+      oss_warn << "push to output queue \"" << m_tpset_output_queues.at(component)->get_name() << "\"";
+      ers::warning(dunedaq::appfwk::QueueTimeoutExpired(ERS_HERE, get_name(), oss_warn.str(), m_queue_timeout.count()));
+    }
   } else {
     ers::error(UnknownGeoID(ERS_HERE, component));
   }
