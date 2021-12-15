@@ -9,7 +9,7 @@
 
 #include "IntervalTCCreator.hpp"
 
-#include "dataformats/ComponentRequest.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
 
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -70,7 +70,7 @@ IntervalTCCreator::do_configure(const nlohmann::json& confobj)
 void
 IntervalTCCreator::do_start(const nlohmann::json& startobj)
 {
-  m_run_number = startobj.value<dunedaq::dataformats::run_number_t>("run", 0);
+  m_run_number = startobj.value<dunedaq::daqdataformats::run_number_t>("run", 0);
 
   m_running_flag.store(true);
 

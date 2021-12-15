@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 1.1.2)
+project(trigger VERSION 1.1.3)
 
 find_package(daq-cmake REQUIRED)
 
@@ -14,7 +14,7 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
-find_package(dataformats REQUIRED)
+find_package(daqdataformats REQUIRED)
 
 ##############################################################################
 # Main library

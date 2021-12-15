@@ -12,8 +12,8 @@
 #include "trigger/Issues.hpp"
 
 
-#include "dataformats/FragmentHeader.hpp"
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/FragmentHeader.hpp"
+#include "daqdataformats/GeoID.hpp"
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
@@ -101,14 +101,14 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
     while (it != m_dr_on_hold.end()) {
 
       requested_tpset.txsets_in_window = it->second;
-      std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
+      std::unique_ptr<daqdataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
       TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
              << (it->first).window_end << "), containing " << requested_tpset.txsets_in_window.size() << " TPSets.";
 
       if (requested_tpset.txsets_in_window.size()) {
-        frag_out->set_error_bit(dataformats::FragmentErrorBits::kIncomplete, true);
+        frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kIncomplete, true);
       } else {
-        frag_out->set_error_bit(dataformats::FragmentErrorBits::kDataNotFound, true);
+        frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
       }
 
       send_out_fragment(std::move(frag_out));
@@ -130,22 +130,22 @@ TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
   TLOG() << get_name() << ": Exiting do_scrap() method";
 }
 
-std::unique_ptr<dataformats::Fragment>
+std::unique_ptr<daqdataformats::Fragment>
 TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_output */,
                                         dfmessages::DataRequest input_data_request)
 {
-  auto ret = std::make_unique<dataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
+  auto ret = std::make_unique<daqdataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
   auto& frag = *ret.get();
 
-  dataformats::GeoID geoid(dataformats::GeoID::SystemType::kDataSelection, m_conf.region, m_conf.element);
-  dataformats::FragmentHeader frag_h;
+  daqdataformats::GeoID geoid(daqdataformats::GeoID::SystemType::kDataSelection, m_conf.region, m_conf.element);
+  daqdataformats::FragmentHeader frag_h;
   frag_h.trigger_number = input_data_request.trigger_number;
   frag_h.trigger_timestamp = input_data_request.trigger_timestamp;
   frag_h.window_begin = input_data_request.window_begin;
   frag_h.window_end = input_data_request.window_end;
   frag_h.run_number = input_data_request.run_number;
   frag_h.element_id = geoid;
-  frag_h.fragment_type = (dataformats::fragment_type_t)dataformats::FragmentType::kTriggerPrimitives;
+  frag_h.fragment_type = (daqdataformats::fragment_type_t)daqdataformats::FragmentType::kTriggerPrimitives;
   frag_h.sequence_number = input_data_request.sequence_number;
 
   frag.set_header_fields(frag_h);
@@ -158,7 +158,7 @@ TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_out
 }
 
 void
-TPSetBufferCreator::send_out_fragment(std::unique_ptr<dataformats::Fragment> frag_out,
+TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out,
                                       size_t& sentCount,
                                       std::atomic<bool>& running_flag)
 {
@@ -182,7 +182,7 @@ TPSetBufferCreator::send_out_fragment(std::unique_ptr<dataformats::Fragment> fra
 }
 
 void
-TPSetBufferCreator::send_out_fragment(std::unique_ptr<dataformats::Fragment> frag_out)
+TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out)
 {
   std::string thisQueueName = m_output_queue_frag->get_name();
   bool successfullyWasSent = false;
@@ -255,12 +255,12 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
           }
           if (it->first.window_end < input_tpset.start_time) { // If more TPSet aren't expected to arrive then push and remove pending data request
             requested_tpset.txsets_in_window = std::move(it->second);
-            std::unique_ptr<dataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
+            std::unique_ptr<daqdataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
             TLOG() << get_name() << ": Sending late requested data (" << (it->first).window_begin << ", "
                    << (it->first).window_end << "), containing " << requested_tpset.txsets_in_window.size()
                    << " TPSets.";
             if (requested_tpset.txsets_in_window.empty()) {
-              frag_out->set_error_bit(dataformats::FragmentErrorBits::kDataNotFound, true);
+              frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
             }
 
             send_out_fragment(std::move(frag_out), sentCount, running_flag);
@@ -292,7 +292,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
                  << input_data_request.window_end << ") not in buffer, which contains "
                  << m_tps_buffer->get_stored_size() << " TPSets between (" << m_tps_buffer->get_earliest_start_time()
                  << ", " << m_tps_buffer->get_latest_end_time() << "). Returning empty fragment.";
-          frag_out->set_error_bit(dataformats::FragmentErrorBits::kDataNotFound, true);
+          frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
           send_out_fragment(std::move(frag_out), sentCount, running_flag);
           break;
         case TPSetBuffer::kLate:

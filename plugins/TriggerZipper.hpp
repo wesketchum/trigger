@@ -10,7 +10,7 @@
 #include "appfwk/DAQSource.hpp"
 #include "appfwk/ThreadHelper.hpp"
 
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/GeoID.hpp"
 
 #include "trigger/Issues.hpp"
 #include "trigger/triggerzipper/Nljs.hpp"
@@ -34,7 +34,7 @@ namespace dunedaq::trigger {
 // >
 
 size_t
-zipper_stream_id(const dataformats::GeoID& geoid)
+zipper_stream_id(const daqdataformats::GeoID& geoid)
 {
   return (0xffff000000000000 & (static_cast<size_t>(geoid.system_type) << 48)) |
          (0x0000ffff00000000 & (static_cast<size_t>(geoid.region_id) << 32)) | (0x00000000ffffffff & geoid.element_id);
@@ -79,7 +79,7 @@ public:
   size_t m_n_received{ 0 };
   size_t m_n_sent{ 0 };
   size_t m_n_tardy{ 0 };
-  std::map<dataformats::GeoID, size_t> m_tardy_counts;
+  std::map<daqdataformats::GeoID, size_t> m_tardy_counts;
 
   explicit TriggerZipper(const std::string& name)
     : DAQModule(name)
