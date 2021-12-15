@@ -113,7 +113,7 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
         frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
       }
 
-      send_out_fragment(std::move(frag_out));
+      send_out_fragment(std::move(frag_out), it->first.data_destination);
       sentCount++;
       it++;
     }
@@ -160,6 +160,7 @@ TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_out
 
 void
 TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out,
+                                      std::string data_destination,
                                       size_t& sentCount,
                                       std::atomic<bool>& running_flag)
 {
@@ -171,7 +172,7 @@ TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> 
   do {
     TLOG() << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
     try {
-      m_output_queue_frag->push(std::move(frag_out), m_queueTimeout);
+      m_output_queue_frag->push(std::make_pair(std::move(frag_out), data_destination), m_queueTimeout);
       successfullyWasSent = true;
       ++sentCount;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
@@ -183,14 +184,14 @@ TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> 
 }
 
 void
-TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out)
+TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out, std::string data_destination)
 {
   std::string thisQueueName = m_output_queue_frag->get_name();
   bool successfullyWasSent = false;
   do {
     TLOG() << get_name() << ": Pushing the requested TPSet onto queue " << thisQueueName;
     try {
-      m_output_queue_frag->push(std::move(frag_out), m_queueTimeout);
+      m_output_queue_frag->push(std::make_pair(std::move(frag_out), data_destination), m_queueTimeout);
       successfullyWasSent = true;
     } catch (const dunedaq::appfwk::QueueTimeoutExpired& excpt) {
       std::ostringstream oss_warn;
@@ -268,7 +269,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
               frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
             }
 
-            send_out_fragment(std::move(frag_out), sentCount, running_flag);
+            send_out_fragment(std::move(frag_out), it->first.data_destination, sentCount, running_flag);
             it = m_dr_on_hold.erase(it);
             continue;
           }
@@ -300,7 +301,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
                  << m_tps_buffer->get_stored_size() << " TPSets between (" << m_tps_buffer->get_earliest_start_time()
                  << ", " << m_tps_buffer->get_latest_end_time() << "). Returning empty fragment.";
           frag_out->set_error_bit(daqdataformats::FragmentErrorBits::kDataNotFound, true);
-          send_out_fragment(std::move(frag_out), sentCount, running_flag);
+          send_out_fragment(std::move(frag_out), input_data_request.data_destination, sentCount, running_flag);
           break;
         case TPSetBuffer::kLate:
           TLOG() << get_name() << ": Requested data (" << input_data_request.request_information.window_begin << ", "
@@ -314,7 +315,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
                  << ", " << input_data_request.request_information.window_end << "), containing "
                  << requested_tpset.txsets_in_window.size() << " TPSets.";
 
-          send_out_fragment(std::move(frag_out), sentCount, running_flag);
+          send_out_fragment(std::move(frag_out), input_data_request.data_destination, sentCount, running_flag);
           break;
         default:
           TLOG() << get_name() << ": Data request failed!";
