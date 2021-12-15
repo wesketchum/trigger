@@ -207,7 +207,7 @@ ModuleLevelTrigger::send_trigger_decisions()
       }
 
     } else if (!tokens_allow_triggers) {
-      ers::warning(TriggerInhibited(ERS_HERE));
+      ers::warning(TriggerInhibited(ERS_HERE, m_run_number));
       TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
       m_td_inhibited_count++;
@@ -218,7 +218,8 @@ ModuleLevelTrigger::send_trigger_decisions()
     m_td_total_count++;
   }
 
-  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
+  TLOG() << "Run " << m_run_number << ": "
+         << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
          << m_td_paused_count << " TDs were created during pause, and " << m_td_inhibited_count.load()
          << " TDs were inhibited.";
 }
