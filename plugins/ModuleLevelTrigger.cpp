@@ -152,6 +152,10 @@ ModuleLevelTrigger::create_decision(const triggeralgs::TriggerCandidate& tc)
   decision.trigger_type = 1; // m_trigger_type;
   decision.readout_type = dfmessages::ReadoutType::kLocalized;
 
+  auto now = std::chrono::system_clock::now();
+  auto now_timestamp = 50*std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+  TLOG() << "Creating decision for timestamp " << tc.time_start << " at wall-clock timestamp " << now_timestamp
+	 << ". Delay is " << (now_timestamp - tc.time_start);
   for (auto link : m_links) {
     dfmessages::ComponentRequest request;
     request.component = link;
