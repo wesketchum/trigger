@@ -1,3 +1,11 @@
+/**
+ * @file set_serialization_speed.cxx Test the amount of time it takes to serialize a TASet
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
 #include "logging/Logging.hpp"
 #include "serialization/Serialization.hpp"
 #include "trigger/TASet.hpp"
@@ -8,6 +16,7 @@
 #include <chrono>
 #include <iostream>
 #include <random>
+#include <vector>
 
 // Return the current steady clock in microseconds
 inline uint64_t // NOLINT(build/unsigned)
@@ -55,8 +64,8 @@ time_serialization(int tps_per_set)
   uint64_t start_time = now_us(); // NOLINT(build/unsigned)
 
   for (int i = 0; i < N; ++i) {
-    std::vector<uint8_t> bytes =
-      dunedaq::serialization::serialize(sets[i], dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
+    // NOLINTNEXTLINE(build/unsigned)
+    std::vector<uint8_t> bytes = dunedaq::serialization::serialize(sets[i], dunedaq::serialization::kMsgPack);
     dunedaq::trigger::TPSet set_recv = dunedaq::serialization::deserialize<dunedaq::trigger::TPSet>(bytes);
     total += set_recv.seqno;
   }
@@ -65,8 +74,8 @@ time_serialization(int tps_per_set)
   double time_taken_s = 1e-6 * (end_time - start_time);
   double msg_kHz = 1e-3 * N / time_taken_s;
   double tp_kHz = 1e-3 * tps_per_set * N / time_taken_s;
-  std::cout << "Sent " << N << " messages in " << time_taken_s << " (" << msg_kHz << " kHz of msgs, " << tp_kHz
-            << " kHz of TPs) " << total << std::endl; // NOLINT
+  TLOG() << "Sent " << N << " messages in " << time_taken_s << " (" << msg_kHz << " kHz of msgs, " << tp_kHz
+         << " kHz of TPs) " << total;
 }
 
 int
@@ -74,12 +83,12 @@ main()
 {
   std::vector<int> n_tps{ 0, 1, 10, 100, 1000 };
   for (auto n : n_tps) {
-    std::cout << n << " TPs per set: " << std::flush;
+    TLOG() << n << " TPs per set: " << std::flush;
     time_serialization(n);
   }
 
   dunedaq::trigger::TASet taset;
-  std::vector<uint8_t> bytes =
-    dunedaq::serialization::serialize(taset, dunedaq::serialization::kMsgPack); // NOLINT(build/unsigned)
+  // NOLINTNEXTLINE(build/unsigned)
+  std::vector<uint8_t> bytes = dunedaq::serialization::serialize(taset, dunedaq::serialization::kMsgPack);
   dunedaq::trigger::TASet set_recv = dunedaq::serialization::deserialize<dunedaq::trigger::TASet>(bytes);
 }

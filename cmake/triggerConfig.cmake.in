@@ -4,7 +4,6 @@
 include(CMakeFindDependencyMacro)
 
 find_dependency(ers)
-find_dependency(Boost 1.70.0 COMPONENTS unit_test_framework)
 find_dependency(serialization)
 find_dependency(logging)
 find_dependency(appfwk)
@@ -13,6 +12,8 @@ find_dependency(dfmessages)
 find_dependency(timinglibs)
 find_dependency(nwqueueadapters)
 find_dependency(daqdataformats)
+find_dependency(networkmanager)
+find_dependency(utilities)
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/@PROJECT_NAME@)
 

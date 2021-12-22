@@ -1,3 +1,11 @@
+/**
+ * @file TriggerPrimitiveMaker.cpp
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
+ */
+
 #include "TriggerPrimitiveMaker.hpp"
 
 #include "trigger/Issues.hpp" // For TLVL_*
@@ -49,9 +57,9 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
   TriggerPrimitive tp;
   TPSet tpset;
 
-  uint64_t prev_tpset_number = 0;
-  uint32_t seqno = 0;
-  uint64_t old_time_start = 0;
+  uint64_t prev_tpset_number = 0; // NOLINT(build/unsigned)
+  uint32_t seqno = 0;             // NOLINT(build/unsigned)
+  uint64_t old_time_start = 0;    // NOLINT(build/unsigned)
 
   // Read in the file and place the TPs in TPSets. TPSets have time
   // boundaries ( n*tpset_time_width + tpset_time_offset ), and TPs are placed
@@ -61,6 +69,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
   while (file >> tp.time_start >> tp.time_over_threshold >> tp.time_peak >> tp.channel >> tp.adc_integral >>
          tp.adc_peak >> tp.detid >> tp.type) {
     if (tp.time_start >= old_time_start) {
+      // NOLINTNEXTLINE(build/unsigned)
       uint64_t current_tpset_number = (tp.time_start + m_conf.tpset_time_offset) / m_conf.tpset_time_width;
       old_time_start = tp.time_start;
 
@@ -74,7 +83,8 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
 
         tpset.start_time = current_tpset_number * m_conf.tpset_time_width + m_conf.tpset_time_offset;
         tpset.end_time = tpset.start_time + m_conf.tpset_time_width;
-        tpset.seqno = seqno++;
+        tpset.seqno = seqno;
+        ++seqno;
 
         // 12-Jul-2021, KAB: setting origin fields from configuration
         tpset.origin.region_id = m_conf.region_id;
@@ -122,19 +132,19 @@ void
 TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
 {
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_work() method";
-  uint64_t current_iteration = 0;
+  uint64_t current_iteration = 0; // NOLINT(build/unsigned)
   size_t generated_count = 0;
   size_t push_failed_count = 0;
   size_t generated_tp_count = 0;
 
-  uint64_t prev_tpset_start_time = 0;
+  uint64_t prev_tpset_start_time = 0; // NOLINT(build/unsigned)
   auto prev_tpset_send_time = std::chrono::steady_clock::now();
 
   auto input_file_duration = m_tpsets.back().start_time - m_tpsets.front().start_time + m_conf.tpset_time_width;
 
   auto run_start_time = std::chrono::steady_clock::now();
 
-  uint32_t seqno = 0;
+  uint32_t seqno = 0; // NOLINT(build/unsigned)
 
   while (running_flag.load()) {
     if (m_conf.number_of_loops > 0 && current_iteration >= m_conf.number_of_loops) {
@@ -193,7 +203,8 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
         tp.time_start += input_file_duration;
         tp.time_peak += input_file_duration;
       }
-      tpset.seqno = seqno++;
+      tpset.seqno = seqno;
+      ++seqno;
 
     } // end loop over tpsets
     ++current_iteration;
@@ -210,6 +221,6 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag)
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Exiting do_work() method";
 }
 
-} // namespace dunedaq
+} // namespace dunedaq::trigger
 
 DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TriggerPrimitiveMaker)

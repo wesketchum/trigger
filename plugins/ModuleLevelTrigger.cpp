@@ -38,7 +38,6 @@ namespace trigger {
 
 ModuleLevelTrigger::ModuleLevelTrigger(const std::string& name)
   : DAQModule(name)
-  , m_token_source(nullptr)
   , m_trigger_decision_sink(nullptr)
   , m_last_trigger_number(0)
   , m_run_number(0)
@@ -58,8 +57,6 @@ ModuleLevelTrigger::init(const nlohmann::json& iniobj)
 {
   m_trigger_decision_sink.reset(
     new appfwk::DAQSink<dfmessages::TriggerDecision>(appfwk::queue_inst(iniobj, "trigger_decision_sink")));
-  m_token_source.reset(
-    new appfwk::DAQSource<dfmessages::TriggerDecisionToken>(appfwk::queue_inst(iniobj, "token_source")));
   m_candidate_source.reset(
     new appfwk::DAQSource<triggeralgs::TriggerCandidate>(appfwk::queue_inst(iniobj, "trigger_candidate_source")));
 }
@@ -71,7 +68,6 @@ ModuleLevelTrigger::get_info(opmonlib::InfoCollector& ci, int /*level*/)
 
   i.tc_received_count = m_tc_received_count.load();
   i.td_sent_count = m_td_sent_count.load();
-  i.td_queue_timeout_expired_err_count = m_td_queue_timeout_expired_err_count.load();
   i.td_inhibited_count = m_td_inhibited_count.load();
   i.td_paused_count = m_td_paused_count.load();
   i.td_total_count = m_td_total_count.load();
@@ -83,8 +79,6 @@ void
 ModuleLevelTrigger::do_configure(const nlohmann::json& confobj)
 {
   auto params = confobj.get<moduleleveltrigger::ConfParams>();
-
-  m_initial_tokens = params.initial_token_count;
 
   m_links.clear();
   for (auto const& link : params.links) {
@@ -103,8 +97,6 @@ ModuleLevelTrigger::do_start(const nlohmann::json& startobj)
   m_paused.store(true);
   m_running_flag.store(true);
 
-  m_token_manager.reset(new TokenManager(m_token_source, m_initial_tokens, m_run_number));
-
   m_send_trigger_decisions_thread = std::thread(&ModuleLevelTrigger::send_trigger_decisions, this);
   pthread_setname_np(m_send_trigger_decisions_thread.native_handle(), "mlt-trig-dec");
   ers::info(TriggerStartOfRun(ERS_HERE, m_run_number));
@@ -115,7 +107,6 @@ ModuleLevelTrigger::do_stop(const nlohmann::json& /*stopobj*/)
 {
   m_running_flag.store(false);
   m_send_trigger_decisions_thread.join();
-  m_token_manager.reset(nullptr); // Calls TokenManager dtor
   ers::info(TriggerEndOfRun(ERS_HERE, m_run_number));
 }
 
@@ -136,8 +127,9 @@ ModuleLevelTrigger::do_resume(const nlohmann::json& /*resumeobj*/)
 }
 
 void
-ModuleLevelTrigger::do_scrap(const nlohmann::json& /*stopobj*/)
+ModuleLevelTrigger::do_scrap(const nlohmann::json& /*scrapobj*/)
 {
+  m_links.clear();
   m_configured_flag.store(false);
 }
 
@@ -174,7 +166,6 @@ ModuleLevelTrigger::send_trigger_decisions()
   // OpMon.
   m_tc_received_count.store(0);
   m_td_sent_count.store(0);
-  m_td_queue_timeout_expired_err_count.store(0);
   m_td_inhibited_count.store(0);
   m_td_paused_count.store(0);
   m_td_total_count.store(0);
@@ -194,9 +185,9 @@ ModuleLevelTrigger::send_trigger_decisions()
       }
     }
 
-    bool tokens_allow_triggers = m_token_manager->triggers_allowed();
+    bool tokens_allow_triggers = m_trigger_decision_sink->can_push();
 
-    if (!m_paused.load() && tokens_allow_triggers) {
+    if (!m_paused.load() && tokens_allow_triggers ) {
 
       dfmessages::TriggerDecision decision = create_decision(tc);
 
@@ -204,35 +195,31 @@ ModuleLevelTrigger::send_trigger_decisions()
                     << decision.trigger_timestamp << " number of links " << decision.components.size()
                     << " based on TC of type " << static_cast<std::underlying_type_t<decltype(tc.type)>>(tc.type);
 
-      // Have to notify the token manager of the trigger _before_
-      // actually pushing it, otherwise the DF could reply with
-      // TriggerComplete before we get to the notification. If that
-      // happens, then the token manager sees a TriggerComplete for a
-      // token it doesn't know about, and ignores it
-      m_token_manager->trigger_sent(decision.trigger_number);
       try {
-        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(10));
+        m_trigger_decision_sink->push(decision, std::chrono::milliseconds(1));
         m_td_sent_count++;
+        m_last_trigger_number++;
       } catch (appfwk::QueueTimeoutExpired& e) {
+	ers::error(e);
+        TLOG_DEBUG(1) << "The queue is misbehaving: it accepted TD but the push failed for "
+                      << tc.time_candidate;
         m_td_queue_timeout_expired_err_count++;
-        ers::error(e);
       }
 
-      decision.trigger_number++;
-      m_last_trigger_number++;
     } else if (!tokens_allow_triggers) {
-      ers::warning(TriggerInhibited(ERS_HERE));
+      ers::warning(TriggerInhibited(ERS_HERE, m_run_number));
       TLOG_DEBUG(1) << "There are no Tokens available. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
       m_td_inhibited_count++;
-    } else {
+    }else {
       ++m_td_paused_count;
       TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
     m_td_total_count++;
   }
 
-  TLOG() << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
+  TLOG() << "Run " << m_run_number << ": "
+         << "Received " << m_tc_received_count << " TCs. Sent " << m_td_sent_count.load() << " TDs. "
          << m_td_paused_count << " TDs were created during pause, and " << m_td_inhibited_count.load()
          << " TDs were inhibited.";
 }

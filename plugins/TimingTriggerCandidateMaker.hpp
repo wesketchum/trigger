@@ -24,6 +24,8 @@
 #include "triggeralgs/TriggerActivity.hpp"
 #include "triggeralgs/TriggerCandidate.hpp"
 
+#include "ipm/Receiver.hpp"
+
 #include <chrono>
 #include <map>
 #include <memory>
@@ -51,21 +53,18 @@ private:
   void do_stop(const nlohmann::json& obj);
   void do_scrap(const nlohmann::json& obj);
 
-  dunedaq::appfwk::ThreadHelper m_thread;
+  std::string m_hsievent_receive_connection;
 
   triggeralgs::TriggerCandidate HSIEventToTriggerCandidate(const dfmessages::HSIEvent& data);
-  void do_work(std::atomic<bool>&);
-
-  using source_t = dunedaq::appfwk::DAQSource<dfmessages::HSIEvent>;
-  std::unique_ptr<source_t> m_input_queue;
+  void receive_hsievent(ipm::Receiver::Response message);
 
   using sink_t = dunedaq::appfwk::DAQSink<triggeralgs::TriggerCandidate>;
   std::unique_ptr<sink_t> m_output_queue;
 
   std::chrono::milliseconds m_queue_timeout;
 
-  std::map<uint32_t, std::pair<triggeralgs::timestamp_t, triggeralgs::timestamp_t>>
-    m_detid_offsets_map; // NOLINT(build/unsigned)
+  // NOLINTNEXTLINE(build/unsigned)
+  std::map<uint32_t, std::pair<triggeralgs::timestamp_t, triggeralgs::timestamp_t>> m_detid_offsets_map;
 
   // Opmon variables
   using metric_counter_type = decltype(timingtriggercandidatemakerinfo::Info::tsd_received_count);

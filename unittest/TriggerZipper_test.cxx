@@ -11,17 +11,18 @@
 
 #include "appfwk/QueueRegistry.hpp"
 
-#include <chrono>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <string>
-
 /**
  * @brief Name of this test module
  */
 #define BOOST_TEST_MODULE TriggerZipper_test // NOLINT
 #include "boost/test/unit_test.hpp"
+
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
 
 using namespace dunedaq;
 
@@ -60,7 +61,7 @@ using tpset_queue_ptr = std::shared_ptr<tpset_queue_t>;
 
 struct TPSetSrc
 {
-  uint32_t element_id{ 0 };
+  uint32_t element_id{ 0 }; // NOLINT(build/unsigned)
   using timestamp_t = daqdataformats::timestamp_t;
   timestamp_t dt{ 10 };
 
@@ -80,26 +81,25 @@ struct TPSetSrc
 static void
 pop_must_timeout(tpset_queue_ptr out)
 {
-  std::cerr << "Popping assuming a timeout" << std::endl;
+  TLOG() << "Popping assuming a timeout";
   trigger::TPSet tpset;
   BOOST_CHECK_THROW(out->pop(tpset, (duration_t)1000), appfwk::QueueTimeoutExpired);
-  return;
 }
 static trigger::TPSet
 pop_must_succeed(tpset_queue_ptr out)
 {
-  std::cerr << "Popping assuming no waiting" << std::endl;
+  TLOG() << "Popping assuming no waiting";
   trigger::TPSet tpset;
   BOOST_CHECK_NO_THROW(out->pop(tpset, (duration_t)1000); // no exception expected
   );
-  std::cerr << "Popped " << tpset.origin << " @ " << tpset.start_time << std::endl;
+  TLOG() << "Popped " << tpset.origin << " @ " << tpset.start_time ;
   return tpset;
 }
 
 static void
 push0(tpset_queue_ptr in, trigger::TPSet&& tpset)
 {
-  std::cerr << "Pushing " << tpset.origin << " @ " << tpset.start_time << std::endl;
+  TLOG() << "Pushing " << tpset.origin << " @ " << tpset.start_time ;
   assert(in->can_push());
   in->push(std::move(tpset), (duration_t)0);
 }
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(ZipperScenario1)
   auto in = qr.get_queue<trigger::TPSet>("source");
   auto out = qr.get_queue<trigger::TPSet>("sink");
 
-  trigger::TPZipper* zip = new trigger::TPZipper("zs1");
+  auto zip = std::make_unique<trigger::TPZipper>("zs1");
 
   zip->set_input("source");
   zip->set_output("sink");
@@ -152,9 +152,8 @@ BOOST_AUTO_TEST_CASE(ZipperScenario1)
   got = pop_must_succeed(out);
   BOOST_CHECK_EQUAL(got.start_time, 14);
 
-  std::cerr << "Deleteing TriggerZipper\n";
-  delete zip;
-  zip = nullptr;
+  TLOG() << "Deleteing TriggerZipper";
+  zip.reset(nullptr);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

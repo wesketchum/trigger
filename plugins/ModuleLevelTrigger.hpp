@@ -75,13 +75,10 @@ private:
   void send_trigger_decisions();
   std::thread m_send_trigger_decisions_thread;
 
-  std::unique_ptr<TokenManager> m_token_manager;
-
   // Create the next trigger decision
   dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 
   // Queue sources and sinks
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
   std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
 
@@ -91,8 +88,6 @@ private:
 
   // paused state, in which we don't send triggers
   std::atomic<bool> m_paused;
-
-  int m_initial_tokens;
 
   dfmessages::trigger_number_t m_last_trigger_number;
 
@@ -107,10 +102,10 @@ private:
   using metric_counter_type = decltype(moduleleveltriggerinfo::Info::tc_received_count);
   std::atomic<metric_counter_type> m_tc_received_count{ 0 };
   std::atomic<metric_counter_type> m_td_sent_count{ 0 };
-  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
   std::atomic<metric_counter_type> m_td_inhibited_count{ 0 };
   std::atomic<metric_counter_type> m_td_paused_count{ 0 };
   std::atomic<metric_counter_type> m_td_total_count{ 0 };
+  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq

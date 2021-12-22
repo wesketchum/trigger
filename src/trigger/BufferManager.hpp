@@ -27,7 +27,7 @@ class BufferManager
 {
 public:
   BufferManager();
-  BufferManager(long unsigned int buffer_size)
+  explicit BufferManager(size_t buffer_size)
     : m_buffer_max_size(buffer_size)
     , m_buffer_earliest_start_time(0)
     , m_buffer_latest_end_time(0)
@@ -35,10 +35,10 @@ public:
 
   virtual ~BufferManager() {}
 
-  void set_buffer_size(long unsigned int size) { m_buffer_max_size = size; }
+  void set_buffer_size(size_t size) { m_buffer_max_size = size; }
   void clear_buffer() { m_txset_buffer.clear(); }
-  long unsigned int get_buffer_size() { return m_buffer_max_size; }
-  long unsigned int get_stored_size() { return m_txset_buffer.size(); }
+  size_t get_buffer_size() { return m_buffer_max_size; }
+  size_t get_stored_size() { return m_txset_buffer.size(); }
 
   BufferManager(BufferManager const&) = delete;
   BufferManager(BufferManager&&) = default;
@@ -149,7 +149,7 @@ private:
   std::set<BSET, TxSetCmp> m_txset_buffer;
 
   // Buffer maximum size.
-  std::atomic<long unsigned int> m_buffer_max_size;
+  std::atomic<size_t> m_buffer_max_size;
 
   // Earliest start time stored in the buffer
   daqdataformats::timestamp_t m_buffer_earliest_start_time;

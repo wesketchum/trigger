@@ -7,13 +7,15 @@
  */
 
 #ifndef TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_
-#define TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFERR_HPP_
+#define TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_
 
 #include "trigger/Issues.hpp"
 #include "trigger/Set.hpp"
 
 #include "logging/Logging.hpp"
 
+#include <algorithm>
+#include <string>
 #include <vector>
 
 namespace dunedaq::trigger {
@@ -70,8 +72,7 @@ public:
     m_buffer.clear();
     // sort the vector by time_start property of T
     std::sort(time_slice.begin(), time_slice.end(), [](const T& a, const T& b) { return a.time_start < b.time_start; });
-    // TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc)
-    // included a natural ordering with operator<()
+    // TODO Benjamin Land <BenLand100@github.com> June-01-2021: would be nice if the T (TriggerPrimative, etc) included a natural ordering with operator<()
     return true;
   }
 
@@ -82,4 +83,4 @@ private:
 
 } // namespace dunedaq::trigger
 
-#endif // TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#endif // TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_
