@@ -36,6 +36,7 @@ daq_codegen(
   moduleleveltrigger.jsonnet
   randomtriggercandidatemaker.jsonnet
   timingtriggercandidatemaker.jsonnet
+  tpwriter.jsonnet
   triggerprimitivemaker.jsonnet
   triggeractivitymaker.jsonnet
   triggercandidatemaker.jsonnet
@@ -62,6 +63,7 @@ daq_add_plugin(FakeTimeStampedDataGenerator duneDAQModule LINK_LIBRARIES trigger
 daq_add_plugin(FakeDataFlow duneDAQModule LINK_LIBRARIES trigger TEST)
 daq_add_plugin(FakeTPCreatorHeartbeatMaker duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TPSetBufferCreator duneDAQModule LINK_LIBRARIES trigger)
+daq_add_plugin(TPWriter duneDAQModule LINK_LIBRARIES trigger)
 
 daq_add_plugin(TPZipper duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TAZipper duneDAQModule LINK_LIBRARIES trigger)
