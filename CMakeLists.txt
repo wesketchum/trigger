@@ -98,5 +98,8 @@ daq_add_unit_test(BufferManager_test             LINK_LIBRARIES trigger)
 daq_add_unit_test(TriggerZipper_test LINK_LIBRARIES trigger)
 
 ##############################################################################
+# Applications
+
+daq_add_application(decode-tps-from-stream decode-tps-from-stream.cpp LINK_LIBRARIES trigger)
 
 daq_install()
