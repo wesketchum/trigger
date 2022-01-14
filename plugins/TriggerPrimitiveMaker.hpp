@@ -28,8 +28,8 @@ class TriggerPrimitiveMaker : public dunedaq::appfwk::DAQModule
 {
 public:
   /**
-   * @brief RandomDataListGenerator Constructor
-   * @param name Instance name for this RandomDataListGenerator instance
+   * @brief TriggerPrimitiveMaker Constructor
+   * @param name Instance name for this TriggerPrimitiveMaker instance
    */
   explicit TriggerPrimitiveMaker(const std::string& name);
 
