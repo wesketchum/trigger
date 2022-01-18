@@ -13,7 +13,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
+#include "utilities/WorkerThread.hpp"
 
 #include "trigger/Issues.hpp"
 
