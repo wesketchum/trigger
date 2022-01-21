@@ -290,7 +290,22 @@ public:
         process_slice(time_slice, elems);
       } break;
       case Set<A>::Type::kHeartbeat: {
-        // forward the heartbeat
+        // PAR 2022-01-21 We've got a heartbeat for time T, so we know
+        // we won't receive any more inputs for times t < T. Therefore
+        // we can flush all items in the input buffer, which have
+        // times t < T, because the input is time-ordered. We also
+        // forward the heartbeat downstream
+
+        std::vector<A> time_slice;
+        daqdataformats::timestamp_t start_time, end_time;
+        if (m_in_buffer.flush(time_slice, start_time, end_time)) {
+          if (end_time > in.start_time) {
+            // This should never happen, but we check here so we at least get some output if it did
+            ers::fatal(OutOfOrderSets(ERS_HERE, m_parent.get_name(), end_time, in.start_time));
+          }
+          process_slice(time_slice, out_vec);
+        }
+        
         Set<B> heartbeat;
         heartbeat.seqno = m_parent.m_sent_count;
         heartbeat.type = Set<B>::Type::kHeartbeat;
@@ -424,7 +439,21 @@ public:
       } break;
       case Set<A>::Type::kHeartbeat:
         // TODO BJL May-28-2021 should anything happen with the heartbeat when OUT is not a Set<T>?
+        //
+        // PAR 2022-01-21 We've got a heartbeat for time T, so we know
+        // we won't receive any more inputs for times t < T. Therefore
+        // we can flush all items in the input buffer, which have
+        // times t < T, because the input is time-ordered
         try {
+          std::vector<A> time_slice;
+          daqdataformats::timestamp_t start_time, end_time;
+          if (m_in_buffer.flush(time_slice, start_time, end_time)) {
+            if (end_time > in.start_time) {
+              // This should never happen, but we check here so we at least get some output if it did
+              ers::fatal(OutOfOrderSets(ERS_HERE, m_parent.get_name(), end_time, in.start_time));
+            }
+            process_slice(time_slice, out_vec);
+          }
           m_parent.m_maker->flush(in.end_time, out_vec);
         } catch (...) { // TODO BJL May 28-2021 can we restrict the possible exceptions triggeralgs might raise?
           ers::fatal(AlgorithmFatalError(ERS_HERE, m_parent.get_name(), m_parent.m_algorithm_name));
