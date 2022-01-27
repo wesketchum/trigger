@@ -18,7 +18,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
+#include "utilities/WorkerThread.hpp"
 
 #include "daqdataformats/GeoID.hpp"
 
@@ -96,7 +96,7 @@ protected:
   }
 
 private:
-  dunedaq::appfwk::ThreadHelper m_thread;
+  dunedaq::utilities::WorkerThread m_thread;
 
   size_t m_received_count;
   size_t m_sent_count;
