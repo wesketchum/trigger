@@ -216,14 +216,14 @@ ModuleLevelTrigger::send_trigger_decisions()
         m_td_queue_timeout_expired_err_count++;
       }
 
-    } else if (m_dfo_is_busy.load()) {
+    } else if (m_paused.load()) {
+      ++m_td_paused_count;
+      TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
+    } else {
       ers::warning(TriggerInhibited(ERS_HERE, m_run_number));
       TLOG_DEBUG(1) << "The DFO is busy. Not sending a TriggerDecision for candidate timestamp "
                     << tc.time_candidate;
       m_td_inhibited_count++;
-    }else {
-      ++m_td_paused_count;
-      TLOG_DEBUG(1) << "Triggers are paused. Not sending a TriggerDecision ";
     }
     m_td_total_count++;
   }
