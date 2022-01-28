@@ -305,7 +305,7 @@ public: // NOLINT
             // This should never happen, but we check here so we at least get some output if it did
             ers::fatal(OutOfOrderSets(ERS_HERE, m_parent.get_name(), end_time, in.start_time));
           }
-          process_slice(time_slice, out_vec);
+          process_slice(time_slice, elems);
         }
         
         Set<B> heartbeat;
