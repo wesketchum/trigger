@@ -10,6 +10,7 @@
 #include "../plugins/TPZipper.hpp" // NOLINT
 
 #include "appfwk/QueueRegistry.hpp"
+#include "appfwk/app/Nljs.hpp"
 
 /**
  * @brief Name of this test module
@@ -108,8 +109,18 @@ BOOST_AUTO_TEST_CASE(ZipperScenario1)
 {
   auto& qr = appfwk::QueueRegistry::get();
 
-  qr.configure({ { "source", appfwk::QueueConfig{ appfwk::QueueConfig::kStdDeQueue, 10 } },
-                 { "sink", appfwk::QueueConfig{ appfwk::QueueConfig::kStdDeQueue, 10 } } });
+  dunedaq::appfwk::app::QueueSpecs test_config;
+  dunedaq::appfwk::app::QueueSpec qc;
+  qc.kind = dunedaq::appfwk::app::QueueKind::StdDeQueue;
+  qc.capacity = 10;
+  qc.inst = "source";
+  test_config.push_back(qc);
+  qc.kind = dunedaq::appfwk::app::QueueKind::StdDeQueue;
+  qc.capacity = 10;
+  qc.inst = "sink";
+  test_config.push_back(qc);
+
+  qr.configure(test_config);
 
   auto in = qr.get_queue<trigger::TPSet>("source");
   auto out = qr.get_queue<trigger::TPSet>("sink");
