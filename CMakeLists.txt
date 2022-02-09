@@ -15,6 +15,7 @@ find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
 find_package(daqdataformats REQUIRED)
+find_package(detchannelmaps REQUIRED)
 
 ##############################################################################
 # Main library
@@ -88,6 +89,8 @@ daq_add_plugin(TASetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::
 
 daq_add_application( set_serialization_speed set_serialization_speed.cxx TEST LINK_LIBRARIES trigger)
 daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRARIES trigger)
+
+daq_add_application( find_vd_coldbox_pseudo_collection find_vd_coldbox_pseudo_collection.cxx TEST LINK_LIBRARIES trigger detchannelmaps::detchannelmaps)
 
 ##############################################################################
 # Unit Tests
