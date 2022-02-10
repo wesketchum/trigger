@@ -52,6 +52,12 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
 {
   m_conf = obj.get<triggerprimitivemaker::ConfParams>();
 
+  // For each of the streams that are specified in the config, we read
+  // the input file, and create an outgoing sink. We also keep track
+  // of the total timestamp range of all the streams, so we can keep
+  // the timestamps of the multiple streams in sync when replaying,
+  // even when they don't all start or end at the same time
+  
   m_earliest_first_tpset_timestamp = std::numeric_limits<triggeralgs::timestamp_t>::max();
   m_latest_last_tpset_timestamp = 0;
 
@@ -61,6 +67,7 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
       std::make_unique<appfwk::DAQSink<TPSet>>(appfwk::queue_inst(m_init_obj, stream.output_sink_name));
 
     this_stream.tpsets = read_tpsets(stream.filename, stream.region_id, stream.element_id);
+
     m_earliest_first_tpset_timestamp =
       std::min(m_earliest_first_tpset_timestamp, this_stream.tpsets.front().start_time);
 
@@ -75,6 +82,11 @@ TriggerPrimitiveMaker::do_start(const nlohmann::json& /*args*/)
 {
   TLOG(TLVL_ENTER_EXIT_METHODS) << get_name() << ": Entering do_start() method";
   m_running_flag.store(true);
+
+  // We need the wall-clock time at which we'll send out the TPSet
+  // with the earliest timestamp, so we can keep all of the output
+  // streams in sync. We pick "now" plus a bit, to allow time for all
+  // of the threads to start up
   auto earliest_timestamp_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(10);
 
   for (auto& stream : m_tp_streams) {
@@ -205,9 +217,9 @@ TriggerPrimitiveMaker::do_work(std::atomic<bool>& running_flag,
       }
 
       // The argument `earliest_timestamp_time` is the wall-clock time
-      // of the earliest first tpset timestamp in any of the input
+      // of the earliest first tpset timestamp in _any_ of the input
       // streams. So for the first TPSet we send out, we wait until
-      // our first timestamp comes up
+      // _this_ stream's first timestamp comes up
       auto wait_time_us = 0;
       std::chrono::steady_clock::time_point next_tpset_send_time;
       if (prev_tpset_start_time == 0) {
