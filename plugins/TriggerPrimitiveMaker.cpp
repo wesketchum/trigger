@@ -33,10 +33,12 @@ TriggerPrimitiveMaker::TriggerPrimitiveMaker(const std::string& name)
   : dunedaq::appfwk::DAQModule(name)
   , m_queue_timeout(100)
 {
-  register_command("conf", &TriggerPrimitiveMaker::do_configure);
+  // clang-format off
+  register_command("conf",  &TriggerPrimitiveMaker::do_configure);
   register_command("start", &TriggerPrimitiveMaker::do_start);
-  register_command("stop", &TriggerPrimitiveMaker::do_stop);
+  register_command("stop",  &TriggerPrimitiveMaker::do_stop);
   register_command("scrap", &TriggerPrimitiveMaker::do_scrap);
+  // clang-format on
 }
 
 void
@@ -57,10 +59,13 @@ TriggerPrimitiveMaker::do_configure(const nlohmann::json& obj)
     TPStream this_stream;
     this_stream.tpset_sink =
       std::make_unique<appfwk::DAQSink<TPSet>>(appfwk::queue_inst(m_init_obj, stream.output_sink_name));
+
     this_stream.tpsets = read_tpsets(stream.filename, stream.region_id, stream.element_id);
     m_earliest_first_tpset_timestamp =
       std::min(m_earliest_first_tpset_timestamp, this_stream.tpsets.front().start_time);
+
     m_latest_last_tpset_timestamp = std::max(m_latest_last_tpset_timestamp, this_stream.tpsets.back().start_time);
+
     m_tp_streams.push_back(std::move(this_stream));
   }
 }
