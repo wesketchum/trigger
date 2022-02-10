@@ -166,6 +166,7 @@ TriggerPrimitiveMaker::read_tpsets(std::string filename, int region, int element
     tpsets.push_back(tpset);
   }
 
+  TLOG_DEBUG(0) << "Read " << seqno << " TPs into " << tpsets.size() << " TPSets, from file " << filename;  
   return tpsets;
 }
 
