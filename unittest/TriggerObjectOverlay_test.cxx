@@ -6,10 +6,10 @@
  * received with this code.
  */
 
-#include "detdataformats/trigger/TriggerActivityData.hpp"
-#include "detdataformats/trigger/TriggerCandidate.hpp"
-#include "detdataformats/trigger/TriggerPrimitive.hpp"
-#include "detdataformats/trigger/TriggerObjectOverlay.hpp"
+#include "triggeralgs/TriggerActivity.hpp"
+#include "triggeralgs/TriggerCandidate.hpp"
+#include "triggeralgs/TriggerPrimitive.hpp"
+#include "triggeralgs/TriggerObjectOverlay.hpp"
 
 /**
  * @brief Name of this test module
@@ -19,9 +19,11 @@
 #include "boost/test/data/test_case.hpp"
 #include "boost/test/unit_test.hpp"
 
+using triggeralgs::TriggerActivity;
+
 using namespace dunedaq::detdataformats::trigger;
 
-BOOST_TEST_DONT_PRINT_LOG_VALUE(TriggerCandidate)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(triggeralgs::TriggerCandidate)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(TriggerCandidateData)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(TriggerActivityData)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(TriggerPrimitive::Algorithm)
@@ -34,7 +36,7 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(TriggerCandidateData::Type)
 BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
 
 BOOST_AUTO_TEST_CASE(TriggerCandidateOverlay_in_out) {
-  TriggerCandidate candidate;
+  triggeralgs::TriggerCandidate candidate;
   candidate.time_start = 5;
   candidate.time_end = 6;
   candidate.time_candidate = 7;
@@ -73,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TriggerCandidateOverlay_in_out) {
   const TriggerCandidateOverlay& candidate_overlay = *reinterpret_cast<const TriggerCandidateOverlay*>(buffer);
   BOOST_CHECK_EQUAL(candidate.time_start,     candidate_overlay.data.time_start);
   
-  TriggerCandidate candidate_read = read_overlay_from_buffer<TriggerCandidate>(buffer);
+  triggeralgs::TriggerCandidate candidate_read = triggeralgs::read_overlay_from_buffer<triggeralgs::TriggerCandidate>(buffer);
 
   BOOST_CHECK_EQUAL(candidate.time_start,     candidate_read.time_start);
   BOOST_CHECK_EQUAL(candidate.time_end,       candidate_read.time_end);
@@ -102,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TriggerCandidateOverlay_in_out) {
 }
 
 BOOST_AUTO_TEST_CASE(TriggerActivityOverlay_in_out) {
-  TriggerActivity activity;
+  triggeralgs::TriggerActivity activity;
   activity.time_start = 1;
   activity.time_end = 2;
   activity.time_peak = 3;
@@ -120,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TriggerActivityOverlay_in_out) {
   const size_t n_primitive = 5;
   
   for(size_t i=0; i<n_primitive; ++i){
-    TriggerPrimitive primitive;
+    triggeralgs::TriggerPrimitive primitive;
 
     primitive.time_start = i;
     primitive.time_peak = i+1;
@@ -143,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TriggerActivityOverlay_in_out) {
 
   write_overlay(activity, buffer);
 
-  TriggerActivity activity_read = read_overlay_from_buffer<TriggerActivity>(buffer);
+  TriggerActivity activity_read = triggeralgs::read_overlay_from_buffer<TriggerActivity>(buffer);
 
   BOOST_CHECK_EQUAL(activity.time_start,     activity_read.time_start);
   BOOST_CHECK_EQUAL(activity.time_end,       activity_read.time_end);
