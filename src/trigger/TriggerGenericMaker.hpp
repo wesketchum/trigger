@@ -23,7 +23,7 @@
 #include "daqdataformats/GeoID.hpp"
 
 #include "logging/Logging.hpp"
-#include "triggeralgs/Types.hpp"
+#include "detdataformats/trigger/Types.hpp"
 
 #include <algorithm>
 #include <memory>

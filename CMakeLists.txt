@@ -17,11 +17,19 @@ find_package(nwqueueadapters REQUIRED)
 find_package(utilities REQUIRED)
 find_package(networkmanager REQUIRED)
 find_package(daqdataformats REQUIRED)
+find_package(detdataformats REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs utilities::utilities)
+daq_add_library(TokenManager.cpp
+  LINK_LIBRARIES
+  appfwk::appfwk
+  logging::logging
+  dfmessages::dfmessages
+  triggeralgs::triggeralgs
+  utilities::utilities
+  detdataformats::detdataformats)
 
 ##############################################################################
 # Codegen
