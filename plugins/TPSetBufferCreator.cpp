@@ -133,10 +133,29 @@ TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 std::unique_ptr<daqdataformats::Fragment>
-TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_output */,
+TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput ds_output,
                                         dfmessages::DataRequest input_data_request)
 {
-  auto ret = std::make_unique<daqdataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
+
+  using detdataformats::trigger::TriggerPrimitive;
+  size_t n_tps = 0;
+  for(size_t i=0; i<ds_output.txsets_in_window.size(); ++i){
+    n_tps += ds_output.txsets_in_window[i].objects.size();
+  }
+  
+  size_t payload_n_bytes = sizeof(TriggerPrimitive)*n_tps;
+
+  auto payload = std::make_unique<uint8_t[]>(payload_n_bytes);
+  TriggerPrimitive* tp_out = reinterpret_cast<TriggerPrimitive*>(payload.get());
+  
+  for(auto const& tpset : ds_output.txsets_in_window) {
+    for(auto const& tp: tpset.objects) {
+      *tp_out = tp;
+      ++tp_out;
+    }
+  }
+  
+  auto ret = std::make_unique<daqdataformats::Fragment>(payload.get(), payload_n_bytes);
   auto& frag = *ret.get();
 
   daqdataformats::GeoID geoid(daqdataformats::GeoID::SystemType::kDataSelection, m_conf.region, m_conf.element);
@@ -151,9 +170,6 @@ TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput /* ds_out
   frag_h.sequence_number = input_data_request.sequence_number;
 
   frag.set_header_fields(frag_h);
-
-  // TODO Trigger Team <dune-daq@github.com> July-7-2021: need to fill the fragment with the contents of the TPSet
-  // vector here
 
   return ret;
 }
