@@ -150,8 +150,11 @@ TPSetBufferCreator::convert_to_fragment(TPSetBuffer::DataRequestOutput ds_output
   
   for(auto const& tpset : ds_output.txsets_in_window) {
     for(auto const& tp: tpset.objects) {
-      *tp_out = tp;
-      ++tp_out;
+      if(tp.time_start >= input_data_request.request_information.window_begin &&
+         tp.time_start <= input_data_request.request_information.window_end) {
+        *tp_out = tp;
+        ++tp_out;
+      }
     }
   }
   
