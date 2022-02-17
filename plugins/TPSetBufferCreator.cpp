@@ -133,31 +133,30 @@ TPSetBufferCreator::do_scrap(const nlohmann::json& /*args*/)
 }
 
 std::unique_ptr<daqdataformats::Fragment>
-TPSetBufferCreator::convert_to_fragment(std::vector<TPSet>& tpsets,
-                                        dfmessages::DataRequest input_data_request)
+TPSetBufferCreator::convert_to_fragment(std::vector<TPSet>& tpsets, dfmessages::DataRequest input_data_request)
 {
 
   using detdataformats::trigger::TriggerPrimitive;
   size_t n_tps = 0;
-  for(auto const& tpset: tpsets) {
+  for (auto const& tpset : tpsets) {
     n_tps += tpset.objects.size();
   }
-  
-  size_t payload_n_bytes = sizeof(TriggerPrimitive)*n_tps;
+
+  size_t payload_n_bytes = sizeof(TriggerPrimitive) * n_tps;
 
   auto payload = std::make_unique<uint8_t[]>(payload_n_bytes);
   TriggerPrimitive* tp_out = reinterpret_cast<TriggerPrimitive*>(payload.get());
-  
-  for(auto const& tpset : tpsets) {
-    for(auto const& tp: tpset.objects) {
-      if(tp.time_start >= input_data_request.request_information.window_begin &&
-         tp.time_start <= input_data_request.request_information.window_end) {
+
+  for (auto const& tpset : tpsets) {
+    for (auto const& tp : tpset.objects) {
+      if (tp.time_start >= input_data_request.request_information.window_begin &&
+          tp.time_start <= input_data_request.request_information.window_end) {
         *tp_out = tp;
         ++tp_out;
       }
     }
   }
-  
+
   auto ret = std::make_unique<daqdataformats::Fragment>(payload.get(), payload_n_bytes);
   auto& frag = *ret.get();
 
@@ -176,7 +175,6 @@ TPSetBufferCreator::convert_to_fragment(std::vector<TPSet>& tpsets,
 
   return ret;
 }
-
 
 void
 TPSetBufferCreator::send_out_fragment(std::unique_ptr<daqdataformats::Fragment> frag_out,
@@ -281,7 +279,8 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
               input_tpset
                 .start_time) { // If more TPSet aren't expected to arrive then push and remove pending data request
             requested_tpset.txsets_in_window = std::move(it->second);
-            std::unique_ptr<daqdataformats::Fragment> frag_out = convert_to_fragment(requested_tpset.txsets_in_window, it->first);
+            std::unique_ptr<daqdataformats::Fragment> frag_out =
+              convert_to_fragment(requested_tpset.txsets_in_window, it->first);
             TLOG() << get_name() << ": Sending late requested data (" << (it->first).request_information.window_begin
                    << ", " << (it->first).request_information.window_end << "), containing "
                    << requested_tpset.txsets_in_window.size() << " TPSets.";
