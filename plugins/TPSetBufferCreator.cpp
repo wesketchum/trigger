@@ -102,7 +102,7 @@ TPSetBufferCreator::do_stop(const nlohmann::json& /*args*/)
     while (it != m_dr_on_hold.end()) {
 
       requested_tpset.txsets_in_window = it->second;
-      std::unique_ptr<daqdataformats::Fragment> frag_out = convert_to_fragment(requested_tpset, it->first);
+      std::unique_ptr<daqdataformats::Fragment> frag_out = convert_to_fragment(requested_tpset.txsets_in_window, it->first);
       TLOG() << get_name() << ": Sending late requested data (" << (it->first).request_information.window_begin << ", "
              << (it->first).request_information.window_end << "), containing "
              << requested_tpset.txsets_in_window.size() << " TPSets.";
@@ -311,7 +311,7 @@ TPSetBufferCreator::do_work(std::atomic<bool>& running_flag)
                     << input_data_request.request_information.window_begin << ", "
                     << input_data_request.request_information.window_end << ")";
 
-      auto frag_out = convert_to_fragment(requested_tpset, input_data_request);
+      auto frag_out = convert_to_fragment(requested_tpset.txsets_in_window, input_data_request);
 
       switch (requested_tpset.ds_outcome) {
         case TPSetBuffer::kEmpty:
