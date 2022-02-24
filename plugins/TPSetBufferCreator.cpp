@@ -137,27 +137,27 @@ TPSetBufferCreator::convert_to_fragment(std::vector<TPSet>& tpsets, dfmessages::
 {
 
   using detdataformats::trigger::TriggerPrimitive;
-  size_t n_tps = 0;
-  for (auto const& tpset : tpsets) {
-    n_tps += tpset.objects.size();
-  }
 
-  size_t payload_n_bytes = sizeof(TriggerPrimitive) * n_tps;
-
-  auto payload = std::make_unique<uint8_t[]>(payload_n_bytes);
-  TriggerPrimitive* tp_out = reinterpret_cast<TriggerPrimitive*>(payload.get());
-
+  std::vector<TriggerPrimitive> tps;
+  
   for (auto const& tpset : tpsets) {
     for (auto const& tp : tpset.objects) {
       if (tp.time_start >= input_data_request.request_information.window_begin &&
           tp.time_start <= input_data_request.request_information.window_end) {
-        *tp_out = tp;
-        ++tp_out;
+        tps.push_back(tp);
       }
     }
   }
 
-  auto ret = std::make_unique<daqdataformats::Fragment>(payload.get(), payload_n_bytes);
+  std::unique_ptr<daqdataformats::Fragment> ret;
+
+  // If tps is empty, tps.data() will be nullptr, so we need this `if`
+  if(tps.empty()){
+    ret = std::make_unique<daqdataformats::Fragment>(std::vector<std::pair<void*, size_t>>());
+  }
+  else{
+    ret = std::make_unique<daqdataformats::Fragment>(tps.data(), sizeof(TriggerPrimitive)*tps.size());
+  }
   auto& frag = *ret.get();
 
   daqdataformats::GeoID geoid(daqdataformats::GeoID::SystemType::kDataSelection, m_conf.region, m_conf.element);
