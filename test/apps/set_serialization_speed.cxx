@@ -53,7 +53,6 @@ time_serialization(int tps_per_set)
       tp.detid = 1;
       tp.type = triggeralgs::TriggerPrimitive::Type::kUnknown;
       tp.algorithm = triggeralgs::TriggerPrimitive::Algorithm::kTPCDefault;
-      tp.version = 1;
       tp.flag = 1;
 
       set.objects.push_back(tp);

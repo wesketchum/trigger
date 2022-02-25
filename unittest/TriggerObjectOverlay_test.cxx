@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TriggerCandidateOverlay_in_out) {
   candidate.detid = 8;
   candidate.type = TriggerCandidateData::Type::kSupernova;
   candidate.algorithm = TriggerCandidateData::Algorithm::kPrescale;
-  candidate.version = 1;
+
 
   const size_t n_activity = 5;
   
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TriggerCandidateOverlay_in_out) {
     activity.detid = i;
     activity.type = TriggerActivityData::Type::kTPC;
     activity.algorithm = TriggerActivityData::Algorithm::kSupernova;
-    activity.version = 1;
+
 
     candidate.inputs.push_back(activity);
   }
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TriggerActivityOverlay_in_out) {
   activity.detid = 9;
   activity.type = TriggerActivityData::Type::kTPC;
   activity.algorithm = TriggerActivityData::Algorithm::kSupernova;
-  activity.version = 1;
+
 
   const size_t n_primitive = 5;
   
@@ -133,7 +133,6 @@ BOOST_AUTO_TEST_CASE(TriggerActivityOverlay_in_out) {
     primitive.detid = i+65;
     primitive.type = TriggerPrimitive::Type::kPDS;
     primitive.algorithm = TriggerPrimitive::Algorithm::kTPCDefault;
-    primitive.version = 1;      // NOLINT(build/unsigned)
     primitive.flag = 1;
 
     activity.inputs.push_back(primitive);

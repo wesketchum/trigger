@@ -47,7 +47,6 @@ TimingTriggerCandidateMaker::HSIEventToTriggerCandidate(const dfmessages::HSIEve
   candidate.type = triggeralgs::TriggerCandidate::Type::kTiming;
 
   candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
-  candidate.version = 0;
   candidate.inputs = {};
 
   return candidate;
