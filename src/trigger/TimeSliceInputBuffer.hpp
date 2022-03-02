@@ -7,13 +7,15 @@
  */
 
 #ifndef TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_
-#define TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFERR_HPP_
+#define TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_
 
 #include "trigger/Issues.hpp"
 #include "trigger/Set.hpp"
 
 #include "logging/Logging.hpp"
 
+#include <algorithm>
+#include <string>
 #include <vector>
 
 namespace dunedaq::trigger {
@@ -36,8 +38,8 @@ public:
   // Returns whether the previous slice was complete (and time_slice etc was filled)
   bool buffer(Set<T> in,
               std::vector<T>& time_slice,
-              dataformats::timestamp_t& start_time,
-              dataformats::timestamp_t& end_time)
+              daqdataformats::timestamp_t& start_time,
+              daqdataformats::timestamp_t& end_time)
   {
     if (m_buffer.size() == 0 || m_buffer.back().start_time == in.start_time) {
       // if `in` is the current time slice
@@ -52,7 +54,7 @@ public:
   }
   // Fill time_slice with the sorted buffer, clear the buffer, and return true
   // Returns false and does nothing if the buffer is empty
-  bool flush(std::vector<T>& time_slice, dataformats::timestamp_t& start_time, dataformats::timestamp_t& end_time)
+  bool flush(std::vector<T>& time_slice, daqdataformats::timestamp_t& start_time, daqdataformats::timestamp_t& end_time)
   {
     if (m_buffer.size() == 0) {
       return false;
@@ -70,8 +72,7 @@ public:
     m_buffer.clear();
     // sort the vector by time_start property of T
     std::sort(time_slice.begin(), time_slice.end(), [](const T& a, const T& b) { return a.time_start < b.time_start; });
-    // TODO BJL June 01-2021 would be nice if the T (TriggerPrimative, etc)
-    // included a natural ordering with operator<()
+    // TODO Benjamin Land <BenLand100@github.com> June-01-2021: would be nice if the T (TriggerPrimative, etc) included a natural ordering with operator<()
     return true;
   }
 
@@ -82,4 +83,4 @@ private:
 
 } // namespace dunedaq::trigger
 
-#endif // TRIGGER_SRC_TRIGGER_TRIGGERGENERICMAKER_HPP_
+#endif // TRIGGER_SRC_TRIGGER_TIMESLICEINPUTBUFFER_HPP_

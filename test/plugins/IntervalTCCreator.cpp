@@ -9,7 +9,7 @@
 
 #include "IntervalTCCreator.hpp"
 
-#include "dataformats/ComponentRequest.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
 
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -24,7 +24,7 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
-#include "triggeralgs/Types.hpp"
+#include "detdataformats/trigger/Types.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -70,7 +70,7 @@ IntervalTCCreator::do_configure(const nlohmann::json& confobj)
 void
 IntervalTCCreator::do_start(const nlohmann::json& startobj)
 {
-  m_run_number = startobj.value<dunedaq::dataformats::run_number_t>("run", 0);
+  m_run_number = startobj.value<dunedaq::daqdataformats::run_number_t>("run", 0);
 
   m_running_flag.store(true);
 
@@ -117,7 +117,7 @@ IntervalTCCreator::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.detid = { 1 };
   candidate.type = triggeralgs::TriggerCandidate::Type::kTiming;
   candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
-  candidate.version = 1;
+
 
   return candidate;
 }

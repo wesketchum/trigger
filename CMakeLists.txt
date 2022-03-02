@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.12)
-project(trigger VERSION 1.1.1)
+project(trigger VERSION 1.2.0)
 
 find_package(daq-cmake REQUIRED)
 
 daq_setup_environment()
 
 find_package(ers REQUIRED)
-find_package(Boost 1.70.0 COMPONENTS unit_test_framework REQUIRED)
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 find_package(serialization REQUIRED)
 find_package(logging REQUIRED)
 find_package(appfwk REQUIRED)
@@ -14,12 +14,24 @@ find_package(triggeralgs REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(nwqueueadapters REQUIRED)
-find_package(dataformats REQUIRED)
+find_package(utilities REQUIRED)
+find_package(networkmanager REQUIRED)
+find_package(daqdataformats REQUIRED)
+find_package(detdataformats REQUIRED)
+find_package(hdf5libs REQUIRED)
+find_package(CLI11 REQUIRED)
 
 ##############################################################################
 # Main library
 
-daq_add_library(TokenManager.cpp LINK_LIBRARIES appfwk::appfwk logging::logging dfmessages::dfmessages triggeralgs::triggeralgs)
+daq_add_library(TokenManager.cpp
+  LINK_LIBRARIES
+  appfwk::appfwk
+  logging::logging
+  dfmessages::dfmessages
+  triggeralgs::triggeralgs
+  utilities::utilities
+  detdataformats::detdataformats)
 
 ##############################################################################
 # Codegen
@@ -43,6 +55,7 @@ daq_codegen(
   triggerzipper.jsonnet
   tpsetbuffercreator.jsonnet
   tasetsink.jsonnet
+  tpsetreceiver.jsonnet
   TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 
 daq_codegen( *info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
@@ -85,6 +98,7 @@ daq_add_plugin(TriggerActivityMakerDBSCANPlugin duneTAMaker LINK_LIBRARIES trigg
 
 # nwqueueadapters plugins
 daq_add_plugin(TPSetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
+daq_add_plugin(TPSetReceiver duneDAQModule LINK_LIBRARIES trigger)
 daq_add_plugin(TASetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::nwqueueadapters)
 
 ##############################################################################
@@ -92,6 +106,7 @@ daq_add_plugin(TASetNQ duneNetworkQueue LINK_LIBRARIES trigger nwqueueadapters::
 
 daq_add_application( set_serialization_speed set_serialization_speed.cxx TEST LINK_LIBRARIES trigger)
 daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRARIES trigger)
+daq_add_application( check_fragment_TPs check_fragment_TPs.cxx TEST LINK_LIBRARIES trigger hdf5libs::hdf5libs CLI11::CLI11)
 
 ##############################################################################
 # Unit Tests
@@ -99,7 +114,8 @@ daq_add_application( taset_serialization taset_serialization.cxx TEST LINK_LIBRA
 daq_add_unit_test(TokenManager_test              LINK_LIBRARIES trigger)
 daq_add_unit_test(TxSet_test                     LINK_LIBRARIES trigger)
 daq_add_unit_test(BufferManager_test             LINK_LIBRARIES trigger)
-daq_add_unit_test(TriggerZipper_test LINK_LIBRARIES trigger)
+daq_add_unit_test(TriggerZipper_test             LINK_LIBRARIES trigger)
+daq_add_unit_test(TriggerObjectOverlay_test      LINK_LIBRARIES trigger)
 
 ##############################################################################
 

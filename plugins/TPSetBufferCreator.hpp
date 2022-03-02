@@ -4,24 +4,24 @@
  * received with this code.
  */
 
-#ifndef TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
-#define TRIGGER_TEST_PLUGINS_TPSETBUFFERCREATOR_HPP_
+#ifndef TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
+#define TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
-#include "dataformats/Fragment.hpp"
-#include "dataformats/Types.hpp"
+#include "daqdataformats/Fragment.hpp"
+#include "daqdataformats/Types.hpp"
 
 #include "dfmessages/DataRequest.hpp"
 #include "dfmessages/HSIEvent.hpp"
 
-#include "trigger/TPSetBuffer.hpp"
 #include "trigger/TPSet.hpp"
-#include "trigger/tpsetbuffercreator/Structs.hpp"
+#include "trigger/TPSetBuffer.hpp"
 #include "trigger/tpsetbuffercreator/Nljs.hpp"
+#include "trigger/tpsetbuffercreator/Structs.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
+#include "utilities/WorkerThread.hpp"
 
 #include <ers/Issue.hpp>
 
@@ -62,7 +62,7 @@ private:
   void do_scrap(const nlohmann::json& obj);
 
   // Threading
-  dunedaq::appfwk::ThreadHelper m_thread;
+  dunedaq::utilities::WorkerThread m_thread;
   void do_work(std::atomic<bool>&);
 
   // Configuration
@@ -77,33 +77,34 @@ private:
   using dr_source_t = dunedaq::appfwk::DAQSource<dfmessages::DataRequest>;
   std::unique_ptr<dr_source_t> m_input_queue_dr;
 
-  using fragment_sink_t = dunedaq::appfwk::DAQSink<std::unique_ptr<dataformats::Fragment>>;
+  using fragment_sink_t = dunedaq::appfwk::DAQSink<std::pair<std::unique_ptr<daqdataformats::Fragment>, std::string>>;
   std::unique_ptr<fragment_sink_t> m_output_queue_frag;
 
   std::unique_ptr<trigger::TPSetBuffer> m_tps_buffer;
 
-  uint64_t m_tps_buffer_size;
+  uint64_t m_tps_buffer_size; // NOLINT(build/unsigned)
 
   struct DataRequestComp
   {
     bool operator()(const dfmessages::DataRequest& left, const dfmessages::DataRequest& right) const
     {
-      return left.window_begin < right.window_end;
+      return left.request_information.window_begin < right.request_information.window_end;
     }
   };
 
   std::map<dfmessages::DataRequest, std::vector<trigger::TPSet>, DataRequestComp>
     m_dr_on_hold; ///< Holds data request when data has not arrived in the buffer yet
 
-  std::unique_ptr<dataformats::Fragment> convert_to_fragment(TPSetBuffer::DataRequestOutput, dfmessages::DataRequest);
+  std::unique_ptr<daqdataformats::Fragment> convert_to_fragment(std::vector<TPSet>&,
+                                                                dfmessages::DataRequest);
 
-  void send_out_fragment(std::unique_ptr<dataformats::Fragment>, size_t&, std::atomic<bool>&);
-  void send_out_fragment(std::unique_ptr<dataformats::Fragment>);
+  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, std::string, size_t&, std::atomic<bool>&);
+  void send_out_fragment(std::unique_ptr<daqdataformats::Fragment>, std::string);
 };
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_TEST_PLUGINS_BUFFERCREATOR_HPP_
+#endif // TRIGGER_PLUGINS_TPSETBUFFERCREATOR_HPP_
 
 // Local Variables:
 // c-basic-offset: 2

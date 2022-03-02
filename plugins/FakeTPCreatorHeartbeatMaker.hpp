@@ -13,7 +13,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
+#include "utilities/WorkerThread.hpp"
 
 #include "trigger/Issues.hpp"
 #include "trigger/TPSet.hpp"
@@ -49,12 +49,12 @@ private:
   void do_scrap(const nlohmann::json& obj);
   void do_work(std::atomic<bool>&);
 
-  bool should_send_heartbeat(dataformats::timestamp_t const& last_sent_heartbeat_time,
-                             dataformats::timestamp_t const& current_tpset_start_time,
+  bool should_send_heartbeat(daqdataformats::timestamp_t const& last_sent_heartbeat_time,
+                             daqdataformats::timestamp_t const& current_tpset_start_time,
                              bool const& is_first_tpset_received);
-  void get_heartbeat(TPSet& tpset_heartbeat, dataformats::timestamp_t const& current_tpset_start_time);
+  void get_heartbeat(TPSet& tpset_heartbeat, daqdataformats::timestamp_t const& current_tpset_start_time);
 
-  dunedaq::appfwk::ThreadHelper m_thread;
+  dunedaq::utilities::WorkerThread m_thread;
 
   using source_t = dunedaq::appfwk::DAQSource<TPSet>;
   std::unique_ptr<source_t> m_input_queue;
@@ -74,4 +74,4 @@ private:
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_PLUGINS_TIMINGTRIGGERCANDIDATEMAKER_HPP_
+#endif // TRIGGER_PLUGINS_FAKETPCREATORHEARTBEATMAKER_HPP_

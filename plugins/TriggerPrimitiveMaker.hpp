@@ -1,26 +1,27 @@
 /**
- * @file TriggerPrimitiveMaker.cpp
+ * @file TriggerPrimitiveMaker.hpp
  *
  * This is part of the DUNE DAQ Application Framework, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
 
-#ifndef TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_
-#define TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_
+#ifndef TRIGGER_PLUGINS_TRIGGERPRIMITIVEMAKER_HPP_
+#define TRIGGER_PLUGINS_TRIGGERPRIMITIVEMAKER_HPP_
 
 #include "triggeralgs/TriggerPrimitive.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
+#include "utilities/WorkerThread.hpp"
 
 #include "trigger/TPSet.hpp"
 #include "trigger/triggerprimitivemaker/Nljs.hpp"
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace dunedaq {
 namespace trigger {
@@ -49,7 +50,7 @@ private:
   void do_scrap(const nlohmann::json& obj);
 
   // Threading
-  dunedaq::appfwk::ThreadHelper m_thread;
+  dunedaq::utilities::WorkerThread m_thread;
   void do_work(std::atomic<bool>&);
 
   // Configuration
@@ -62,4 +63,4 @@ private:
 } // namespace trigger
 } // namespace dunedaq
 
-#endif // TRIGGER_PLUGINS_TIMINGTRIGGERPRIMITIVEMAKER_HPP_
+#endif // TRIGGER_PLUGINS_TRIGGERPRIMITIVEMAKER_HPP_

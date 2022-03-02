@@ -8,6 +8,10 @@
 
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
+
+#include "networkmanager/NetworkManager.hpp"
+#include "networkmanager/nwmgr/Structs.hpp"
+
 #include "trigger/TokenManager.hpp"
 
 /**
@@ -27,36 +31,37 @@ using namespace dunedaq;
 BOOST_AUTO_TEST_SUITE(BOOST_TEST_MODULE)
 
 /**
- * @brief Initializes the QueueRegistry
+ * @brief Initializes the NetworkManager
  */
-struct DAQSinkDAQSourceTestFixture
+struct NetworkManagerTestFixture
 {
-  DAQSinkDAQSourceTestFixture() {}
-
-  void setup()
+  NetworkManagerTestFixture()
   {
-    std::map<std::string, appfwk::QueueConfig> queue_map = {
-      { "dummy", { appfwk::QueueConfig::queue_kind::kFollyMPMCQueue, 100 } }
-    };
-
-    appfwk::QueueRegistry::get().configure(queue_map);
+    networkmanager::nwmgr::Connections testConfig;
+    networkmanager::nwmgr::Connection testConn;
+    testConn.name = "foo";
+    testConn.address = "inproc://foo";
+    testConn.topics = {};
+    testConfig.push_back(testConn);
+    networkmanager::NetworkManager::get().configure(testConfig);
   }
+  ~NetworkManagerTestFixture() { networkmanager::NetworkManager::get().reset(); }
+
+  NetworkManagerTestFixture(NetworkManagerTestFixture const&) = default;
+  NetworkManagerTestFixture(NetworkManagerTestFixture&&) = default;
+  NetworkManagerTestFixture& operator=(NetworkManagerTestFixture const&) = default;
+  NetworkManagerTestFixture& operator=(NetworkManagerTestFixture&&) = default;
 };
 
-BOOST_TEST_GLOBAL_FIXTURE(DAQSinkDAQSourceTestFixture);
+BOOST_TEST_GLOBAL_FIXTURE(NetworkManagerTestFixture);
 
 BOOST_AUTO_TEST_CASE(Basics)
 {
   using namespace std::chrono_literals;
 
-  using sink_t = appfwk::DAQSink<dfmessages::TriggerDecisionToken>;
-  using source_t = appfwk::DAQSource<dfmessages::TriggerDecisionToken>;
-  auto sink = std::make_unique<sink_t>("dummy");
-  auto source = std::make_unique<source_t>("dummy");
-
   int initial_tokens = 10;
-  dataformats::run_number_t run_number = 1;
-  trigger::TokenManager tm(source, initial_tokens, run_number);
+  daqdataformats::run_number_t run_number = 1;
+  trigger::TokenManager tm("foo", initial_tokens, run_number);
 
   BOOST_CHECK_EQUAL(tm.get_n_tokens(), initial_tokens);
   BOOST_CHECK_EQUAL(tm.triggers_allowed(), true);
@@ -75,7 +80,9 @@ BOOST_AUTO_TEST_CASE(Basics)
   dfmessages::TriggerDecisionToken token;
   token.run_number = run_number;
   token.trigger_number = 1;
-  sink->push(token);
+  auto serialised_token = dunedaq::serialization::serialize(token, dunedaq::serialization::kMsgPack);
+  networkmanager::NetworkManager::get().send_to(
+    "foo", static_cast<const void*>(serialised_token.data()), serialised_token.size(), std::chrono::milliseconds(10));
 
   // Give TokenManager a little time to pop the token off the queue
   std::this_thread::sleep_for(100ms);

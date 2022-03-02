@@ -1,25 +1,33 @@
-/** TriggerZipper is an appfwk::module that runs zipper::merge
+/**
+ * @file TriggerZipper.hpp TriggerZipper is an appfwk::DAQModule that runs zipper::merge
+ *
+ * This is part of the DUNE DAQ Application Framework, copyright 2020.
+ * Licensing/copyright details are in the COPYING file that you should have
+ * received with this code.
  */
 
 #ifndef TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
 #define TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
 
-#include "appfwk/DAQModule.hpp"
-#include "appfwk/DAQModuleHelper.hpp"
-#include "appfwk/DAQSink.hpp"
-#include "appfwk/DAQSource.hpp"
-#include "appfwk/ThreadHelper.hpp"
-
-#include "dataformats/GeoID.hpp"
-
 #include "trigger/Issues.hpp"
 #include "trigger/triggerzipper/Nljs.hpp"
 #include "zipper.hpp"
 
+#include "appfwk/DAQModule.hpp"
+#include "appfwk/DAQModuleHelper.hpp"
+#include "appfwk/DAQSink.hpp"
+#include "appfwk/DAQSource.hpp"
+#include "utilities/WorkerThread.hpp"
+#include "daqdataformats/GeoID.hpp"
+#include <logging/Logging.hpp>
+
 #include <chrono>
 #include <list>
-#include <logging/Logging.hpp>
+#include <map>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 const char* inqs_name = "inputs";
 const char* outq_name = "output";
@@ -34,7 +42,7 @@ namespace dunedaq::trigger {
 // >
 
 size_t
-zipper_stream_id(const dataformats::GeoID& geoid)
+zipper_stream_id(const daqdataformats::GeoID& geoid)
 {
   return (0xffff000000000000 & (static_cast<size_t>(geoid.system_type) << 48)) |
          (0x0000ffff00000000 & (static_cast<size_t>(geoid.region_id) << 32)) | (0x00000000ffffffff & geoid.element_id);
@@ -79,7 +87,7 @@ public:
   size_t m_n_received{ 0 };
   size_t m_n_sent{ 0 };
   size_t m_n_tardy{ 0 };
-  std::map<dataformats::GeoID, size_t> m_tardy_counts;
+  std::map<daqdataformats::GeoID, size_t> m_tardy_counts;
 
   explicit TriggerZipper(const std::string& name)
     : DAQModule(name)
@@ -92,7 +100,6 @@ public:
         register_command("scrap",  &TriggerZipper<TSET>::do_scrap);
     // clang-format on
   }
-  virtual ~TriggerZipper() {}
 
   void init(const nlohmann::json& ini)
   {
@@ -134,7 +141,7 @@ public:
     TLOG() << "Received " << m_n_received << " Sets. Sent " << m_n_sent << " Sets. " << m_n_tardy << " were tardy";
     std::stringstream ss;
     ss << std::endl;
-    for(auto& [id, n]: m_tardy_counts){
+    for (auto& [id, n] : m_tardy_counts) {
       ss << id << "\t" << n << std::endl;
     }
     TLOG_DEBUG(1) << "Tardy counts:" << ss.str();
@@ -165,7 +172,8 @@ public:
       return false;
     }
 
-    if(!m_tardy_counts.count(tset.origin)) m_tardy_counts[tset.origin]=0;
+    if (!m_tardy_counts.count(tset.origin))
+      m_tardy_counts[tset.origin] = 0;
 
     bool accepted = m_zm.feed(m_cache.begin(), tset.start_time, zipper_stream_id(tset.origin));
 
@@ -173,7 +181,8 @@ public:
       ++m_n_tardy;
       ++m_tardy_counts[tset.origin];
 
-      ers::warning(TardyInputSet(ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
+      ers::warning(TardyInputSet(
+        ERS_HERE, get_name(), tset.origin.region_id, tset.origin.element_id, tset.start_time, m_zm.get_origin()));
       m_cache.pop_front(); // vestigial
     }
     drain();
@@ -189,7 +198,8 @@ public:
       // tell consumer "where" the set was produced
       tset.origin.region_id = m_cfg.region_id;
       tset.origin.element_id = m_cfg.element_id;
-      tset.seqno = m_next_seqno++;
+      tset.seqno = m_next_seqno;
+      ++m_next_seqno;
 
       try {
         m_outq->push(tset, std::chrono::milliseconds(10));
@@ -223,12 +233,12 @@ public:
     send_out(got);
   }
 };
-}
+} // namespace dunedaq::trigger
 
 /// Need one of these in a .cpp for each concrete TSET type
 // DEFINE_DUNE_DAQ_MODULE(dunedaq::trigger::TriggerZipper<TSET>)
 
-#endif
+#endif // TRIGGER_PLUGINS_TRIGGERZIPPER_HPP_
 // Local Variables:
 // c-basic-offset: 2
 // End:

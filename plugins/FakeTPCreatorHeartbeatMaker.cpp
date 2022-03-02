@@ -59,7 +59,7 @@ FakeTPCreatorHeartbeatMaker::do_conf(const nlohmann::json& conf)
 void
 FakeTPCreatorHeartbeatMaker::do_start(const nlohmann::json&)
 {
-  m_thread.start_working_thread("fake-tp-heartbeat-maker");
+  m_thread.start_working_thread("heartbeater");
   TLOG_DEBUG(2) << get_name() + " successfully started.";
 }
 
@@ -84,7 +84,7 @@ FakeTPCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
 
   bool is_first_tpset_received = true;
 
-  dataformats::timestamp_t last_sent_heartbeat_time;
+  daqdataformats::timestamp_t last_sent_heartbeat_time;
 
   while (true) {
     TPSet tpset;
@@ -103,7 +103,7 @@ FakeTPCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
 
     TLOG_DEBUG(2) << "Activity received.";
 
-    dataformats::timestamp_t current_tpset_start_time = tpset.start_time;
+    daqdataformats::timestamp_t current_tpset_start_time = tpset.start_time;
 
     bool send_heartbeat =
       should_send_heartbeat(last_sent_heartbeat_time, current_tpset_start_time, is_first_tpset_received);
@@ -149,8 +149,8 @@ FakeTPCreatorHeartbeatMaker::do_work(std::atomic<bool>& running_flag)
 }
 
 bool
-FakeTPCreatorHeartbeatMaker::should_send_heartbeat(dataformats::timestamp_t const& last_sent_heartbeat_time,
-                                                   dataformats::timestamp_t const& current_tpset_start_time,
+FakeTPCreatorHeartbeatMaker::should_send_heartbeat(daqdataformats::timestamp_t const& last_sent_heartbeat_time,
+                                                   daqdataformats::timestamp_t const& current_tpset_start_time,
                                                    bool const& is_first_tpset_received)
 {
   // If it is the first TPSet received, send out a heartbeat.
@@ -165,7 +165,7 @@ FakeTPCreatorHeartbeatMaker::should_send_heartbeat(dataformats::timestamp_t cons
 
 void
 FakeTPCreatorHeartbeatMaker::get_heartbeat(TPSet& tpset_heartbeat,
-                                           dataformats::timestamp_t const& current_tpset_start_time)
+                                           daqdataformats::timestamp_t const& current_tpset_start_time)
 {
   tpset_heartbeat.type = TPSet::Type::kHeartbeat;
   tpset_heartbeat.start_time = current_tpset_start_time;

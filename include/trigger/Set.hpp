@@ -9,9 +9,9 @@
 #ifndef TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 #define TRIGGER_INCLUDE_TRIGGER_SET_HPP_
 
-#include "dataformats/GeoID.hpp"
-#include "dataformats/Types.hpp"
-#include "triggeralgs/Types.hpp"
+#include "daqdataformats/GeoID.hpp"
+#include "daqdataformats/Types.hpp"
+#include "detdataformats/trigger/Types.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -26,8 +26,8 @@ class Set
 {
 public:
   using element_t = T;
-  using origin_t = dataformats::GeoID;
-  using timestamp_t = dataformats::timestamp_t;
+  using origin_t = daqdataformats::GeoID;
+  using timestamp_t = daqdataformats::timestamp_t;
 
   enum Type
   {
@@ -38,13 +38,13 @@ public:
 
   // An incremental count of how many Sets have been produced by this source
   // At TPSet rates seen in one protodune felix link, 32bits overflows in a week.
-  using seqno_t = uint64_t;
+  using seqno_t = uint64_t; // NOLINT(build/unsigned)
   seqno_t seqno{ 0 };
 
   // Identify the instance creator/stream/source of this set.
-  origin_t origin{ dataformats::GeoID(dataformats::GeoID::SystemType::kDataSelection,
-                                      dataformats::GeoID::s_invalid_region_id,
-                                      dataformats::GeoID::s_invalid_element_id) };
+  origin_t origin{ daqdataformats::GeoID(daqdataformats::GeoID::SystemType::kDataSelection,
+                                         daqdataformats::GeoID::s_invalid_region_id,
+                                         daqdataformats::GeoID::s_invalid_element_id) };
 
   // Whether this Set is a regular bag-of-objects or a heartbeat
   Type type{ kUnknown };

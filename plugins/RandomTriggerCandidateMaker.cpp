@@ -9,7 +9,7 @@
 
 #include "RandomTriggerCandidateMaker.hpp"
 
-#include "dataformats/ComponentRequest.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
 
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
@@ -25,7 +25,7 @@
 
 #include "appfwk/DAQModuleHelper.hpp"
 #include "appfwk/app/Nljs.hpp"
-#include "triggeralgs/Types.hpp"
+#include "detdataformats/trigger/Types.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -76,7 +76,7 @@ RandomTriggerCandidateMaker::do_configure(const nlohmann::json& obj)
 void
 RandomTriggerCandidateMaker::do_start(const nlohmann::json& obj)
 {
-  m_run_number = obj.value<dunedaq::dataformats::run_number_t>("run", 0);
+  m_run_number = obj.value<dunedaq::daqdataformats::run_number_t>("run", 0);
 
   m_running_flag.store(true);
 
@@ -121,7 +121,6 @@ RandomTriggerCandidateMaker::create_candidate(dfmessages::timestamp_t timestamp)
   candidate.detid = { 0 };
   candidate.type = triggeralgs::TriggerCandidate::Type::kRandom;
   candidate.algorithm = triggeralgs::TriggerCandidate::Algorithm::kHSIEventToTriggerCandidate;
-  candidate.version = 0;
 
   return candidate;
 }

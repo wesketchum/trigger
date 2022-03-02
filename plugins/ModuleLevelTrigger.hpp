@@ -19,7 +19,7 @@
 
 #include "triggeralgs/TriggerCandidate.hpp"
 
-#include "dataformats/GeoID.hpp"
+#include "daqdataformats/GeoID.hpp"
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TriggerDecisionToken.hpp"
@@ -75,14 +75,12 @@ private:
   void send_trigger_decisions();
   std::thread m_send_trigger_decisions_thread;
 
-  std::unique_ptr<TokenManager> m_token_manager;
-
   // Create the next trigger decision
   dfmessages::TriggerDecision create_decision(const triggeralgs::TriggerCandidate& tc);
 
+  void dfo_busy_callback(ipm::Receiver::Response message);
+
   // Queue sources and sinks
-  std::unique_ptr<appfwk::DAQSource<dfmessages::TriggerDecisionToken>> m_token_source;
-  std::unique_ptr<appfwk::DAQSink<dfmessages::TriggerDecision>> m_trigger_decision_sink;
   std::unique_ptr<appfwk::DAQSource<triggeralgs::TriggerCandidate>> m_candidate_source;
 
   std::vector<dfmessages::GeoID> m_links;
@@ -91,8 +89,9 @@ private:
 
   // paused state, in which we don't send triggers
   std::atomic<bool> m_paused;
-
-  int m_initial_tokens;
+  std::atomic<bool> m_dfo_is_busy;
+  std::string m_trigger_decision_connection;
+  std::string m_inhibit_connection;
 
   dfmessages::trigger_number_t m_last_trigger_number;
 
@@ -107,10 +106,10 @@ private:
   using metric_counter_type = decltype(moduleleveltriggerinfo::Info::tc_received_count);
   std::atomic<metric_counter_type> m_tc_received_count{ 0 };
   std::atomic<metric_counter_type> m_td_sent_count{ 0 };
-  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
   std::atomic<metric_counter_type> m_td_inhibited_count{ 0 };
   std::atomic<metric_counter_type> m_td_paused_count{ 0 };
   std::atomic<metric_counter_type> m_td_total_count{ 0 };
+  std::atomic<metric_counter_type> m_td_queue_timeout_expired_err_count{ 0 };
 };
 } // namespace trigger
 } // namespace dunedaq

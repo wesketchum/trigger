@@ -10,7 +10,8 @@
 #define TRIGGER_INCLUDE_TRIGGER_ISSUES_HPP_
 
 #include "appfwk/DAQModule.hpp"
-#include "dataformats/Types.hpp"
+#include "daqdataformats/GeoID.hpp"
+#include "daqdataformats/Types.hpp"
 #include "ers/Issue.hpp"
 #include "triggeralgs/Types.hpp"
 
@@ -28,9 +29,12 @@ namespace dunedaq {
 ERS_DECLARE_ISSUE(trigger, InvalidConfiguration, "An invalid configuration object was received", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerActive, "Trigger is active now", ERS_EMPTY)
 ERS_DECLARE_ISSUE(trigger, TriggerPaused, "Trigger is paused", ERS_EMPTY)
-ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited", ERS_EMPTY)
+ERS_DECLARE_ISSUE(trigger, TriggerInhibited, "Trigger is inhibited in run " << runno, ((int64_t)runno))
 ERS_DECLARE_ISSUE(trigger, TriggerStartOfRun, "Start of run " << runno, ((int64_t)runno))
 ERS_DECLARE_ISSUE(trigger, TriggerEndOfRun, "End of run " << runno, ((int64_t)runno))
+
+ERS_DECLARE_ISSUE(trigger, UnknownGeoID, "Unknown GeoID: " << geo_id, ((daqdataformats::GeoID)geo_id))
+ERS_DECLARE_ISSUE(trigger, InvalidSystemType, "Unknown system type " << type, ((std::string)type))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        SignalTypeError,
@@ -75,8 +79,8 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        << " Output's time is " << output_time << ", last sent time is " << last_sent_time,
                        ((std::string)name),
                        ((std::string)algorithm)
-                       ((dataformats::timestamp_t)output_time)
-                       ((dataformats::timestamp_t)last_sent_time))
+                       ((daqdataformats::timestamp_t)output_time)
+                       ((daqdataformats::timestamp_t)last_sent_time))
 
 ERS_DECLARE_ISSUE_BASE(trigger,
                        TardyInputSet,
@@ -84,10 +88,10 @@ ERS_DECLARE_ISSUE_BASE(trigger,
                        "Tardy input set from region " << region << " element " << element
                        << ". Set start time " << start_time << " but last sent time " << last_sent_time,
                        ((std::string)name),
-                       ((uint16_t)region)
-                       ((uint32_t)element)
-                       ((dataformats::timestamp_t)start_time)
-                       ((dataformats::timestamp_t)last_sent_time))
+                       ((uint16_t)region) // NOLINT(build/unsigned)
+                       ((uint32_t)element) // NOLINT(build/unsigned)
+                       ((daqdataformats::timestamp_t)start_time)
+                       ((daqdataformats::timestamp_t)last_sent_time))
 // clang-format on
 
 ERS_DECLARE_ISSUE_BASE(trigger,
