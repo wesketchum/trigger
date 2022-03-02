@@ -87,7 +87,7 @@ TASetSink::do_work()
 
     for(auto const& ta : taset.objects) {
       m_outfile << ta.time_start << "\t" << ta.time_end << "\t" << ta.channel_start  << "\t" << ta.channel_end  << "\t" << ta.adc_integral << std::endl;
-      for (auto const& tp : ta.tp_list) {
+      for (auto const& tp : ta.inputs) {
           m_outfile << "\t" <<  tp.time_start << "\t" <<  tp.time_over_threshold << "\t" <<  tp.time_peak << "\t" <<  tp.channel << "\t" <<  tp.adc_integral << "\t"
                     << tp.adc_peak << "\t" <<  tp.detid << "\t" <<  tp.type << "\t" <<  std::endl;
       }
